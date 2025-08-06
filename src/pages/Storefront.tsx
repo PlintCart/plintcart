@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { Product } from "@/types/product";
 import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
@@ -18,26 +19,27 @@ const Storefront = () => {
 
   const fetchProducts = async () => {
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('is_visible', true)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      const q = query(collection(db, "products"), where("isVisible", "==", true));
+      const querySnapshot = await getDocs(q);
+      const productList: Product[] = [];
       
-      setProducts(data?.map(item => ({
-        id: item.id,
-        name: item.name,
-        description: item.description || '',
-        price: Number(item.price),
-        imageUrl: item.image_url || '',
-        category: item.category,
-        isVisible: item.is_visible,
-        createdAt: new Date(item.created_at),
-        updatedAt: new Date(item.updated_at),
-        userId: item.user_id
-      })) || []);
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        productList.push({
+          id: doc.id,
+          name: data.name,
+          description: data.description || '',
+          price: Number(data.price),
+          imageUrl: data.imageUrl || '',
+          category: data.category,
+          isVisible: data.isVisible,
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+          userId: data.userId
+        });
+      });
+      
+      setProducts(productList.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
     } catch (error) {
       console.error('Error fetching products:', error);
       toast({

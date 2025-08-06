@@ -1,11 +1,11 @@
-import { ShoppingCart, MessageCircle, Users, Zap, Shield, Globe } from "lucide-react";
+import { Store, MessageCircle, Palette, Zap, Shield, Globe } from "lucide-react";
 
 const Features = () => {
   const features = [
     {
-      icon: ShoppingCart,
-      title: "Easy Product Management",
-      description: "Add, edit, and organize your products with beautiful galleries and detailed descriptions.",
+      icon: Store,
+      title: "Universal Business Platform",
+      description: "Perfect for any business - retail, services, food, digital products, and more.",
       color: "brand-blue",
       delay: "0s"
     },
@@ -17,16 +17,16 @@ const Features = () => {
       delay: "0.2s"
     },
     {
-      icon: Users,
-      title: "Customer Management",
-      description: "Track orders, manage customer information, and provide excellent service.",
+      icon: Palette,
+      title: "Brand Customization",
+      description: "Customize colors, upload banners, and create a storefront that matches your brand.",
       color: "brand-purple",
       delay: "0.4s"
     },
     {
       icon: Zap,
-      title: "Lightning Fast",
-      description: "Optimized performance ensures your customers have a smooth ordering experience.",
+      title: "Instant Setup",
+      description: "Get your online ordering system up and running in minutes, no technical knowledge required.",
       color: "brand-orange",
       delay: "0s"
     },
@@ -39,15 +39,15 @@ const Features = () => {
     },
     {
       icon: Globe,
-      title: "Global Reach",
-      description: "Multi-language support and global payment processing for worldwide customers.",
+      title: "Multi-Language Support",
+      description: "Reach global customers with support for English, Spanish, French, and Swahili.",
       color: "brand-green",
       delay: "0.4s"
     }
   ];
 
   return (
-    <section className="py-24 bg-background relative">
+    <section id="features" className="py-24 bg-background relative">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{

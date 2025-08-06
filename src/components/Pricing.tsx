@@ -58,7 +58,7 @@ const Pricing = () => {
   ];
 
   return (
-    <section className="py-24 bg-gradient-to-br from-background via-accent/20 to-background relative">
+    <section id="pricing" className="py-24 bg-gradient-to-br from-background via-accent/20 to-background relative">
       {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-brand-green/10 rounded-full blur-3xl" />

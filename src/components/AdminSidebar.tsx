@@ -38,7 +38,7 @@ export function AdminSidebar() {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
           {!collapsed && (
-            <h1 className="text-xl font-bold text-primary">Take.App</h1>
+            <h1 className="text-xl font-bold text-primary">plint</h1>
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}

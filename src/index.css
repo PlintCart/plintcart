@@ -5,6 +5,17 @@
 /* Professional Take.App Design System */
 
 @layer base {
+  /* CSS compatibility fixes */
+  html,
+  :host {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  
+  * {
+    -webkit-user-select: auto;
+    user-select: auto;
+  }
   :root {
     --background: 0 0% 100%;
     --foreground: 220 15% 20%;

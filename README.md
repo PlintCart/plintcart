@@ -1,8 +1,29 @@
-# Welcome to your Lovable project
+# plint - Universal Business Ordering Platform
 
 ## Project info
 
 **URL**: https://lovable.dev/projects/14430d10-56ee-4760-87aa-cdb0b8c80b8d
+
+## About plint
+
+plint is a comprehensive business management platform that allows any business owner to create and manage their online ordering system with a beautiful, minimal WhatsApp-inspired interface.
+
+### 🏪 Core Purpose
+Enable any business to create an online presence and manage orders efficiently through a clean, customizable platform with direct WhatsApp integration.
+
+### 👥 Target Users
+- **Small to medium businesses** of any type
+- **Entrepreneurs** starting any kind of business  
+- **Local shops** wanting to go digital
+- **Service providers** needing order management
+- **Anyone selling** products or services
+
+### 💼 Business Applications
+- 🛍️ **Retail & E-commerce**: Clothing, electronics, home goods, jewelry
+- 🍕 **Food & Beverage**: Restaurants, cafes, bakeries, catering
+- 🎨 **Services**: Beauty salons, cleaning, tutoring, consulting
+- 🏠 **Local Businesses**: Hardware stores, bookshops, gift shops
+- 📱 **Digital Products**: Software, downloads, courses, subscriptions
 
 ## How can I edit this code?
 

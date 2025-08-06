@@ -1,7 +1,20 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Hero = () => {
+  const navigate = useNavigate();
+
+  const handleStartTrial = () => {
+    // Navigate to auth page for sign up
+    navigate('/auth?mode=signup');
+  };
+
+  const handleViewDemo = () => {
+    // Navigate to storefront to show the demo
+    navigate('/storefront');
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Gradient */}
@@ -19,14 +32,14 @@ const Hero = () => {
           {/* Brand Logo */}
           <div className="mb-8 animate-fade-in">
             <h1 className="text-6xl md:text-8xl font-bold mb-2 tracking-tight">
-              Take<span className="text-brand-green-light">.App</span>
+              pl<span className="text-brand-green-light">int</span>
             </h1>
           </div>
 
           {/* Main Headline */}
           <div className="mb-8 animate-slide-in-left" style={{ animationDelay: "0.2s" }}>
             <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6">
-              Your Restaurant, <br />
+              Your Business, <br />
               <span className="bg-gradient-to-r from-brand-green-light to-white bg-clip-text text-transparent">
                 One Click Away
               </span>
@@ -39,27 +52,40 @@ const Hero = () => {
               Create a beautiful, minimal ordering system that connects directly to WhatsApp.
             </p>
             <p className="text-lg md:text-xl text-white/80 mt-4 max-w-2xl mx-auto">
-              Perfect for restaurants, cafes, and food businesses.
+              Perfect for any business - retail, services, food, digital products & more.
             </p>
           </div>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-12 animate-scale-in" style={{ animationDelay: "0.6s" }}>
-            <Button variant="success" size="xl" className="group min-w-[200px]">
+            <Button variant="success" size="xl" className="group min-w-[200px]" onClick={handleStartTrial}>
               Start Free Trial
               <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
             </Button>
-            <Button variant="outline" size="xl" className="group min-w-[180px] border-white/30 text-white hover:bg-white hover:text-primary">
+            <Button variant="outline" size="xl" className="group min-w-[180px] border-white/30 text-white hover:bg-white hover:text-primary" onClick={handleViewDemo}>
               <Play className="w-5 h-5 transition-transform group-hover:scale-110" />
               View Demo
             </Button>
+          </div>
+
+          {/* Sign In Link for Existing Users */}
+          <div className="mb-8 animate-fade-in" style={{ animationDelay: "0.7s" }}>
+            <p className="text-white/70 text-sm">
+              Already have an account?{" "}
+              <button 
+                onClick={() => navigate('/auth?mode=signin')}
+                className="text-brand-green-light hover:text-white transition-colors underline font-medium"
+              >
+                Sign In
+              </button>
+            </p>
           </div>
 
           {/* Trust Indicators */}
           <div className="animate-fade-in" style={{ animationDelay: "0.8s" }}>
             <p className="text-white/70 text-sm mb-4">Trusted by thousands of businesses worldwide</p>
             <div className="flex justify-center items-center space-x-8 opacity-60">
-              <div className="text-white/60 text-sm font-medium">🏆 #1 Restaurant Solution</div>
+              <div className="text-white/60 text-sm font-medium">� Universal Platform</div>
               <div className="text-white/60 text-sm font-medium">⚡ Instant Setup</div>
               <div className="text-white/60 text-sm font-medium">📱 WhatsApp Ready</div>
             </div>
