@@ -30,6 +30,15 @@ export interface BusinessSettings {
   emailNotifications: boolean;
   smsNotifications: boolean;
   marketingUpdates: boolean;
+  
+  // Storefront Design
+  storeTheme: string;
+  primaryColor: string;
+  logoUrl: string;
+  coverImageUrl: string;
+  storeDescription: string;
+  showBusinessInfo: boolean;
+  showSocialProof: boolean;
 }
 
 export interface UserProfile {
@@ -64,6 +73,13 @@ const defaultSettings: BusinessSettings = {
   emailNotifications: true,
   smsNotifications: false,
   marketingUpdates: true,
+  storeTheme: 'modern',
+  primaryColor: '#059669',
+  logoUrl: '',
+  coverImageUrl: '',
+  storeDescription: '',
+  showBusinessInfo: true,
+  showSocialProof: false,
 };
 
 const defaultProfile: UserProfile = {

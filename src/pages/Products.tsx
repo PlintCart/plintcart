@@ -113,20 +113,35 @@ export default function Products() {
 
   const handleShareProduct = async (product: Product) => {
     try {
-      // Generate WhatsApp link with product details
-      const whatsappLink = ProductSharingService.generateWhatsAppLink(product, settings);
+      // Try Web Share API first (better for mobile)
+      const webShareSuccess = await ProductSharingService.shareWithWebAPI(product, settings);
       
-      // Open WhatsApp
-      window.open(whatsappLink, '_blank');
-      
-      // Also copy the shareable link to clipboard
-      const shareableLink = ProductSharingService.generateShareableLink(product);
-      await navigator.clipboard.writeText(shareableLink);
-      
-      toast.success('WhatsApp opened! Shareable link copied to clipboard');
+      if (!webShareSuccess) {
+        // Fallback to WhatsApp with enhanced link sharing
+        const whatsappLink = ProductSharingService.generateWhatsAppImageShare(product, settings);
+        
+        // Open WhatsApp
+        window.open(whatsappLink, '_blank');
+        
+        // Also copy the shareable link to clipboard
+        const shareableLink = ProductSharingService.generateShareableLink(product);
+        await navigator.clipboard.writeText(shareableLink);
+        
+        toast.success('WhatsApp opened! Link copied to clipboard for easy sharing');
+      } else {
+        toast.success('Product shared successfully!');
+      }
     } catch (error) {
       console.error('Error sharing product:', error);
-      toast.error('Failed to share product');
+      
+      // Final fallback - just copy the link
+      try {
+        const shareableLink = ProductSharingService.generateShareableLink(product);
+        await navigator.clipboard.writeText(shareableLink);
+        toast.success('Product link copied to clipboard');
+      } catch (clipboardError) {
+        toast.error('Failed to share product');
+      }
     }
   };
 

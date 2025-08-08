@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
-import { Settings, User, Globe, DollarSign, MessageCircle, Bell } from "lucide-react";
+import { Settings, User, Globe, DollarSign, MessageCircle, Bell, Palette } from "lucide-react";
 import { useState } from "react";
 
 export default function AdminSettings() {
@@ -47,7 +47,7 @@ export default function AdminSettings() {
           <p className="text-muted-foreground">Manage your account and store settings</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {/* Account Settings */}
           <Card>
             <CardHeader>
@@ -148,6 +148,135 @@ export default function AdminSettings() {
                   value={settings.businessEmail}
                   onChange={(e) => updateSettings({ businessEmail: e.target.value })}
                 />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Storefront Design */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Palette className="w-5 h-5" />
+                Storefront Design
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Store Theme</Label>
+                <Select value={settings.storeTheme} onValueChange={(value) => updateSettings({ storeTheme: value })}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="modern">Modern & Clean</SelectItem>
+                    <SelectItem value="elegant">Elegant & Minimal</SelectItem>
+                    <SelectItem value="vibrant">Vibrant & Colorful</SelectItem>
+                    <SelectItem value="classic">Classic & Professional</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="primary-color">Brand Color</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="primary-color"
+                    type="color"
+                    value={settings.primaryColor}
+                    onChange={(e) => updateSettings({ primaryColor: e.target.value })}
+                    className="w-16 h-10 p-1 border rounded"
+                  />
+                  <Input
+                    type="text"
+                    value={settings.primaryColor}
+                    onChange={(e) => updateSettings({ primaryColor: e.target.value })}
+                    placeholder="#059669"
+                    className="flex-1"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="logo-url">Logo URL</Label>
+                <Input
+                  id="logo-url"
+                  type="url"
+                  placeholder="https://example.com/logo.png"
+                  value={settings.logoUrl}
+                  onChange={(e) => updateSettings({ logoUrl: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Upload your logo to a hosting service and paste the URL here
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="cover-image">Cover Image URL</Label>
+                <Input
+                  id="cover-image"
+                  type="url"
+                  placeholder="https://example.com/cover.jpg"
+                  value={settings.coverImageUrl}
+                  onChange={(e) => updateSettings({ coverImageUrl: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Hero image for your storefront header
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="store-description">Store Description</Label>
+                <Textarea
+                  id="store-description"
+                  placeholder="Tell customers about your business..."
+                  rows={3}
+                  value={settings.storeDescription}
+                  onChange={(e) => updateSettings({ storeDescription: e.target.value })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Show Business Info</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Display contact details on storefront
+                  </p>
+                </div>
+                <Switch 
+                  checked={settings.showBusinessInfo} 
+                  onCheckedChange={(checked) => updateSettings({ showBusinessInfo: checked })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Show Social Proof</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Display customer reviews and ratings
+                  </p>
+                </div>
+                <Switch 
+                  checked={settings.showSocialProof} 
+                  onCheckedChange={(checked) => updateSettings({ showSocialProof: checked })}
+                />
+              </div>
+
+              {/* Preview Button */}
+              <div className="pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => {
+                    // Open a sample product link to preview the storefront
+                    window.open('/product/preview', '_blank');
+                  }}
+                >
+                  <Palette className="w-4 h-4 mr-2" />
+                  Preview Storefront
+                </Button>
+                <p className="text-xs text-muted-foreground mt-2 text-center">
+                  See how your storefront will look to customers
+                </p>
               </div>
             </CardContent>
           </Card>

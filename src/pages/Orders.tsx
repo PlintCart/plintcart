@@ -1,47 +1,92 @@
+import { useState, useEffect } from "react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, Clock, CheckCircle, XCircle } from "lucide-react";
+import { ShoppingBag, Clock, CheckCircle, XCircle, Phone, User } from "lucide-react";
+import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+
+interface OrderItem {
+  name: string;
+  quantity: number;
+  price: number;
+}
+
+interface Order {
+  id: string;
+  customerName?: string;
+  customerPhone?: string;
+  items: OrderItem[];
+  total: number;
+  status: 'pending' | 'completed' | 'cancelled';
+  createdAt: Date;
+  productName?: string;
+  productPrice?: number;
+  message?: string;
+}
 
 export default function Orders() {
-  // Placeholder data - in a real app, this would come from your database
-  const orders = [
-    {
-      id: "ORD-001",
-      customerName: "John Doe",
-      customerPhone: "+1234567890",
-      items: [
-        { name: "Premium T-Shirt", quantity: 2, price: 29.99 },
-        { name: "Wireless Headphones", quantity: 1, price: 79.99 }
-      ],
-      total: 139.97,
-      status: "pending",
-      createdAt: new Date("2024-01-15T10:30:00"),
-    },
-    {
-      id: "ORD-002",
-      customerName: "Jane Smith",
-      customerPhone: "+1234567891",
-      items: [
-        { name: "Coffee Blend", quantity: 3, price: 12.99 }
-      ],
-      total: 38.97,
-      status: "completed",
-      createdAt: new Date("2024-01-14T15:45:00"),
-    },
-    {
-      id: "ORD-003",
-      customerName: "Mike Johnson",
-      customerPhone: "+1234567892",
-      items: [
-        { name: "Laptop Stand", quantity: 1, price: 45.00 }
-      ],
-      total: 45.00,
-      status: "cancelled",
-      createdAt: new Date("2024-01-13T09:15:00"),
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    fetchOrders();
+  }, [user]);
+
+  const fetchOrders = async () => {
+    if (!user) return;
+
+    try {
+      // Try to fetch from orders collection first
+      const ordersQuery = query(
+        collection(db, "orders"),
+        where("userId", "==", user.uid),
+        orderBy("createdAt", "desc")
+      );
+      
+      const querySnapshot = await getDocs(ordersQuery);
+      const ordersList: Order[] = [];
+      
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        ordersList.push({
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate() || new Date(),
+        } as Order);
+      });
+
+      // If no orders found, create some sample data to show the interface
+      if (ordersList.length === 0) {
+        const sampleOrders: Order[] = [
+          {
+            id: "sample-001",
+            customerName: "Sample Customer",
+            customerPhone: "+1234567890",
+            items: [
+              { name: "Your Product", quantity: 1, price: 25.00 }
+            ],
+            total: 25.00,
+            status: "pending",
+            createdAt: new Date(),
+            message: "This is a sample order. Real orders will appear here when customers place them."
+          }
+        ];
+        setOrders(sampleOrders);
+      } else {
+        setOrders(ordersList);
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast.error('Failed to fetch orders');
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -69,8 +114,14 @@ export default function Orders() {
           <p className="text-muted-foreground">Manage customer orders and track sales</p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
@@ -180,6 +231,8 @@ export default function Orders() {
             ))
           )}
         </div>
+          </>
+        )}
       </div>
     </AdminLayout>
   );

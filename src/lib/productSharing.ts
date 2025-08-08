@@ -22,18 +22,20 @@ export class ProductSharingService {
     return `${this.baseUrl}/product/${shareableId}`;
   }
 
-  // Generate WhatsApp sharing URL
+  // Generate WhatsApp sharing URL with image support
   static generateWhatsAppLink(product: Product, settings: any): string {
     const shareUrl = this.generateShareableLink(product);
     const currencySymbol = this.getCurrencySymbol(settings.currency);
     const businessName = settings.businessName || 'Our Store';
     const whatsappNumber = settings.whatsappNumber;
     
+    // Create a more concise message that includes the link first for preview
     const message = `🛍️ *${product.name}*\n\n` +
+      `Check out this amazing product!\n\n` +
+      `${shareUrl}\n\n` +
       `💰 Price: ${currencySymbol}${product.price}${product.salePrice ? ` ~~${currencySymbol}${product.salePrice}~~` : ''}\n\n` +
-      `📝 ${product.description}\n\n` +
+      `📝 ${product.description.length > 100 ? product.description.substring(0, 100) + '...' : product.description}\n\n` +
       `🏪 Available at: *${businessName}*\n\n` +
-      `🔗 View & Order: ${shareUrl}\n\n` +
       `#${product.category.replace(/\s+/g, '')} #${businessName.replace(/\s+/g, '')}`;
 
     const encodedMessage = encodeURIComponent(message);
@@ -42,6 +44,71 @@ export class ProductSharingService {
       return `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=${encodedMessage}`;
     } else {
       return `https://wa.me/?text=${encodedMessage}`;
+    }
+  }
+
+  // Generate WhatsApp link with image sharing (alternative method)
+  static generateWhatsAppImageShare(product: Product, settings: any): string {
+    const shareUrl = this.generateShareableLink(product);
+    const currencySymbol = this.getCurrencySymbol(settings.currency);
+    const businessName = settings.businessName || 'Our Store';
+    const whatsappNumber = settings.whatsappNumber;
+    
+    // For image sharing, we create a shorter message that prioritizes the link
+    const message = `🛍️ *${product.name}* - ${currencySymbol}${product.price}\n\n${shareUrl}\n\nAvailable at ${businessName}`;
+
+    const encodedMessage = encodeURIComponent(message);
+    
+    if (whatsappNumber) {
+      return `https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}?text=${encodedMessage}`;
+    } else {
+      return `https://wa.me/?text=${encodedMessage}`;
+    }
+  }
+
+  // Generate a copyable link with image data for manual sharing
+  static async generateImageShareData(product: Product, settings: any): Promise<{
+    shareUrl: string;
+    message: string;
+    imageUrl: string;
+    canShare: boolean;
+  }> {
+    const shareUrl = this.generateShareableLink(product);
+    const currencySymbol = this.getCurrencySymbol(settings.currency);
+    const businessName = settings.businessName || 'Our Store';
+    
+    const message = `🛍️ *${product.name}*\n\n` +
+      `💰 ${currencySymbol}${product.price}\n\n` +
+      `📱 Order now: ${shareUrl}\n\n` +
+      `🏪 ${businessName}`;
+
+    return {
+      shareUrl,
+      message,
+      imageUrl: product.imageUrl || '',
+      canShare: navigator.share !== undefined
+    };
+  }
+
+  // Use Web Share API when available (better for mobile)
+  static async shareWithWebAPI(product: Product, settings: any): Promise<boolean> {
+    if (!navigator.share) {
+      return false;
+    }
+
+    try {
+      const shareData = await this.generateImageShareData(product, settings);
+      
+      await navigator.share({
+        title: product.name,
+        text: shareData.message,
+        url: shareData.shareUrl
+      });
+      
+      return true;
+    } catch (error) {
+      console.log('Error sharing:', error);
+      return false;
     }
   }
 
