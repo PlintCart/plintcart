@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
 import { ProductSharingService } from "@/lib/productSharing";
+import { ThumbnailPreview } from "@/components/ThumbnailPreview";
+import { StoreSetupReminder } from "@/components/StoreSetupReminder";
 
 interface Product {
   id: string;
@@ -113,23 +115,26 @@ export default function Products() {
 
   const handleShareProduct = async (product: Product) => {
     try {
-      // Try Web Share API first (better for mobile)
-      const webShareSuccess = await ProductSharingService.shareWithWebAPI(product, settings);
+      // Try the simple sharing method first (most reliable)
+      const result = await ProductSharingService.shareProductSimple(product, settings);
       
-      if (!webShareSuccess) {
-        // Fallback to WhatsApp with enhanced link sharing
-        const whatsappLink = ProductSharingService.generateWhatsAppImageShare(product, settings);
-        
-        // Open WhatsApp
-        window.open(whatsappLink, '_blank');
-        
-        // Also copy the shareable link to clipboard
-        const shareableLink = ProductSharingService.generateShareableLink(product);
-        await navigator.clipboard.writeText(shareableLink);
-        
-        toast.success('WhatsApp opened! Link copied to clipboard for easy sharing');
+      if (result.success) {
+        toast.success(result.message || 'Product shared with thumbnail and store links!');
       } else {
-        toast.success('Product shared successfully!');
+        // Fallback to enhanced sharing method
+        const fallbackResult = await ProductSharingService.shareProductWithMessage(product, settings);
+        if (fallbackResult.success) {
+          toast.success(fallbackResult.message || 'Product shared!');
+        } else {
+          // Final fallback to WhatsApp with text
+          const whatsappLink = ProductSharingService.generateWhatsAppImageShare(product, settings);
+          window.open(whatsappLink, '_blank');
+          
+          const shareableLink = ProductSharingService.generateShareableLink(product);
+          await navigator.clipboard.writeText(shareableLink);
+          
+          toast.success('WhatsApp opened! Link copied to clipboard');
+        }
       }
     } catch (error) {
       console.error('Error sharing product:', error);
@@ -169,13 +174,16 @@ export default function Products() {
           </Button>
         </div>
 
+        {/* Store Setup Reminder */}
+        <StoreSetupReminder />
+
         {products.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <div className="text-center space-y-4">
                 <h3 className="text-lg font-semibold">No products yet</h3>
                 <p className="text-muted-foreground max-w-md">
-                  Start building your catalog by adding your first product.
+                  Start building your catalog by adding your first product. Each product automatically appears in your custom storefront!
                 </p>
                 <Button onClick={() => navigate('/admin/products/add')}>
                   <Plus className="w-4 h-4 mr-2" />
@@ -226,6 +234,7 @@ export default function Products() {
                     >
                       {product.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </Button>
+                    <ThumbnailPreview product={product} settings={settings} />
                     <Button 
                       variant="outline" 
                       size="sm"

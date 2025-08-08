@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Product } from "@/types/product";
 import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Grid, List, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ProductSharingService } from "@/lib/productSharing";
 
 const Storefront = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -53,20 +54,39 @@ const Storefront = () => {
   };
 
   const shareProduct = async (product: Product) => {
-    const productUrl = `${window.location.origin}/product/${product.id}`;
-    const message = `Check out ${product.name} for $${product.price.toFixed(2)}! ${productUrl}`;
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: product.name,
-          text: message,
-          url: productUrl,
-        });
-      } catch (error) {
-        console.log('Error sharing:', error);
+    try {
+      // Get settings for thumbnail generation
+      const settingsDoc = await getDoc(doc(db, "settings", product.userId));
+      const userSettings = settingsDoc.exists() ? settingsDoc.data() : {};
+      
+      // Use thumbnail sharing
+      const result = await ProductSharingService.shareProductThumbnail(product, userSettings);
+      
+      if (result.success) {
+        if (result.message) {
+          console.log(result.message);
+        }
+      } else {
+        // Fallback to regular sharing
+        const productUrl = `${window.location.origin}/product/${product.id}`;
+        const message = `Check out ${product.name} for $${product.price.toFixed(2)}! ${productUrl}`;
+        
+        if (navigator.share) {
+          await navigator.share({
+            title: product.name,
+            text: message,
+            url: productUrl,
+          });
+        } else {
+          const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+          window.open(whatsappUrl, '_blank');
+        }
       }
-    } else {
+    } catch (error) {
+      console.error('Error sharing product:', error);
+      // Simple fallback
+      const productUrl = `${window.location.origin}/product/${product.id}`;
+      const message = `Check out ${product.name} for $${product.price.toFixed(2)}! ${productUrl}`;
       const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
     }

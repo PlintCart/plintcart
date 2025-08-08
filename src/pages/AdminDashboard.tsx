@@ -6,6 +6,7 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
+import { StoreSetupReminder } from "@/components/StoreSetupReminder";
 
 interface Product {
   id: string;
@@ -90,6 +91,9 @@ export default function AdminDashboard() {
             Welcome back{user?.displayName ? `, ${user.displayName}` : ''}! Here's an overview of your store.
           </p>
         </div>
+
+        {/* Store Setup Reminder */}
+        <StoreSetupReminder />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

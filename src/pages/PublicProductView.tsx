@@ -7,23 +7,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, MessageCircle, Share2, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
-
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  salePrice?: number;
-  imageUrl: string;
-  category: string;
-  businessName?: string;
-  whatsappNumber?: string;
-  tags?: string[];
-  specifications?: Record<string, string>;
-  stockQuantity?: number;
-  featured?: boolean;
-  userId: string;
-}
+import { ProductSharingService } from "@/lib/productSharing";
+import { Product } from "@/types/product";
 
 export default function PublicProductView() {
   const { id } = useParams();
@@ -86,13 +71,27 @@ export default function PublicProductView() {
       
       if (!querySnapshot.empty) {
         // Found by shareableId
-        const doc = querySnapshot.docs[0];
-        productData = { id: doc.id, ...doc.data() } as Product;
+        const docData = querySnapshot.docs[0];
+        const data = docData.data();
+        productData = {
+          id: docData.id,
+          ...data,
+          createdAt: data.createdAt?.toDate() || new Date(),
+          updatedAt: data.updatedAt?.toDate() || new Date(),
+          isVisible: data.isVisible ?? true
+        } as Product;
       } else {
         // Fallback: try to find by document ID
         const productDoc = await getDoc(doc(db, "products", id!));
         if (productDoc.exists()) {
-          productData = { id: productDoc.id, ...productDoc.data() } as Product;
+          const data = productDoc.data();
+          productData = {
+            id: productDoc.id,
+            ...data,
+            createdAt: data.createdAt?.toDate() || new Date(),
+            updatedAt: data.updatedAt?.toDate() || new Date(),
+            isVisible: data.isVisible ?? true
+          } as Product;
         }
       }
       
@@ -138,21 +137,50 @@ export default function PublicProductView() {
   const handleShare = async () => {
     if (!product) return;
 
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: product.name,
-          text: `Check out ${product.name} - ${getCurrencySymbol(businessSettings?.currency || 'usd')}${product.price}`,
-          url: window.location.href
-        });
-      } catch (error) {
-        // Fallback to copy link
+    try {
+      // Use simple sharing method with guaranteed delivery
+      if (businessSettings) {
+        const result = await ProductSharingService.shareProductSimple(product, businessSettings);
+        
+        if (result.success) {
+          toast.success(result.message || 'Product shared with thumbnail and store links!');
+          return;
+        } else {
+          // Fallback to enhanced sharing method
+          const fallbackResult = await ProductSharingService.shareProductWithMessage(product, businessSettings);
+          if (fallbackResult.success) {
+            toast.success(fallbackResult.message || 'Product shared as thumbnail!');
+            return;
+          }
+        }
+      }
+
+      // Fallback to regular sharing
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: product.name,
+            text: `Check out ${product.name} - ${getCurrencySymbol(businessSettings?.currency || 'usd')}${product.price}`,
+            url: window.location.href
+          });
+        } catch (error) {
+          // Fallback to copy link
+          await navigator.clipboard.writeText(window.location.href);
+          toast.success('Link copied to clipboard');
+        }
+      } else {
         await navigator.clipboard.writeText(window.location.href);
         toast.success('Link copied to clipboard');
       }
-    } else {
-      await navigator.clipboard.writeText(window.location.href);
-      toast.success('Link copied to clipboard');
+    } catch (error) {
+      console.error('Error sharing:', error);
+      // Final fallback
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('Link copied to clipboard');
+      } catch (clipboardError) {
+        toast.error('Failed to share product');
+      }
     }
   };
 
@@ -350,7 +378,7 @@ export default function PublicProductView() {
                     <Share2 className="w-4 h-4 mr-2" />
                     Share
                   </Button>
-                  <Button variant="outline" onClick={() => navigate('/storefront')}>
+                  <Button variant="outline" onClick={() => navigate(`/store/${product.userId}`)}>
                     View Store
                   </Button>
                 </div>

@@ -18,6 +18,7 @@ import AdminSettings from "./pages/AdminSettings";
 import Storefront from "./pages/Storefront";
 import ProductDetail from "./pages/ProductDetail";
 import PublicProductView from "./pages/PublicProductView";
+import VendorStorefront from "./pages/VendorStorefront";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/storefront" element={<Storefront />} />
+            <Route path="/store/:vendorId" element={<VendorStorefront />} />
             <Route path="/product/:id" element={<PublicProductView />} />
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
