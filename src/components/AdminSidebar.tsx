@@ -20,31 +20,42 @@ const navigation = [
 ];
 
 export function AdminSidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
   return (
     <>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="fixed top-4 left-4 z-50 lg:hidden p-2 bg-background border rounded-lg shadow-md"
+      >
+        <Menu className="h-5 w-5" />
+      </button>
+
       {/* Mobile backdrop */}
-      {!collapsed && (
-        <div className="fixed inset-0 z-40 lg:hidden bg-black/50" onClick={() => setCollapsed(true)} />
+      {mobileOpen && (
+        <div 
+          className="fixed inset-0 z-40 lg:hidden bg-black/50" 
+          onClick={() => setMobileOpen(false)} 
+        />
       )}
       
       {/* Sidebar */}
       <div className={cn(
-        "fixed top-0 left-0 z-50 h-full bg-background border-r border-border transition-all duration-300",
-        collapsed ? "w-16" : "w-64"
+        "fixed top-0 left-0 z-50 h-full bg-background border-r border-border transition-transform duration-300 ease-in-out",
+        "w-64 lg:w-64",
+        // Mobile: slide in from left when open, hide when closed
+        mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
-          {!collapsed && (
-            <h1 className="text-xl font-bold text-primary">plint</h1>
-          )}
+          <h1 className="text-xl font-bold text-primary">plint</h1>
           <button
-            onClick={() => setCollapsed(!collapsed)}
-            className="p-2 hover:bg-accent rounded-lg transition-colors"
+            onClick={() => setMobileOpen(false)}
+            className="p-2 hover:bg-accent rounded-lg transition-colors lg:hidden"
           >
-            {collapsed ? <Menu className="h-5 w-5" /> : <X className="h-5 w-5" />}
+            <X className="h-5 w-5" />
           </button>
         </div>
 
@@ -58,28 +69,21 @@ export function AdminSidebar() {
               <NavLink
                 key={item.name}
                 to={item.href}
+                onClick={() => setMobileOpen(false)} // Close mobile menu on navigation
                 className={cn(
-                  "flex items-center px-3 py-2 rounded-lg transition-colors",
+                  "flex items-center px-3 py-2 rounded-lg transition-colors w-full",
                   isActive 
                     ? "bg-primary text-primary-foreground" 
                     : "hover:bg-accent hover:text-accent-foreground"
                 )}
               >
-                <Icon className={cn("h-5 w-5", collapsed ? "mx-auto" : "mr-3")} />
-                {!collapsed && <span className="font-medium">{item.name}</span>}
+                <Icon className="h-5 w-5 mr-3" />
+                <span className="font-medium">{item.name}</span>
               </NavLink>
             );
           })}
         </nav>
       </div>
-
-      {/* Mobile toggle button */}
-      <button
-        onClick={() => setCollapsed(false)}
-        className="fixed top-4 left-4 z-30 lg:hidden p-2 bg-background border rounded-lg shadow-md"
-      >
-        <Menu className="h-5 w-5" />
-      </button>
     </>
   );
 }

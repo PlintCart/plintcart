@@ -25,18 +25,18 @@ export default function Design() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Design</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">Design</h1>
             <p className="text-muted-foreground">Customize your storefront appearance</p>
           </div>
-          <Button variant="outline">
+          <Button variant="outline" className="w-full sm:w-auto">
             <Eye className="w-4 h-4 mr-2" />
             Preview Store
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Hero Banner */}
           <Card>
             <CardHeader>
@@ -46,15 +46,15 @@ export default function Design() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                <Upload className="w-8 h-8 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground mb-2">
+              <div className="border-2 border-dashed border-border rounded-lg p-4 sm:p-8 text-center">
+                <Upload className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-xs sm:text-sm text-muted-foreground mb-2">
                   Upload a hero banner image
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Recommended: 1200x400px
                 </p>
-                <Button variant="outline" className="mt-4">
+                <Button variant="outline" className="mt-4 text-xs sm:text-sm">
                   Choose Image
                 </Button>
               </div>
@@ -89,31 +89,31 @@ export default function Design() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {themes.map((theme) => (
                   <button
                     key={theme.id}
                     onClick={() => setSelectedTheme(theme.id)}
-                    className={`p-4 rounded-lg border-2 transition-colors ${
+                    className={`p-3 sm:p-4 rounded-lg border-2 transition-colors ${
                       selectedTheme === theme.id 
                         ? "border-primary bg-primary/5" 
                         : "border-border hover:border-primary/50"
                     }`}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
                       <div 
-                        className="w-6 h-6 rounded-full"
+                        className="w-5 h-5 sm:w-6 sm:h-6 rounded-full"
                         style={{ backgroundColor: theme.primary }}
                       />
-                      <span className="font-medium">{theme.name}</span>
+                      <span className="font-medium text-sm sm:text-base">{theme.name}</span>
                     </div>
                     <div className="flex gap-1 mt-2">
                       <div 
-                        className="w-4 h-4 rounded"
+                        className="w-3 h-3 sm:w-4 sm:h-4 rounded"
                         style={{ backgroundColor: theme.primary }}
                       />
                       <div 
-                        className="w-4 h-4 rounded"
+                        className="w-3 h-3 sm:w-4 sm:h-4 rounded"
                         style={{ backgroundColor: theme.accent }}
                       />
                     </div>
@@ -128,12 +128,12 @@ export default function Design() {
                     id="custom-primary"
                     type="color"
                     defaultValue="#22c55e"
-                    className="w-16 h-10 p-1"
+                    className="w-12 h-8 sm:w-16 sm:h-10 p-1"
                   />
                   <Input
                     placeholder="#22c55e"
                     defaultValue="#22c55e"
-                    className="flex-1"
+                    className="flex-1 text-sm"
                   />
                 </div>
               </div>
@@ -162,10 +162,10 @@ export default function Design() {
                 </Select>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-start sm:items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <Label>Show Prices</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <Label className="text-sm">Show Prices</Label>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Display product prices on the storefront
                   </p>
                 </div>
@@ -175,10 +175,10 @@ export default function Design() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-start sm:items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <Label>Show Descriptions</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <Label className="text-sm">Show Descriptions</Label>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Display product descriptions on cards
                   </p>
                 </div>
@@ -217,23 +217,23 @@ export default function Design() {
 
               <div className="space-y-2">
                 <Label htmlFor="store-logo">Store Logo</Label>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Input
                     id="store-logo"
                     type="file"
                     accept="image/*"
-                    className="flex-1"
+                    className="flex-1 text-sm"
                   />
-                  <Button variant="outline">Upload</Button>
+                  <Button variant="outline" className="text-sm">Upload</Button>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <div className="flex justify-end gap-2">
-          <Button variant="outline">Reset to Default</Button>
-          <Button>Save Changes</Button>
+        <div className="flex flex-col sm:flex-row justify-end gap-2">
+          <Button variant="outline" className="text-sm">Reset to Default</Button>
+          <Button className="text-sm">Save Changes</Button>
         </div>
       </div>
     </AdminLayout>

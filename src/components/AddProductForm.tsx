@@ -6,6 +6,7 @@ import { collection, addDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage, auth } from "@/lib/firebase";
 import { useSettings } from "@/contexts/SettingsContext";
+import { StockManagementService } from "@/services/StockManagementService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,9 +25,18 @@ const productSchema = z.object({
   isVisible: z.boolean().default(true),
   tags: z.string().optional(),
   specifications: z.string().optional(),
-  stockQuantity: z.number().min(0).optional(),
   salePrice: z.number().min(0).optional(),
   featured: z.boolean().default(false),
+  
+  // Enhanced Stock Management
+  stockQuantity: z.number().min(0).optional(),
+  minStockLevel: z.number().min(0).optional(),
+  maxStockLevel: z.number().min(0).optional(),
+  allowBackorders: z.boolean().default(false),
+  trackStock: z.boolean().default(true),
+  sku: z.string().optional(),
+  barcode: z.string().optional(),
+  restockDate: z.string().optional(),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -90,9 +100,18 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
       isVisible: true,
       tags: "",
       specifications: "",
-      stockQuantity: 0,
       salePrice: 0,
       featured: false,
+      
+      // Stock Management defaults
+      stockQuantity: 0,
+      minStockLevel: 5,
+      maxStockLevel: 100,
+      allowBackorders: false,
+      trackStock: true,
+      sku: "",
+      barcode: "",
+      restockDate: "",
     },
   });
 
@@ -230,8 +249,18 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
         }
       }
 
-      // Add product to Firebase
-      await addDoc(collection(db, "products"), {
+      // Determine stock status based on quantity and settings
+      let stockStatus: 'in_stock' | 'low_stock' | 'out_of_stock' = 'in_stock';
+      if (data.trackStock) {
+        if (data.stockQuantity === 0) {
+          stockStatus = 'out_of_stock';
+        } else if (data.stockQuantity <= data.minStockLevel) {
+          stockStatus = 'low_stock';
+        }
+      }
+
+      // Prepare enhanced product data with stock management
+      const productData = {
         ...data,
         imageUrl,
         userId: user.uid,
@@ -244,9 +273,24 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
         likes: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
-      });
+        
+        // Enhanced stock management fields
+        initialStock: data.stockQuantity, // Track original stock level
+        stockStatus,
+        stockHistory: [], // Will be populated by service
+      };
 
-      toast.success("Product added successfully!");
+      // Add product to Firebase
+      const docRef = await addDoc(collection(db, "products"), productData);
+      const productId = docRef.id;
+
+      // Create initial stock transaction if tracking stock
+      if (data.trackStock && data.stockQuantity > 0) {
+        const stockService = new StockManagementService();
+        await stockService.addStock(productId, data.stockQuantity, `Initial stock for ${data.name}`, 'addition');
+      }
+
+      toast.success("Product added successfully with stock tracking!");
       form.reset();
       setImageFile(null);
       setImagePreview(null);
@@ -276,7 +320,7 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
                     <img
                       src={imagePreview}
                       alt="Preview"
-                      className="w-48 h-48 object-cover rounded-lg border"
+                      className="w-32 h-32 sm:w-48 sm:h-48 object-cover rounded-lg border"
                     />
                     <Button
                       type="button"
@@ -292,10 +336,10 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
                     </Button>
                   </div>
                 ) : (
-                  <label className="flex flex-col items-center justify-center w-48 h-48 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-accent transition-colors" htmlFor="product-image-upload">
+                  <label className="flex flex-col items-center justify-center w-32 h-32 sm:w-48 sm:h-48 border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-accent transition-colors" htmlFor="product-image-upload">
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
-                      <p className="mb-2 text-sm text-muted-foreground">
+                      <Upload className="w-6 h-6 sm:w-8 sm:h-8 mb-2 sm:mb-4 text-muted-foreground" />
+                      <p className="mb-1 sm:mb-2 text-xs sm:text-sm text-muted-foreground text-center px-2">
                         <span className="font-semibold">Click to upload</span>
                       </p>
                       <p className="text-xs text-muted-foreground">PNG, JPG or GIF</p>
@@ -357,7 +401,7 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
             />
 
             {/* Price & Category */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="price"
@@ -415,7 +459,7 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
               </div>
 
               {/* Stock Quantity & Sale Price */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="stockQuantity"
@@ -464,6 +508,165 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
                     </FormItem>
                   )}
                 />
+              </div>
+
+              {/* Enhanced Stock Management */}
+              <div className="space-y-4 border-t pt-4">
+                <div className="flex items-center gap-2">
+                  <Package className="w-5 h-5 text-primary" />
+                  <h4 className="text-md font-semibold">Advanced Stock Management</h4>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="minStockLevel"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Min Stock Level</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="0"
+                            placeholder="Low stock warning"
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <div className="text-xs text-muted-foreground">
+                          Alert when stock reaches this level
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="maxStockLevel"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Max Stock Level</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="0"
+                            placeholder="Maximum capacity"
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <div className="text-xs text-muted-foreground">
+                          Maximum stock capacity
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="sku"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>SKU</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Product SKU"
+                            {...field}
+                          />
+                        </FormControl>
+                        <div className="text-xs text-muted-foreground">
+                          Stock Keeping Unit
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="barcode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Barcode (Optional)</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Product barcode"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="restockDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Expected Restock Date</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            {...field}
+                          />
+                        </FormControl>
+                        <div className="text-xs text-muted-foreground">
+                          When will this be restocked?
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="trackStock"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">Track Stock</FormLabel>
+                          <div className="text-sm text-muted-foreground">
+                            Monitor inventory levels for this product
+                          </div>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="allowBackorders"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">Allow Backorders</FormLabel>
+                          <div className="text-sm text-muted-foreground">
+                            Accept orders when out of stock
+                          </div>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
               {/* Tags */}
@@ -523,7 +726,7 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
             </div>
 
             {/* Featured & Visibility */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="featured"

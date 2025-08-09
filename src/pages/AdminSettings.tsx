@@ -43,11 +43,11 @@ export default function AdminSettings() {
     <AdminLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Settings</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Settings</h1>
           <p className="text-muted-foreground">Manage your account and store settings</p>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
           {/* Account Settings */}
           <Card>
             <CardHeader>
@@ -91,8 +91,8 @@ export default function AdminSettings() {
                 />
               </div>
 
-              <Button className="w-full">Update Account</Button>
-              <Button variant="outline" className="w-full" onClick={logout}>
+              <Button className="w-full text-sm">Update Account</Button>
+              <Button variant="outline" className="w-full text-sm" onClick={logout}>
                 Sign Out
               </Button>
             </CardContent>
@@ -184,14 +184,14 @@ export default function AdminSettings() {
                     type="color"
                     value={settings.primaryColor}
                     onChange={(e) => updateSettings({ primaryColor: e.target.value })}
-                    className="w-16 h-10 p-1 border rounded"
+                    className="w-12 h-8 sm:w-16 sm:h-10 p-1 border rounded"
                   />
                   <Input
                     type="text"
                     value={settings.primaryColor}
                     onChange={(e) => updateSettings({ primaryColor: e.target.value })}
                     placeholder="#059669"
-                    className="flex-1"
+                    className="flex-1 text-sm"
                   />
                 </div>
               </div>
@@ -235,10 +235,10 @@ export default function AdminSettings() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-start sm:items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <Label>Show Business Info</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <Label className="text-sm">Show Business Info</Label>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Display contact details on storefront
                   </p>
                 </div>
@@ -248,10 +248,10 @@ export default function AdminSettings() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-start sm:items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <Label>Show Social Proof</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <Label className="text-sm">Show Social Proof</Label>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Display customer reviews and ratings
                   </p>
                 </div>
@@ -265,7 +265,7 @@ export default function AdminSettings() {
               <div className="pt-4 border-t">
                 <Button 
                   variant="outline" 
-                  className="w-full"
+                  className="w-full text-sm"
                   onClick={() => {
                     // Open a sample product link to preview the storefront
                     window.open('/product/preview', '_blank');
@@ -370,10 +370,10 @@ export default function AdminSettings() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-start sm:items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <Label>Accept Cash Payments</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <Label className="text-sm">Accept Cash Payments</Label>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Allow customers to pay on delivery
                   </p>
                 </div>
@@ -419,10 +419,10 @@ export default function AdminSettings() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-start sm:items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <Label>Auto-send Order Details</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <Label className="text-sm">Auto-send Order Details</Label>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Automatically include order details in WhatsApp message
                   </p>
                 </div>
@@ -443,10 +443,10 @@ export default function AdminSettings() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-start sm:items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <Label>Email Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <Label className="text-sm">Email Notifications</Label>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Receive order notifications via email
                   </p>
                 </div>
@@ -456,10 +456,10 @@ export default function AdminSettings() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-start sm:items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <Label>SMS Notifications</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <Label className="text-sm">SMS Notifications</Label>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Receive order notifications via SMS
                   </p>
                 </div>
@@ -469,10 +469,10 @@ export default function AdminSettings() {
                 />
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-start sm:items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <Label>Marketing Updates</Label>
-                  <p className="text-sm text-muted-foreground">
+                  <Label className="text-sm">Marketing Updates</Label>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     Receive updates about new features
                   </p>
                 </div>
@@ -485,11 +485,11 @@ export default function AdminSettings() {
           </Card>
         </div>
 
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={handleReset} disabled={isSaving}>
+        <div className="flex flex-col sm:flex-row justify-end gap-2">
+          <Button variant="outline" onClick={handleReset} disabled={isSaving} className="text-sm">
             Reset to Default
           </Button>
-          <Button onClick={handleSaveAll} disabled={isSaving}>
+          <Button onClick={handleSaveAll} disabled={isSaving} className="text-sm">
             {isSaving ? "Saving..." : "Save All Settings"}
           </Button>
         </div>

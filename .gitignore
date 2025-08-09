@@ -30,6 +30,10 @@ build/
 firebase-debug.log
 firestore-debug.log
 
+# Deployment scripts (optional)
+# deploy-firestore.sh
+# deploy-firestore.ps1
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

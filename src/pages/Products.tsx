@@ -163,12 +163,12 @@ export default function Products() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Products</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">Products</h1>
             <p className="text-muted-foreground">Manage your product catalog</p>
           </div>
-          <Button onClick={() => navigate('/admin/products/add')}>
+          <Button onClick={() => navigate('/admin/products/add')} className="w-full sm:w-auto">
             <Plus className="w-4 h-4 mr-2" />
             Add Product
           </Button>
@@ -193,7 +193,7 @@ export default function Products() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {products.map((product) => (
               <Card key={product.id} className="overflow-hidden">
                 <div className="aspect-square relative">
@@ -214,25 +214,26 @@ export default function Products() {
                     </Badge>
                   </div>
                 </div>
-                <CardContent className="p-4">
+                <CardContent className="p-3 sm:p-4">
                   <div className="space-y-2">
-                    <h3 className="font-semibold line-clamp-1">{product.name}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
+                    <h3 className="font-semibold line-clamp-1 text-sm sm:text-base">{product.name}</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
                       {product.description}
                     </p>
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-lg">${product.price.toFixed(2)}</span>
-                      <Badge variant="outline">{product.category}</Badge>
+                      <span className="font-bold text-base sm:text-lg">${product.price.toFixed(2)}</span>
+                      <Badge variant="outline" className="text-xs">{product.category}</Badge>
                     </div>
                   </div>
-                  <div className="flex gap-2 mt-4">
+                  <div className="grid grid-cols-5 gap-1 sm:flex sm:gap-2 mt-4">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleToggleVisibility(product.id, product.isVisible)}
                       title={product.isVisible ? "Hide product" : "Show product"}
+                      className="p-1.5 sm:p-2"
                     >
-                      {product.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {product.isVisible ? <EyeOff className="w-3 h-3 sm:w-4 sm:h-4" /> : <Eye className="w-3 h-3 sm:w-4 sm:h-4" />}
                     </Button>
                     <ThumbnailPreview product={product} settings={settings} />
                     <Button 
@@ -240,21 +241,21 @@ export default function Products() {
                       size="sm"
                       onClick={() => handleShareProduct(product)}
                       title="Share on WhatsApp"
-                      className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                      className="text-green-600 hover:text-green-700 hover:bg-green-50 p-1.5 sm:p-2"
                     >
-                      <Share2 className="w-4 h-4" />
+                      <Share2 className="w-3 h-3 sm:w-4 sm:h-4" />
                     </Button>
-                    <Button variant="outline" size="sm" title="Edit product">
-                      <Edit className="w-4 h-4" />
+                    <Button variant="outline" size="sm" title="Edit product" className="p-1.5 sm:p-2">
+                      <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleDeleteProduct(product.id)}
                       title="Delete product"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1.5 sm:p-2"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                     </Button>
                   </div>
                 </CardContent>

@@ -3,7 +3,7 @@ import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, Clock, CheckCircle, XCircle, Phone, User } from "lucide-react";
+import { Package, Clock, CheckCircle, XCircle, ShoppingBag, User, Phone } from 'lucide-react';
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
@@ -41,11 +41,10 @@ export default function Orders() {
     if (!user) return;
 
     try {
-      // Try to fetch from orders collection first
+      // Simplified query without orderBy to avoid index requirement
       const ordersQuery = query(
         collection(db, "orders"),
-        where("userId", "==", user.uid),
-        orderBy("createdAt", "desc")
+        where("businessOwnerId", "==", user.uid)
       );
       
       const querySnapshot = await getDocs(ordersQuery);
@@ -59,6 +58,9 @@ export default function Orders() {
           createdAt: data.createdAt?.toDate() || new Date(),
         } as Order);
       });
+
+      // Sort in memory instead of in the query
+      ordersList.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
       // If no orders found, create some sample data to show the interface
       if (ordersList.length === 0) {
@@ -110,25 +112,25 @@ export default function Orders() {
     <AdminLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">Orders</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold">Orders</h1>
           <p className="text-muted-foreground">Manage customer orders and track sales</p>
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+            <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-primary"></div>
           </div>
         ) : (
           <>
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
               <ShoppingBag className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{orders.length}</div>
+              <div className="text-xl sm:text-2xl font-bold">{orders.length}</div>
               <p className="text-xs text-muted-foreground">All time</p>
             </CardContent>
           </Card>
@@ -139,7 +141,7 @@ export default function Orders() {
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-xl sm:text-2xl font-bold">
                 {orders.filter(order => order.status === 'pending').length}
               </div>
               <p className="text-xs text-muted-foreground">Needs attention</p>
@@ -178,29 +180,38 @@ export default function Orders() {
           ) : (
             orders.map((order) => (
               <Card key={order.id}>
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-3 flex-1">
-                      <div className="flex items-center gap-4">
-                        <h3 className="font-semibold">{order.id}</h3>
-                        <Badge variant={getStatusColor(order.status)} className="flex items-center gap-1">
-                          {getStatusIcon(order.status)}
-                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                        </Badge>
-                      </div>
-                      
-                      <div className="text-sm text-muted-foreground">
-                        <p><strong>Customer:</strong> {order.customerName}</p>
-                        <p><strong>Phone:</strong> {order.customerPhone}</p>
-                        <p><strong>Order Date:</strong> {order.createdAt.toLocaleDateString()}</p>
-                      </div>
+                <CardContent className="p-4 sm:p-6">
+                  <div className="space-y-4">
+                    {/* Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <h3 className="font-semibold text-sm sm:text-base truncate">{order.id}</h3>
+                      <Badge variant={getStatusColor(order.status)} className="flex items-center gap-1 w-fit">
+                        {getStatusIcon(order.status)}
+                        <span className="text-xs">{order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>
+                      </Badge>
+                    </div>
+                    
+                    {/* Customer Info */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-muted-foreground">
+                      <p className="flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        <span className="truncate">{order.customerName}</span>
+                      </p>
+                      <p className="flex items-center gap-2">
+                        <Phone className="w-4 h-4" />
+                        <span className="truncate">{order.customerPhone}</span>
+                      </p>
+                      <p className="text-xs sm:col-span-2">
+                        <strong>Date:</strong> {order.createdAt.toLocaleDateString()}
+                      </p>
+                    </div>
 
                       <div className="space-y-2">
-                        <p className="font-medium">Items:</p>
+                        <p className="font-medium text-sm">Items:</p>
                         {order.items.map((item, index) => (
                           <div key={index} className="flex justify-between text-sm">
-                            <span>{item.name} x{item.quantity}</span>
-                            <span>${(item.price * item.quantity).toFixed(2)}</span>
+                            <span className="truncate">{item.name} x{item.quantity}</span>
+                            <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
                           </div>
                         ))}
                         <div className="border-t pt-2 flex justify-between font-semibold">
@@ -208,30 +219,30 @@ export default function Orders() {
                           <span>${order.total.toFixed(2)}</span>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex gap-2 ml-4">
-                      {order.status === 'pending' && (
-                        <>
-                          <Button size="sm" variant="outline">
-                            Mark Complete
-                          </Button>
-                          <Button size="sm" variant="outline">
-                            Cancel
-                          </Button>
-                        </>
-                      )}
-                      <Button size="sm" variant="outline">
-                        Contact Customer
-                      </Button>
+                      {/* Actions */}
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        {order.status === 'pending' && (
+                          <>
+                            <Button size="sm" variant="outline" className="text-xs">
+                              Mark Complete
+                            </Button>
+                            <Button size="sm" variant="outline" className="text-xs">
+                              Cancel
+                            </Button>
+                          </>
+                        )}
+                        <Button size="sm" variant="outline" className="text-xs">
+                          Contact Customer
+                        </Button>
+                      </div>
                     </div>
-                  </div>
                 </CardContent>
               </Card>
             ))
           )}
         </div>
-          </>
+        </>
         )}
       </div>
     </AdminLayout>

@@ -83,11 +83,11 @@ export default function AdminDashboard() {
   }
   return (
     <AdminLayout>
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground mt-2">
             Welcome back{user?.displayName ? `, ${user.displayName}` : ''}! Here's an overview of your store.
           </p>
         </div>
@@ -96,14 +96,14 @@ export default function AdminDashboard() {
         <StoreSetupReminder />
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Products</CardTitle>
               <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalProducts}</div>
+              <div className="text-xl sm:text-2xl font-bold">{totalProducts}</div>
               <p className="text-xs text-muted-foreground">
                 {visibleProducts} visible in store
               </p>
@@ -116,7 +116,7 @@ export default function AdminDashboard() {
               <ShoppingBag className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{visibleProducts}</div>
+              <div className="text-xl sm:text-2xl font-bold">{visibleProducts}</div>
               <p className="text-xs text-muted-foreground">
                 {totalProducts - visibleProducts} hidden products
               </p>
@@ -129,7 +129,7 @@ export default function AdminDashboard() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{currencySymbol}{averagePrice.toFixed(2)}</div>
+              <div className="text-xl sm:text-2xl font-bold">{currencySymbol}{averagePrice.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground">
                 Per product average
               </p>
@@ -142,7 +142,7 @@ export default function AdminDashboard() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{currencySymbol}{totalRevenue.toFixed(2)}</div>
+              <div className="text-xl sm:text-2xl font-bold">{currencySymbol}{totalRevenue.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground">
                 Total inventory value
               </p>
@@ -153,18 +153,18 @@ export default function AdminDashboard() {
         {/* Quick Actions */}
         <Card>
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">Quick Actions</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <a 
                 href="/admin/products/add" 
                 className="flex items-center p-4 bg-primary/10 rounded-lg hover:bg-primary/20 transition-colors"
               >
-                <Package className="h-8 w-8 text-primary mr-3" />
-                <div>
-                  <h3 className="font-semibold">Add Product</h3>
-                  <p className="text-sm text-muted-foreground">Create a new product</p>
+                <Package className="h-6 w-6 sm:h-8 sm:w-8 text-primary mr-3 flex-shrink-0" />
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-sm sm:text-base">Add Product</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Create a new product</p>
                 </div>
               </a>
               
@@ -172,21 +172,21 @@ export default function AdminDashboard() {
                 href="/admin/orders" 
                 className="flex items-center p-4 bg-secondary/10 rounded-lg hover:bg-secondary/20 transition-colors"
               >
-                <ShoppingBag className="h-8 w-8 text-secondary mr-3" />
-                <div>
-                  <h3 className="font-semibold">View Orders</h3>
-                  <p className="text-sm text-muted-foreground">Manage customer orders</p>
+                <ShoppingBag className="h-6 w-6 sm:h-8 sm:w-8 text-secondary mr-3 flex-shrink-0" />
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-sm sm:text-base">View Orders</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Manage customer orders</p>
                 </div>
               </a>
               
               <a 
                 href="/admin/design" 
-                className="flex items-center p-4 bg-accent/10 rounded-lg hover:bg-accent/20 transition-colors"
+                className="flex items-center p-4 bg-accent/10 rounded-lg hover:bg-accent/20 transition-colors sm:col-span-2 lg:col-span-1"
               >
-                <TrendingUp className="h-8 w-8 text-accent mr-3" />
-                <div>
-                  <h3 className="font-semibold">Customize Store</h3>
-                  <p className="text-sm text-muted-foreground">Design your storefront</p>
+                <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-accent mr-3 flex-shrink-0" />
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-sm sm:text-base">Customize Store</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Design your storefront</p>
                 </div>
               </a>
             </div>
