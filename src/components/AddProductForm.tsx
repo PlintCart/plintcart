@@ -136,89 +136,92 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
       throw new Error("Image file is too large. Please choose an image smaller than 2MB.");
     }
 
+    console.log('📸 Starting image upload with base64 method...');
     console.log('📸 Using base64 image storage (CORS-safe method)');
     console.log(`📏 Original file size: ${(file.size / 1024).toFixed(1)}KB`);
 
-    // Compress image before converting to base64
-    const compressedFile = await compressImage(file);
-    console.log(`🗜️ Compressed file size: ${(compressedFile.size / 1024).toFixed(1)}KB`);
-
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result as string;
-        const sizeInBytes = dataUrl.length;
-        const sizeInKB = (sizeInBytes / 1024).toFixed(1);
-        
-        // Firestore field limit is ~1MB, so let's be safe with 800KB
-        const maxBase64Size = 800 * 1024; // 800KB
-        
-        if (sizeInBytes > maxBase64Size) {
-          console.error(`❌ Base64 image too large: ${sizeInKB}KB (max: 800KB)`);
-          reject(new Error(`Image is still too large after compression (${sizeInKB}KB). Please try a smaller image.`));
-          return;
-        }
-        
-        console.log(`✅ Image converted to base64 successfully (${sizeInKB}KB)`);
-        resolve(dataUrl);
-      };
-      reader.onerror = () => {
-        console.error('❌ Failed to read image file');
-        reject(new Error('Failed to read file'));
-      };
-      reader.readAsDataURL(compressedFile);
-    });
+    try {
+      // Compress image and get base64 directly
+      const compressedBase64 = await compressImage(file);
+      const sizeInBytes = compressedBase64.length;
+      const sizeInKB = (sizeInBytes / 1024).toFixed(1);
+      
+      console.log(`✅ Image converted to base64 successfully (${sizeInKB}KB)`);
+      console.log('✅ Image upload completed successfully');
+      return compressedBase64;
+    } catch (error) {
+      console.error('❌ Image compression failed:', error);
+      throw new Error(error instanceof Error ? error.message : 'Image processing failed. Please try a different image.');
+    }
   };
 
-  // Image compression function
-  const compressImage = async (file: File): Promise<File> => {
-    return new Promise((resolve) => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-      
-      img.onload = () => {
-        // Calculate new dimensions (max 800x800 while maintaining aspect ratio)
-        const maxSize = 800;
-        let { width, height } = img;
-        
-        if (width > height) {
-          if (width > maxSize) {
-            height = (height * maxSize) / width;
-            width = maxSize;
+  // Enhanced image compression function with aggressive size reduction
+  const compressImage = async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          if (!ctx) {
+            reject(new Error('Canvas context not available'));
+            return;
           }
-        } else {
-          if (height > maxSize) {
-            width = (width * maxSize) / height;
-            height = maxSize;
-          }
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        
-        // Draw and compress
-        ctx?.drawImage(img, 0, 0, width, height);
-        
-        canvas.toBlob(
-          (blob) => {
-            if (blob) {
-              const compressedFile = new File([blob], file.name, {
-                type: 'image/jpeg', // Convert to JPEG for better compression
-                lastModified: Date.now(),
-              });
-              resolve(compressedFile);
-            } else {
-              resolve(file); // Fallback to original if compression fails
+
+          // More aggressive size reduction - max 600x600 for better compression
+          let { width, height } = img;
+          const maxSize = 600; // Reduced from 800 to 600
+          
+          if (width > height) {
+            if (width > maxSize) {
+              height = (height * maxSize) / width;
+              width = maxSize;
             }
-          },
-          'image/jpeg',
-          0.8 // 80% quality - good balance between size and quality
-        );
+          } else {
+            if (height > maxSize) {
+              width = (width * maxSize) / height;
+              height = maxSize;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          // Draw image
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Try different quality levels until we get under 800KB (base64 adds ~33% overhead)
+          const maxSizeBytes = 800 * 1024; // 800KB target to stay well under 1MB
+          let quality = 0.7; // Start with 70% quality
+          let compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+          
+          // Reduce quality if still too large
+          while (compressedDataUrl.length > maxSizeBytes && quality > 0.1) {
+            quality -= 0.1;
+            compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+            console.log(`🔄 Adjusting quality to ${Math.round(quality * 100)}% - Size: ${Math.round(compressedDataUrl.length / 1024)}KB`);
+          }
+          
+          // Final size check
+          if (compressedDataUrl.length > maxSizeBytes) {
+            reject(new Error('Image file is too large even after maximum compression. Please choose a smaller image.'));
+            return;
+          }
+          
+          console.log(`📐 Original: ${img.naturalWidth}x${img.naturalHeight}, Compressed: ${width}x${height}`);
+          console.log(`📦 Final compressed size: ${Math.round(compressedDataUrl.length / 1024)}KB at ${Math.round(quality * 100)}% quality`);
+          
+          resolve(compressedDataUrl);
+        };
+        
+        img.onerror = () => reject(new Error('Failed to load image'));
+        img.src = event.target?.result as string;
       };
       
-      img.onerror = () => resolve(file); // Fallback to original
-      img.src = URL.createObjectURL(file);
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
     });
   };
 
@@ -375,7 +378,7 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
                         <span className="font-semibold">Click to upload</span>
                       </p>
                       <p className="text-xs text-muted-foreground">PNG, JPG or GIF (Max 2MB)</p>
-                      <p className="text-xs text-muted-foreground text-green-600">Auto-compressed for web</p>
+                      <p className="text-xs text-muted-foreground text-green-600">Auto-compressed to &lt;800KB for web</p>
                     </div>
                     <input
                       id="product-image-upload"
