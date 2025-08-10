@@ -3,8 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { collection, addDoc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { db, storage, auth } from "@/lib/firebase";
+import { db, auth } from "@/lib/firebase";
 import { useSettings } from "@/contexts/SettingsContext";
 import { StockManagementService } from "@/services/StockManagementService";
 import { Button } from "@/components/ui/button";
@@ -152,20 +151,25 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
   const onSubmit = async (data: ProductFormData) => {
     try {
       setIsLoading(true);
+      console.log('🚀 Starting product submission...');
       
       const user = auth.currentUser;
       if (!user) {
+        console.error('❌ User not authenticated');
         toast.error("Please log in to add products");
         return;
       }
 
       if (!imageFile) {
+        console.error('❌ No image file selected');
         toast.error("Please select an image for the product");
         return;
       }
 
-      // Upload image
+      // Upload image using base64 method
+      console.log('📸 Starting image upload with base64 method...');
       const imageUrl = await uploadImage(imageFile);
+      console.log('✅ Image upload completed successfully');
 
       // Generate unique shareable ID
       const shareableId = `${user.uid}_${Date.now()}_${Math.random().toString(36).substring(2)}`;
