@@ -130,22 +130,96 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
     const user = auth.currentUser;
     if (!user) throw new Error("User not authenticated");
 
-    // Use base64 to avoid CORS issues completely
+    // Check file size first
+    const maxFileSize = 2 * 1024 * 1024; // 2MB limit for original file
+    if (file.size > maxFileSize) {
+      throw new Error("Image file is too large. Please choose an image smaller than 2MB.");
+    }
+
     console.log('📸 Using base64 image storage (CORS-safe method)');
+    console.log(`📏 Original file size: ${(file.size / 1024).toFixed(1)}KB`);
+
+    // Compress image before converting to base64
+    const compressedFile = await compressImage(file);
+    console.log(`🗜️ Compressed file size: ${(compressedFile.size / 1024).toFixed(1)}KB`);
+
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
         const dataUrl = reader.result as string;
-        console.log('✅ Image converted to base64 successfully');
+        const sizeInBytes = dataUrl.length;
+        const sizeInKB = (sizeInBytes / 1024).toFixed(1);
+        
+        // Firestore field limit is ~1MB, so let's be safe with 800KB
+        const maxBase64Size = 800 * 1024; // 800KB
+        
+        if (sizeInBytes > maxBase64Size) {
+          console.error(`❌ Base64 image too large: ${sizeInKB}KB (max: 800KB)`);
+          reject(new Error(`Image is still too large after compression (${sizeInKB}KB). Please try a smaller image.`));
+          return;
+        }
+        
+        console.log(`✅ Image converted to base64 successfully (${sizeInKB}KB)`);
         resolve(dataUrl);
       };
       reader.onerror = () => {
         console.error('❌ Failed to read image file');
         reject(new Error('Failed to read file'));
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(compressedFile);
     });
+  };
 
+  // Image compression function
+  const compressImage = async (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        // Calculate new dimensions (max 800x800 while maintaining aspect ratio)
+        const maxSize = 800;
+        let { width, height } = img;
+        
+        if (width > height) {
+          if (width > maxSize) {
+            height = (height * maxSize) / width;
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = (width * maxSize) / height;
+            height = maxSize;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and compress
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const compressedFile = new File([blob], file.name, {
+                type: 'image/jpeg', // Convert to JPEG for better compression
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            } else {
+              resolve(file); // Fallback to original if compression fails
+            }
+          },
+          'image/jpeg',
+          0.8 // 80% quality - good balance between size and quality
+        );
+      };
+      
+      img.onerror = () => resolve(file); // Fallback to original
+      img.src = URL.createObjectURL(file);
+    });
   };
 
   const onSubmit = async (data: ProductFormData) => {
@@ -241,7 +315,21 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
       onSuccess?.();
     } catch (error) {
       console.error("Error adding product:", error);
-      toast.error("Failed to add product. Please try again.");
+      
+      // Provide specific error messages
+      if (error instanceof Error) {
+        if (error.message.includes("longer than")) {
+          toast.error("Image file is too large. Please try a smaller image or different format.");
+        } else if (error.message.includes("too large")) {
+          toast.error(error.message);
+        } else if (error.message.includes("compression")) {
+          toast.error("Image processing failed. Please try a different image.");
+        } else {
+          toast.error(`Failed to add product: ${error.message}`);
+        }
+      } else {
+        toast.error("Failed to add product. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -286,7 +374,8 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
                       <p className="mb-1 sm:mb-2 text-xs sm:text-sm text-muted-foreground text-center px-2">
                         <span className="font-semibold">Click to upload</span>
                       </p>
-                      <p className="text-xs text-muted-foreground">PNG, JPG or GIF</p>
+                      <p className="text-xs text-muted-foreground">PNG, JPG or GIF (Max 2MB)</p>
+                      <p className="text-xs text-muted-foreground text-green-600">Auto-compressed for web</p>
                     </div>
                     <input
                       id="product-image-upload"
