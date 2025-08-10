@@ -19,6 +19,8 @@ import Storefront from "./pages/Storefront";
 import ProductDetail from "./pages/ProductDetail";
 import PublicProductView from "./pages/PublicProductView";
 import VendorStorefront from "./pages/VendorStorefront";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentCancelled from "./pages/PaymentCancelled";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +43,8 @@ const App = () => (
             <Route path="/storefront" element={<Storefront />} />
             <Route path="/store/:vendorId" element={<VendorStorefront />} />
             <Route path="/product/:id" element={<PublicProductView />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/payment-cancelled" element={<PaymentCancelled />} />
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
             <Route path="/admin/products/add" element={<ProtectedRoute><AddProduct /></ProtectedRoute>} />

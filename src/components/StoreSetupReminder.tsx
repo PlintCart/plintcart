@@ -53,33 +53,35 @@ export function StoreSetupReminder({ onDismiss }: StoreSetupReminderProps) {
 
   return (
     <Alert className="border-blue-200 bg-blue-50 mb-6">
-      <div className="flex items-start justify-between">
-        <div className="flex items-start space-x-3">
-          <Palette className="w-5 h-5 text-blue-600 mt-0.5" />
-          <div className="flex-1">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start space-x-2 sm:space-x-3 flex-1 min-w-0">
+          <Palette className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+          <div className="flex-1 min-w-0">
             <AlertDescription className="text-sm">
               <strong className="text-blue-800">🎨 Customize Your Store!</strong>
               <br />
-              Your products are now automatically creating a beautiful storefront for your customers. 
-              Add your business name, description, colors, and logo to make it uniquely yours.
+              <span className="block mt-1">
+                Your products are now automatically creating a beautiful storefront for your customers. 
+                Add your business name, description, colors, and logo to make it uniquely yours.
+              </span>
             </AlertDescription>
-            <div className="flex gap-2 mt-3">
+            <div className="flex flex-col sm:flex-row gap-2 mt-3">
               <Button 
                 size="sm" 
                 onClick={handleSetupStore}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
               >
-                <Settings className="w-4 h-4 mr-2" />
-                Customize Store
+                <Settings className="w-4 h-4 mr-2 flex-shrink-0" />
+                <span className="truncate">Customize Store</span>
               </Button>
               <Button 
                 size="sm" 
                 variant="outline"
                 onClick={handlePreviewStore}
-                className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                className="border-blue-300 text-blue-700 hover:bg-blue-100 w-full sm:w-auto"
               >
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Preview Store
+                <ExternalLink className="w-4 h-4 mr-2 flex-shrink-0" />
+                <span className="truncate">Preview Store</span>
               </Button>
             </div>
           </div>
@@ -88,7 +90,7 @@ export function StoreSetupReminder({ onDismiss }: StoreSetupReminderProps) {
           variant="ghost"
           size="sm"
           onClick={handleDismiss}
-          className="text-blue-600 hover:bg-blue-100 -mt-1 -mr-1"
+          className="text-blue-600 hover:bg-blue-100 -mt-1 -mr-1 flex-shrink-0"
         >
           <X className="w-4 h-4" />
         </Button>
@@ -132,24 +134,26 @@ export function NewProductCelebration({ productName, onDismiss }: NewProductCele
 
   return (
     <Alert className="border-green-200 bg-green-50 mb-6">
-      <div className="flex items-start justify-between">
-        <div className="flex items-start space-x-3">
-          <div className="text-2xl">🎉</div>
-          <div className="flex-1">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start space-x-2 sm:space-x-3 flex-1 min-w-0">
+          <div className="text-2xl flex-shrink-0">🎉</div>
+          <div className="flex-1 min-w-0">
             <AlertDescription className="text-sm">
               <strong className="text-green-800">Product Added Successfully!</strong>
               <br />
-              <em>"{productName}"</em> is now live in your store and ready to be shared with customers!
-              Your store is automatically updated with each product you add.
+              <span className="block mt-1">
+                <em className="break-words">"{productName}"</em> is now live in your store and ready to be shared with customers!
+                Your store is automatically updated with each product you add.
+              </span>
             </AlertDescription>
             <div className="flex gap-2 mt-3">
               <Button 
                 size="sm" 
                 onClick={handleViewStore}
-                className="bg-green-600 hover:bg-green-700"
+                className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
               >
-                <ExternalLink className="w-4 h-4 mr-2" />
-                View Products
+                <ExternalLink className="w-4 h-4 mr-2 flex-shrink-0" />
+                <span className="truncate">View Products</span>
               </Button>
             </div>
           </div>
@@ -158,7 +162,7 @@ export function NewProductCelebration({ productName, onDismiss }: NewProductCele
           variant="ghost"
           size="sm"
           onClick={handleDismiss}
-          className="text-green-600 hover:bg-green-100 -mt-1 -mr-1"
+          className="text-green-600 hover:bg-green-100 -mt-1 -mr-1 flex-shrink-0"
         >
           <X className="w-4 h-4" />
         </Button>

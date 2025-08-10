@@ -64,22 +64,23 @@ export function ThumbnailPreview({ product, settings }: ThumbnailPreviewProps) {
         <Button 
           variant="outline" 
           size="sm" 
+          className="w-full sm:w-auto"
           onClick={() => {
             setIsOpen(true);
             generatePreview();
           }}
         >
-          <Eye className="w-4 h-4 mr-2" />
-          Preview
+          <Eye className="w-4 h-4 mr-2 flex-shrink-0" />
+          <span className="truncate">Preview</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md mx-auto w-[95vw] sm:w-full">
         <DialogHeader>
-          <DialogTitle>Thumbnail Preview</DialogTitle>
+          <DialogTitle className="text-base sm:text-lg">Thumbnail Preview</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
-          <div className="text-sm text-muted-foreground">
+          <div className="text-xs sm:text-sm text-muted-foreground">
             This is how your product will appear when shared as a thumbnail:
           </div>
           
@@ -101,21 +102,21 @@ export function ThumbnailPreview({ product, settings }: ThumbnailPreviewProps) {
           </div>
           
           {thumbnailUrl && (
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Button 
                 variant="outline" 
-                className="flex-1"
+                className="flex-1 w-full sm:w-auto"
                 onClick={downloadThumbnail}
               >
-                <Download className="w-4 h-4 mr-2" />
-                Download
+                <Download className="w-4 h-4 mr-2 flex-shrink-0" />
+                <span className="truncate">Download</span>
               </Button>
               <Button 
-                className="flex-1"
+                className="flex-1 w-full sm:w-auto"
                 onClick={shareThumbnail}
               >
-                <Share2 className="w-4 h-4 mr-2" />
-                Share Now
+                <Share2 className="w-4 h-4 mr-2 flex-shrink-0" />
+                <span className="truncate">Share Now</span>
               </Button>
             </div>
           )}

@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { AdminLayout } from "@/components/AdminLayout";
 import { AddProductForm } from "@/components/AddProductForm";
+import { FirebaseDebug } from "@/components/FirebaseDebug";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
@@ -29,6 +30,9 @@ export default function AddProduct() {
             <p className="text-muted-foreground">Create a new product for your store</p>
           </div>
         </div>
+
+        {/* Debug Component - Remove in production */}
+        <FirebaseDebug />
 
         {/* Form */}
         <AddProductForm onSuccess={handleSuccess} />

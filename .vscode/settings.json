@@ -19,6 +19,10 @@
   "editor.quickSuggestions": {
     "strings": true
   },
+  "typescript.preferences.includePackageJsonAutoImports": "off",
+  "files.exclude": {
+    "**/functions/src/**": true
+  },
   "css.customData": [
     ".vscode/tailwind.json"
   ]

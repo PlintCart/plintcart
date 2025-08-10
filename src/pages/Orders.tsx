@@ -3,11 +3,12 @@ import { AdminLayout } from "@/components/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Package, Clock, CheckCircle, XCircle, ShoppingBag, User, Phone } from 'lucide-react';
+import { Package, Clock, CheckCircle, XCircle, ShoppingBag, User, Phone, CreditCard } from 'lucide-react';
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { PaymentInfo } from "@/types/payment";
 
 interface OrderItem {
   name: string;
@@ -15,7 +16,7 @@ interface OrderItem {
   price: number;
 }
 
-interface Order {
+interface Order extends PaymentInfo {
   id: string;
   customerName?: string;
   customerPhone?: string;
@@ -74,6 +75,7 @@ export default function Orders() {
             ],
             total: 25.00,
             status: "pending",
+            paymentStatus: "unpaid",
             createdAt: new Date(),
             message: "This is a sample order. Real orders will appear here when customers place them."
           }
@@ -105,6 +107,26 @@ export default function Orders() {
       case 'completed': return <CheckCircle className="w-4 h-4" />;
       case 'cancelled': return <XCircle className="w-4 h-4" />;
       default: return <Clock className="w-4 h-4" />;
+    }
+  };
+
+  const getPaymentStatusColor = (paymentStatus?: string) => {
+    switch (paymentStatus) {
+      case 'paid': return 'default';
+      case 'pending': return 'secondary';
+      case 'failed': return 'destructive';
+      case 'unpaid': return 'outline';
+      default: return 'outline';
+    }
+  };
+
+  const getPaymentStatusIcon = (paymentStatus?: string) => {
+    switch (paymentStatus) {
+      case 'paid': return <CheckCircle className="w-4 h-4" />;
+      case 'pending': return <Clock className="w-4 h-4" />;
+      case 'failed': return <XCircle className="w-4 h-4" />;
+      case 'unpaid': return <CreditCard className="w-4 h-4" />;
+      default: return <CreditCard className="w-4 h-4" />;
     }
   };
 
@@ -185,10 +207,18 @@ export default function Orders() {
                     {/* Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                       <h3 className="font-semibold text-sm sm:text-base truncate">{order.id}</h3>
-                      <Badge variant={getStatusColor(order.status)} className="flex items-center gap-1 w-fit">
-                        {getStatusIcon(order.status)}
-                        <span className="text-xs">{order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>
-                      </Badge>
+                      <div className="flex gap-2">
+                        <Badge variant={getStatusColor(order.status)} className="flex items-center gap-1 w-fit">
+                          {getStatusIcon(order.status)}
+                          <span className="text-xs">{order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>
+                        </Badge>
+                        {order.paymentStatus && (
+                          <Badge variant={getPaymentStatusColor(order.paymentStatus)} className="flex items-center gap-1 w-fit">
+                            {getPaymentStatusIcon(order.paymentStatus)}
+                            <span className="text-xs">{order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}</span>
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     
                     {/* Customer Info */}

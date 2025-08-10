@@ -2,9 +2,18 @@
   command = "npm run build"
   publish = "dist"
 
+[functions]
+  directory = "netlify/functions"
+
 [build.environment]
   NODE_VERSION = "18"
   NODE_OPTIONS = "--max-old-space-size=4096"
+
+# API redirect rule
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
 
 # SPA redirect rule
 [[redirects]]

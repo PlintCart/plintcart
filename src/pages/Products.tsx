@@ -13,6 +13,7 @@ import { useSettings } from "@/contexts/SettingsContext";
 import { ProductSharingService } from "@/lib/productSharing";
 import { ThumbnailPreview } from "@/components/ThumbnailPreview";
 import { StoreSetupReminder } from "@/components/StoreSetupReminder";
+import { WhatsAppStorefrontShare } from "@/components/WhatsAppStorefrontShare";
 
 interface Product {
   id: string;
@@ -225,27 +226,30 @@ export default function Products() {
                       <Badge variant="outline" className="text-xs">{product.category}</Badge>
                     </div>
                   </div>
-                  <div className="grid grid-cols-5 gap-1 sm:flex sm:gap-2 mt-4">
+                  <div className="flex flex-wrap gap-1 sm:gap-2 mt-4">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleToggleVisibility(product.id, product.isVisible)}
                       title={product.isVisible ? "Hide product" : "Show product"}
-                      className="p-1.5 sm:p-2"
+                      className="p-1.5 sm:p-2 flex-shrink-0"
                     >
                       {product.isVisible ? <EyeOff className="w-3 h-3 sm:w-4 sm:h-4" /> : <Eye className="w-3 h-3 sm:w-4 sm:h-4" />}
                     </Button>
-                    <ThumbnailPreview product={product} settings={settings} />
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleShareProduct(product)}
-                      title="Share on WhatsApp"
-                      className="text-green-600 hover:text-green-700 hover:bg-green-50 p-1.5 sm:p-2"
-                    >
-                      <Share2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" title="Edit product" className="p-1.5 sm:p-2">
+                    <div className="flex-shrink-0">
+                      <ThumbnailPreview product={product} settings={settings} />
+                    </div>
+                    <div className="flex-shrink-0">
+                      <WhatsAppStorefrontShare 
+                        product={product}
+                        businessSettings={settings}
+                        variant="outline"
+                        size="sm"
+                        className="text-green-600 hover:text-green-700 hover:bg-green-50 p-1.5 sm:p-2"
+                        showIcon={true}
+                      />
+                    </div>
+                    <Button variant="outline" size="sm" title="Edit product" className="p-1.5 sm:p-2 flex-shrink-0">
                       <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                     </Button>
                     <Button

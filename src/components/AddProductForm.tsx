@@ -131,82 +131,22 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
     const user = auth.currentUser;
     if (!user) throw new Error("User not authenticated");
 
-    // In development, always use base64 to avoid CORS issues
-    if (import.meta.env.DEV) {
-      console.log('📸 Development mode: Using base64 image storage (CORS workaround)');
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const dataUrl = reader.result as string;
-          resolve(dataUrl);
-        };
-        reader.onerror = () => reject(new Error('Failed to read file'));
-        reader.readAsDataURL(file);
-      });
-    }
+    // Use base64 to avoid CORS issues completely
+    console.log('📸 Using base64 image storage (CORS-safe method)');
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        console.log('✅ Image converted to base64 successfully');
+        resolve(dataUrl);
+      };
+      reader.onerror = () => {
+        console.error('❌ Failed to read image file');
+        reject(new Error('Failed to read file'));
+      };
+      reader.readAsDataURL(file);
+    });
 
-    // Production: Try Firebase Storage
-    try {
-      const timestamp = Date.now();
-      const randomId = Math.random().toString(36).substring(2);
-      const fileExtension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-      const fileName = `product_${timestamp}_${randomId}.${fileExtension}`;
-      
-      // Try multiple storage paths in case of permission issues
-      const storagePaths = [
-        `images/${fileName}`,
-        `uploads/${fileName}`,
-        `public/${fileName}`,
-        fileName // Root level as last resort
-      ];
-      
-      let lastError: any;
-      
-      for (const path of storagePaths) {
-        try {
-          const storageRef = ref(storage, path);
-          
-          const metadata = {
-            contentType: file.type,
-            customMetadata: {
-              'userId': user.uid,
-              'uploadedAt': new Date().toISOString(),
-              'originalName': file.name
-            }
-          };
-          
-          const snapshot = await uploadBytes(storageRef, file, metadata);
-          const downloadURL = await getDownloadURL(snapshot.ref);
-          
-          console.log(`✅ Image uploaded successfully to: ${path}`);
-          return downloadURL;
-          
-        } catch (error: any) {
-          console.warn(`❌ Failed to upload to ${path}:`, error.message);
-          lastError = error;
-          continue; // Try next path
-        }
-      }
-      
-      // If all paths failed, throw the last error
-      throw lastError;
-      
-    } catch (error: any) {
-      console.error('🚨 All Firebase Storage upload attempts failed:', error);
-      
-      // Fallback to base64 in production if Firebase fails
-      console.log('🔄 Falling back to base64 storage...');
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const dataUrl = reader.result as string;
-          console.warn('⚠️ Using base64 fallback. Image will be stored in database. Deploy Firebase Storage rules for proper file hosting.');
-          resolve(dataUrl);
-        };
-        reader.onerror = () => reject(new Error('Failed to read file'));
-        reader.readAsDataURL(file);
-      });
-    }
   };
 
   const onSubmit = async (data: ProductFormData) => {

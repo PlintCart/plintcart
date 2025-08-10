@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs, addDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MessageCircle, Share2, ShoppingCart } from "lucide-react";
+import { ArrowLeft, MessageCircle, Share2, ShoppingCart, CreditCard, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { ProductSharingService } from "@/lib/productSharing";
+import { WhatsAppStorefrontShare } from "@/components/WhatsAppStorefrontShare";
 import { Product } from "@/types/product";
+import { PayNowButton } from "@/components/payments/PayNowButton";
+import { SwyptPaymentButton } from "@/components/payments/SwyptPaymentButton";
 
 export default function PublicProductView() {
   const { id } = useParams();
@@ -16,6 +19,7 @@ export default function PublicProductView() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [businessSettings, setBusinessSettings] = useState<any>(null);
+  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -134,6 +138,40 @@ export default function PublicProductView() {
     window.open(whatsappUrl, '_blank');
   };
 
+  const createOrderForPayment = async () => {
+    if (!product) return null;
+
+    try {
+      const orderData = {
+        businessOwnerId: product.userId,
+        customerName: '', // Will be updated after payment
+        customerPhone: '',
+        items: [{
+          name: product.name,
+          quantity: 1,
+          price: product.price
+        }],
+        total: product.price,
+        status: 'pending',
+        paymentStatus: 'unpaid',
+        paymentProvider: 'swypt',
+        currency: businessSettings?.currency || 'KES',
+        createdAt: new Date(),
+        productName: product.name,
+        productPrice: product.price,
+        message: `Order for ${product.name}`
+      };
+
+      const orderRef = await addDoc(collection(db, 'orders'), orderData);
+      setCurrentOrderId(orderRef.id);
+      return orderRef.id;
+    } catch (error) {
+      console.error('Error creating order:', error);
+      toast.error('Failed to create order');
+      return null;
+    }
+  };
+
   const handleShare = async () => {
     if (!product) return;
 
@@ -181,6 +219,29 @@ export default function PublicProductView() {
       } catch (clipboardError) {
         toast.error('Failed to share product');
       }
+    }
+  };
+
+  // Dedicated WhatsApp sharing with guaranteed clickable links
+  const handleShareToWhatsApp = async () => {
+    if (!product) return;
+    
+    try {
+      const result = await ProductSharingService.shareProductSimple(product, businessSettings);
+      if (result.success) {
+        toast.success(result.message || 'WhatsApp opened with clickable product and store links!');
+      } else {
+        // Fallback to WhatsApp direct link
+        const whatsappLink = ProductSharingService.generateWhatsAppLink(product, businessSettings || {});
+        window.open(whatsappLink, '_blank');
+        toast.success('WhatsApp opened with product details and clickable links!');
+      }
+    } catch (error) {
+      console.error('Error sharing to WhatsApp:', error);
+      // Final fallback - direct WhatsApp link
+      const whatsappLink = ProductSharingService.generateWhatsAppLink(product, businessSettings || {});
+      window.open(whatsappLink, '_blank');
+      toast.success('WhatsApp opened with product details!');
     }
   };
 
@@ -257,9 +318,14 @@ export default function PublicProductView() {
             )}
             <p className="text-xs text-muted-foreground">{businessName}</p>
           </div>
-          <Button variant="outline" size="sm" onClick={handleShare}>
-            <Share2 className="w-4 h-4" />
-          </Button>
+          <WhatsAppStorefrontShare 
+            product={product}
+            businessSettings={businessSettings}
+            variant="outline"
+            size="sm"
+            className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+            showIcon={true}
+          />
         </div>
       </header>
 
@@ -362,12 +428,42 @@ export default function PublicProductView() {
 
               {/* Action Buttons - Prominent */}
               <div className="space-y-3 pt-2">
+                {/* Payment Options */}
+                <div className="space-y-2">
+                  {/* M-Pesa Payment Button */}
+                  <PayNowButton 
+                    productId={product.id}
+                    productName={product.name}
+                    price={product.price}
+                    onPaymentSuccess={(checkoutRequestId) => {
+                      console.log('M-Pesa payment initiated:', checkoutRequestId);
+                      toast.success('M-Pesa payment initiated! Check your phone.');
+                    }}
+                    onPaymentError={(error) => {
+                      console.error('M-Pesa payment error:', error);
+                      toast.error('M-Pesa payment failed. Try Swypt or WhatsApp order.');
+                    }}
+                  />
+                  
+                  {/* Swypt Payment Button */}
+                  <SwyptPaymentButton
+                    productId={product.id}
+                    productName={product.name}
+                    price={product.price}
+                    description={product.description}
+                    imageUrl={product.imageUrl}
+                    className="w-full"
+                    variant="outline"
+                  />
+                </div>
+                
+                {/* WhatsApp Fallback */}
                 <Button 
-                  className="w-full h-12 text-lg font-semibold text-white hover:opacity-90" 
+                  variant="outline"
+                  className="w-full h-12 text-lg font-semibold" 
                   size="lg"
                   onClick={handleOrderNow}
                   disabled={product.stockQuantity === 0}
-                  style={{ backgroundColor: primaryColor }}
                 >
                   <MessageCircle className="w-5 h-5 mr-2" />
                   Order via WhatsApp
@@ -378,6 +474,14 @@ export default function PublicProductView() {
                     <Share2 className="w-4 h-4 mr-2" />
                     Share
                   </Button>
+                  <WhatsAppStorefrontShare 
+                    product={product}
+                    businessSettings={businessSettings}
+                    variant="outline"
+                    className="flex-1 bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                  >
+                    WhatsApp + Store
+                  </WhatsAppStorefrontShare>
                   <Button variant="outline" onClick={() => navigate(`/store/${product.userId}`)}>
                     View Store
                   </Button>
