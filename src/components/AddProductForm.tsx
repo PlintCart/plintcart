@@ -3,7 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { collection, addDoc } from "firebase/firestore";
-import { db, auth } from "@/lib/firebase";
+import { db, auth, handleNetworkError } from "@/lib/firebase";
+import { NetworkTroubleshootingTips } from "@/components/NetworkStatus";
 import { useSettings } from "@/contexts/SettingsContext";
 import { StockManagementService } from "@/services/StockManagementService";
 import { Button } from "@/components/ui/button";
@@ -319,7 +320,14 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
     } catch (error) {
       console.error("Error adding product:", error);
       
-      // Provide specific error messages
+      // Handle network-specific errors first
+      const networkErrorMessage = handleNetworkError(error);
+      if (networkErrorMessage !== (error?.message || error?.toString() || 'Unknown error')) {
+        toast.error(`Network Error: ${networkErrorMessage}`);
+        return;
+      }
+      
+      // Provide specific error messages for other issues
       if (error instanceof Error) {
         if (error.message.includes("longer than")) {
           toast.error("Image file is too large. Please try a smaller image or different format.");
@@ -327,6 +335,8 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
           toast.error(error.message);
         } else if (error.message.includes("compression")) {
           toast.error("Image processing failed. Please try a different image.");
+        } else if (error.message.includes("offline") || error.message.includes("network")) {
+          toast.error("Connection issue. Please check your internet and try again.");
         } else {
           toast.error(`Failed to add product: ${error.message}`);
         }
@@ -848,6 +858,9 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
             </Button>
           </form>
         </Form>
+        
+        {/* Network troubleshooting tips */}
+        {!navigator.onLine && <NetworkTroubleshootingTips />}
       </CardContent>
     </Card>
   );

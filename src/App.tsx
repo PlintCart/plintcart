@@ -6,12 +6,14 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { NetworkStatus } from "@/components/NetworkStatus";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/AdminDashboard";
 import AddProduct from "./pages/AddProduct";
 import Products from "./pages/Products";
+import StockManagement from "./pages/StockManagement";
 import Orders from "./pages/Orders";
 import Design from "./pages/Design";
 import AdminSettings from "./pages/AdminSettings";
@@ -48,6 +50,7 @@ const App = () => (
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
             <Route path="/admin/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
             <Route path="/admin/products/add" element={<ProtectedRoute><AddProduct /></ProtectedRoute>} />
+            <Route path="/admin/stock" element={<ProtectedRoute><StockManagement /></ProtectedRoute>} />
             <Route path="/admin/orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
             <Route path="/admin/design" element={<ProtectedRoute><Design /></ProtectedRoute>} />
             <Route path="/admin/settings" element={<ProtectedRoute><AdminSettings /></ProtectedRoute>} />
@@ -55,6 +58,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+        <NetworkStatus />
       </TooltipProvider>
     </SettingsProvider>
     </AuthProvider>

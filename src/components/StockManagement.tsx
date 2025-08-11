@@ -202,60 +202,61 @@ export default function StockManagement({ products, onProductUpdate }: StockMana
     <div className="space-y-6">
       {/* Stock Statistics */}
       {statistics && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium">Total Products</CardTitle>
               <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{statistics.totalProducts}</div>
+              <div className="text-xl sm:text-2xl font-bold">{statistics.totalProducts}</div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">In Stock</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium">In Stock</CardTitle>
               <TrendingUp className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{statistics.inStock}</div>
+              <div className="text-xl sm:text-2xl font-bold text-green-600">{statistics.inStock}</div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Low Stock</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium">Low Stock</CardTitle>
               <AlertTriangle className="h-4 w-4 text-orange-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{statistics.lowStock}</div>
+              <div className="text-xl sm:text-2xl font-bold text-orange-600">{statistics.lowStock}</div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Out of Stock</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium">Out of Stock</CardTitle>
               <TrendingDown className="h-4 w-4 text-red-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">{statistics.outOfStock}</div>
+              <div className="text-xl sm:text-2xl font-bold text-red-600">{statistics.outOfStock}</div>
             </CardContent>
           </Card>
         </div>
       )}
 
       <Tabs defaultValue="overview" className="space-y-4">
-        <div className="flex items-center justify-between">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="adjust">Adjust Stock</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <TabsList className="grid w-full sm:w-auto grid-cols-3">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+            <TabsTrigger value="adjust" className="text-xs sm:text-sm">Adjust Stock</TabsTrigger>
+            <TabsTrigger value="history" className="text-xs sm:text-sm">History</TabsTrigger>
           </TabsList>
           
-          <Button onClick={exportStockData} variant="outline" className="gap-2">
+          <Button onClick={exportStockData} variant="outline" className="gap-2 w-full sm:w-auto">
             <Download className="w-4 h-4" />
-            Export CSV
+            <span className="hidden sm:inline">Export CSV</span>
+            <span className="sm:hidden">Export</span>
           </Button>
         </div>
 
@@ -272,7 +273,7 @@ export default function StockManagement({ products, onProductUpdate }: StockMana
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -286,39 +287,65 @@ export default function StockManagement({ products, onProductUpdate }: StockMana
 
           {/* Products List */}
           <div className="grid gap-4">
-            {filteredProducts.map((product) => (
-              <Card key={product.id}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      {product.imageUrl && (
-                        <img
-                          src={product.imageUrl}
-                          alt={product.name}
-                          className="w-12 h-12 object-cover rounded"
-                        />
-                      )}
-                      <div>
-                        <h3 className="font-medium">{product.name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          SKU: {product.sku || 'N/A'} • {product.category}
-                        </p>
-                        <p className="text-sm">
-                          Stock: {product.stockQuantity || 0} 
-                          {product.minStockLevel && ` (Min: ${product.minStockLevel})`}
-                        </p>
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map((product) => (
+                <Card key={product.id}>
+                  <CardContent className="p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-center space-x-4">
+                        {product.imageUrl && (
+                          <img
+                            src={product.imageUrl}
+                            alt={product.name}
+                            className="w-12 h-12 object-cover rounded flex-shrink-0"
+                          />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-medium truncate">{product.name}</h3>
+                          <p className="text-sm text-muted-foreground break-words">
+                            SKU: {product.sku || 'N/A'} • {product.category}
+                          </p>
+                          <p className="text-sm">
+                            Stock: {product.stockQuantity || 0} 
+                            {product.minStockLevel && ` (Min: ${product.minStockLevel})`}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex sm:flex-col items-start sm:items-end justify-between sm:justify-start gap-2 sm:space-y-2">
+                        {getStockStatusBadge(product)}
+                        <div className="text-sm font-medium">
+                          {getCurrencySymbol('usd')}{product.price}
+                        </div>
                       </div>
                     </div>
-                    <div className="text-right space-y-2">
-                      {getStockStatusBadge(product)}
-                      <div className="text-sm font-medium">
-                        {getCurrencySymbol('usd')}{product.price}
-                      </div>
-                    </div>
-                  </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground">
+                    {searchTerm || statusFilter !== 'all' 
+                      ? 'No products found matching your criteria'
+                      : 'No products available'
+                    }
+                  </p>
+                  {(searchTerm || statusFilter !== 'all') && (
+                    <Button 
+                      variant="link" 
+                      onClick={() => {
+                        setSearchTerm('');
+                        setStatusFilter('all');
+                      }}
+                      className="mt-2"
+                    >
+                      Clear filters
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
-            ))}
+            )}
           </div>
         </TabsContent>
 
@@ -328,7 +355,7 @@ export default function StockManagement({ products, onProductUpdate }: StockMana
               <CardTitle>Adjust Stock Levels</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Select Product</Label>
                   <Select 
@@ -341,13 +368,15 @@ export default function StockManagement({ products, onProductUpdate }: StockMana
                       }
                     }}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Choose a product" />
                     </SelectTrigger>
                     <SelectContent>
                       {products.map((product) => (
                         <SelectItem key={product.id} value={product.id}>
-                          {product.name} (Current: {product.stockQuantity || 0})
+                          <span className="truncate">
+                            {product.name} (Current: {product.stockQuantity || 0})
+                          </span>
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -357,7 +386,7 @@ export default function StockManagement({ products, onProductUpdate }: StockMana
                 <div className="space-y-2">
                   <Label>Adjustment Type</Label>
                   <Select value={adjustmentType} onValueChange={(value: any) => setAdjustmentType(value)}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -375,6 +404,7 @@ export default function StockManagement({ products, onProductUpdate }: StockMana
                     placeholder="Enter quantity"
                     value={adjustmentQuantity}
                     onChange={(e) => setAdjustmentQuantity(e.target.value)}
+                    className="w-full"
                   />
                 </div>
 
@@ -384,6 +414,7 @@ export default function StockManagement({ products, onProductUpdate }: StockMana
                     placeholder="Reason for adjustment"
                     value={adjustmentReason}
                     onChange={(e) => setAdjustmentReason(e.target.value)}
+                    className="w-full"
                   />
                 </div>
               </div>
@@ -412,18 +443,18 @@ export default function StockManagement({ products, onProductUpdate }: StockMana
               <CardContent>
                 <div className="space-y-2">
                   {stockHistory.map((transaction) => (
-                    <div key={transaction.id} className="flex items-center justify-between p-3 border rounded">
-                      <div>
+                    <div key={transaction.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded gap-3">
+                      <div className="min-w-0 flex-1">
                         <p className="font-medium capitalize">{transaction.type.replace('_', ' ')}</p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground break-words">
                           {transaction.reason || 'No reason provided'}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {transaction.timestamp.toLocaleDateString()} {transaction.timestamp.toLocaleTimeString()}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-medium">
+                      <div className="flex sm:flex-col items-start sm:items-end justify-between sm:justify-start gap-2 sm:text-right">
+                        <p className="font-medium whitespace-nowrap">
                           {transaction.previousStock} → {transaction.newStock}
                         </p>
                         <p className="text-sm text-muted-foreground">

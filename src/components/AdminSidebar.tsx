@@ -7,13 +7,15 @@ import {
   Settings, 
   BarChart3,
   Menu,
-  X
+  X,
+  PackageCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: BarChart3 },
   { name: "Products", href: "/admin/products", icon: Package },
+  { name: "Stock Management", href: "/admin/stock", icon: PackageCheck },
   { name: "Orders", href: "/admin/orders", icon: ShoppingBag },
   { name: "Design", href: "/admin/design", icon: Palette },
   { name: "Settings", href: "/admin/settings", icon: Settings },
