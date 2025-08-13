@@ -1,8 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { AdminLayout } from "@/components/AdminLayout";
-import { AddProductForm } from "@/components/AddProductForm";
-import { FirebaseDebug } from "@/components/FirebaseDebug";
-import { ProductUploadDebug } from "@/components/ProductUploadDebug";
+import { SteppedAddProductForm } from "@/components/SteppedAddProductForm";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 
@@ -10,6 +8,10 @@ export default function AddProduct() {
   const navigate = useNavigate();
 
   const handleSuccess = () => {
+    navigate("/admin/products");
+  };
+
+  const handleCancel = () => {
     navigate("/admin/products");
   };
 
@@ -21,23 +23,19 @@ export default function AddProduct() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate("/admin/products")}
+            onClick={handleCancel}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Products
           </Button>
           <div>
             <h1 className="text-3xl font-bold">Add New Product</h1>
-            <p className="text-muted-foreground">Create a new product for your store</p>
+            <p className="text-muted-foreground">Follow the steps to create a new product for your store</p>
           </div>
         </div>
 
-        {/* Debug Components - Remove in production */}
-        <FirebaseDebug />
-        <ProductUploadDebug />
-
-        {/* Form */}
-        <AddProductForm onSuccess={handleSuccess} />
+        {/* Stepped Form */}
+        <SteppedAddProductForm onSuccess={handleSuccess} onCancel={handleCancel} />
       </div>
     </AdminLayout>
   );

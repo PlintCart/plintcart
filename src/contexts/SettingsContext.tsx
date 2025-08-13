@@ -175,7 +175,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       const updatedSettings = { ...settings, ...newSettings };
       setSettings(updatedSettings);
       
-      await setDoc(doc(db, 'userSettings', user.uid), updatedSettings, { merge: true });
+      // Save to both collections for compatibility
+      await Promise.all([
+        setDoc(doc(db, 'userSettings', user.uid), updatedSettings, { merge: true }),
+        setDoc(doc(db, 'settings', user.uid), updatedSettings, { merge: true }) // Legacy compatibility
+      ]);
+      
       toast.success('Settings updated successfully');
     } catch (error) {
       console.error('Error updating settings:', error);
@@ -208,10 +213,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       
-      // Save both settings and profile
+      // Save both settings and profile to both collections for compatibility
       await Promise.all([
         setDoc(doc(db, 'userSettings', user.uid), settings),
-        setDoc(doc(db, 'userProfiles', user.uid), profile)
+        setDoc(doc(db, 'userProfiles', user.uid), profile),
+        setDoc(doc(db, 'settings', user.uid), settings), // Legacy compatibility
       ]);
       
       toast.success('All settings saved successfully');

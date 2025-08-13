@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { CreditCard, Phone, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { MpesaService, PaymentRequest, MpesaSettings } from "@/services/MpesaService";
+import { SettingsService } from "@/services/SettingsService";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -41,7 +42,9 @@ interface StoredPaymentSettings {
 export const PaymentDialog = ({ product, isOpen, onClose }: PaymentDialogProps) => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentSettings, setPaymentSettings] = useState<StoredPaymentSettings | null>(null);
+  const [paymentSettings, setPaymentSettings] = useState<any | null>(null);
+  const [isMpesaEnabled, setIsMpesaEnabled] = useState(false);
+  const [mpesaMethod, setMpesaMethod] = useState<'paybill' | 'till' | 'send_money'>('paybill');
   const [quantity, setQuantity] = useState(1);
   const { toast } = useToast();
 
@@ -56,17 +59,23 @@ export const PaymentDialog = ({ product, isOpen, onClose }: PaymentDialogProps) 
 
   const loadPaymentSettings = async () => {
     try {
-      const settingsDoc = await getDoc(doc(db, "settings", product.userId));
-      if (settingsDoc.exists()) {
-        setPaymentSettings(settingsDoc.data() as StoredPaymentSettings);
+      const settings = await SettingsService.loadUserSettings(product.userId);
+      const mpesaSettings = await SettingsService.loadMpesaSettings(product.userId);
+      
+      if (settings) {
+        setPaymentSettings(settings);
+        setIsMpesaEnabled(mpesaSettings.enableMpesa);
+        setMpesaMethod(mpesaSettings.mpesaMethod);
       } else {
-        // Set default empty settings if none exist
         setPaymentSettings({ enableMpesa: false, mpesaMethod: 'paybill' });
+        setIsMpesaEnabled(false);
+        setMpesaMethod('paybill');
       }
     } catch (error) {
       console.error("Error loading payment settings:", error);
-      // Set default settings on error
       setPaymentSettings({ enableMpesa: false, mpesaMethod: 'paybill' });
+      setIsMpesaEnabled(false);
+      setMpesaMethod('paybill');
     }
   };
 
@@ -80,9 +89,7 @@ export const PaymentDialog = ({ product, isOpen, onClose }: PaymentDialogProps) 
       return;
     }
 
-    // Check if M-Pesa is enabled - support both formats
-    const isMpesaEnabled = paymentSettings?.enableMpesa || paymentSettings?.mpesa?.enabled;
-    
+    // Check if M-Pesa is enabled using the cached state
     if (!isMpesaEnabled) {
       toast({
         title: "Payment not available",
@@ -97,15 +104,17 @@ export const PaymentDialog = ({ product, isOpen, onClose }: PaymentDialogProps) 
     try {
       const orderId = `ORDER_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      // Convert stored settings to MpesaSettings format - support both formats
-      const mpesaSettings: MpesaSettings = {
-        enableMpesa: paymentSettings?.enableMpesa || paymentSettings?.mpesa?.enabled || false,
-        mpesaMethod: paymentSettings?.mpesaMethod || paymentSettings?.mpesa?.method || 'paybill',
-        paybillNumber: paymentSettings?.paybillNumber || paymentSettings?.mpesa?.paybillNumber,
-        accountReference: paymentSettings?.accountReference || paymentSettings?.mpesa?.accountNumber,
-        tillNumber: paymentSettings?.tillNumber || paymentSettings?.mpesa?.tillNumber,
-        mpesaPhoneNumber: paymentSettings?.mpesaPhoneNumber || paymentSettings?.mpesa?.phoneNumber,
-        mpesaInstructions: paymentSettings?.mpesaInstructions,
+      // Load fresh M-Pesa settings for the payment
+      const mpesaSettings = await SettingsService.loadMpesaSettings(product.userId);
+      
+      const merchantSettings: MpesaSettings = {
+        enableMpesa: mpesaSettings.enableMpesa,
+        mpesaMethod: mpesaSettings.mpesaMethod,
+        paybillNumber: mpesaSettings.paybillNumber,
+        accountReference: mpesaSettings.accountReference,
+        tillNumber: mpesaSettings.tillNumber,
+        mpesaPhoneNumber: mpesaSettings.mpesaPhoneNumber,
+        mpesaInstructions: mpesaSettings.mpesaInstructions,
       };
       
       const paymentRequest: PaymentRequest = {
@@ -113,7 +122,7 @@ export const PaymentDialog = ({ product, isOpen, onClose }: PaymentDialogProps) 
         amount: totalAmount,
         orderId,
         description: `Payment for ${quantity}x ${product.name}`,
-        merchantSettings: mpesaSettings
+        merchantSettings
       };
 
       const response = await MpesaService.initiatePayment(paymentRequest);
@@ -266,7 +275,7 @@ export const PaymentDialog = ({ product, isOpen, onClose }: PaymentDialogProps) 
           </div>
 
           {/* Payment Method Info */}
-          {(paymentSettings?.enableMpesa || paymentSettings?.mpesa?.enabled) ? (
+          {isMpesaEnabled ? (
             <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
               <div className="flex items-center gap-2 text-green-800">
                 <CreditCard className="h-4 w-4" />
@@ -276,7 +285,7 @@ export const PaymentDialog = ({ product, isOpen, onClose }: PaymentDialogProps) 
                 You will receive an STK push notification on your phone
               </p>
               <p className="text-xs text-green-600 mt-1">
-                Method: {(paymentSettings?.mpesaMethod || paymentSettings?.mpesa?.method || 'paybill').replace('_', ' ').toUpperCase()}
+                Method: {mpesaMethod.replace('_', ' ').toUpperCase()}
               </p>
             </div>
           ) : (
@@ -303,7 +312,7 @@ export const PaymentDialog = ({ product, isOpen, onClose }: PaymentDialogProps) 
             </Button>
             <Button
               onClick={handlePayment}
-              disabled={!phoneNumber.trim() || isProcessing || !(paymentSettings?.enableMpesa || paymentSettings?.mpesa?.enabled)}
+              disabled={!phoneNumber.trim() || isProcessing || !isMpesaEnabled}
               className="flex-1"
             >
               {isProcessing ? (
