@@ -27,13 +27,13 @@ export const Stepper = ({ steps, currentStep, onStepClick, allowSkipping = false
 
           return (
             <li key={step.id} className="flex items-center flex-1">
-              {/* Step circle */}
-              <div className="flex flex-col items-center">
+              {/* Step circle with icon */}
+              <div className="flex flex-col items-center relative">
                 <button
                   onClick={() => isClickable && onStepClick?.(index)}
                   disabled={!isClickable}
                   className={cn(
-                    "flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-200",
+                    "flex items-center justify-center w-12 h-12 rounded-full border-2 transition-all duration-200 relative z-10",
                     {
                       "bg-primary border-primary text-primary-foreground": isCompleted,
                       "border-primary bg-primary/10 text-primary": isCurrent,
@@ -46,33 +46,20 @@ export const Stepper = ({ steps, currentStep, onStepClick, allowSkipping = false
                   {isCompleted ? (
                     <Check className="w-5 h-5" />
                   ) : (
-                    <span className="text-sm font-medium">{index + 1}</span>
+                    <div className="w-5 h-5">
+                      {step.icon}
+                    </div>
                   )}
                 </button>
-                
-                {/* Step info */}
-                <div className="mt-2 text-center">
-                  <p className={cn(
-                    "text-sm font-medium transition-colors",
-                    {
-                      "text-primary": isCurrent || isCompleted,
-                      "text-muted-foreground": !isCurrent && !isCompleted,
-                    }
-                  )}>
-                    {step.title}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1 max-w-24">
-                    {step.description}
-                  </p>
-                </div>
               </div>
 
-              {/* Connector line */}
+              {/* Connecting line */}
               {index < steps.length - 1 && (
-                <div className="flex-1 mx-4 h-px bg-border mt-[-20px]">
+                <div className="flex-1 mx-4 relative">
+                  <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-border transform -translate-y-1/2" />
                   <div 
                     className={cn(
-                      "h-full bg-primary transition-all duration-300",
+                      "absolute top-1/2 left-0 h-0.5 bg-primary transform -translate-y-1/2 transition-all duration-500 ease-in-out",
                       isCompleted ? "w-full" : "w-0"
                     )}
                   />

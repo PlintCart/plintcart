@@ -10,6 +10,7 @@ import { db, auth } from "@/lib/firebase";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
+import { getCurrencySymbol } from "@/lib/utils";
 import { ProductSharingService } from "@/lib/productSharing";
 import { ThumbnailPreview } from "@/components/ThumbnailPreview";
 import { StoreSetupReminder } from "@/components/StoreSetupReminder";
@@ -222,7 +223,7 @@ export default function Products() {
                       {product.description}
                     </p>
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-base sm:text-lg">${product.price.toFixed(2)}</span>
+                      <span className="font-bold text-base sm:text-lg">{getCurrencySymbol(settings.currency)}{product.price.toFixed(2)}</span>
                       <Badge variant="outline" className="text-xs">{product.category}</Badge>
                     </div>
                   </div>

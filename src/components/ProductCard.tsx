@@ -3,10 +3,11 @@ import { Product } from "@/types/product";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Share2, ShoppingCart, CreditCard, Link2, Copy } from "lucide-react";
+import { Share2, ShoppingCart, CreditCard } from "lucide-react";
 import { PaymentDialog } from "@/components/PaymentDialog";
-import { PaymentLinkService } from "@/services/PaymentLinkService";
 import { useToast } from "@/hooks/use-toast";
+import { useSettings } from "@/contexts/SettingsContext";
+import { getCurrencySymbol } from "@/lib/utils";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import {
@@ -14,7 +15,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
 interface ProductCardProps {
@@ -38,6 +38,7 @@ const ProductCard = ({
 }: ProductCardProps) => {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentSettings, setPaymentSettings] = useState<any>(null);
+  const { settings } = useSettings();
   const { toast } = useToast();
 
   const handleOrder = () => {
@@ -45,7 +46,8 @@ const ProductCard = ({
       onOrder();
     } else {
       // Default WhatsApp order flow
-      const message = `Hi! I'd like to order ${product.name} for $${product.price.toFixed(2)}`;
+      const currencySymbol = getCurrencySymbol(settings.currency);
+      const message = `Hi! I'd like to order ${product.name} for ${currencySymbol}${product.price.toFixed(2)}`;
       const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
       window.open(whatsappUrl, '_blank');
     }
@@ -67,62 +69,6 @@ const ProductCard = ({
         title: "Notice",
         description: "Payment settings could not be loaded. Some features may be limited.",
         variant: "default",
-      });
-    }
-  };
-
-  const handleSharePaymentLink = async () => {
-    try {
-      let settings = {};
-      try {
-        const settingsDoc = await getDoc(doc(db, "settings", product.userId));
-        settings = settingsDoc.exists() ? settingsDoc.data() : {};
-      } catch (settingsError) {
-        console.warn("Could not load settings for payment link:", settingsError);
-        // Continue with empty settings
-      }
-      
-      await PaymentLinkService.sharePaymentLink(product, settings, 1);
-      toast({
-        title: "Payment link shared",
-        description: "WhatsApp opened with payment link",
-      });
-    } catch (error) {
-      console.error("Error sharing payment link:", error);
-      toast({
-        title: "Error",
-        description: "Could not share payment link",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleCopyPaymentLink = async () => {
-    try {
-      let settings = {};
-      try {
-        const settingsDoc = await getDoc(doc(db, "settings", product.userId));
-        settings = settingsDoc.exists() ? settingsDoc.data() : {};
-      } catch (settingsError) {
-        console.warn("Could not load settings for payment link:", settingsError);
-        // Continue with empty settings
-      }
-      
-      const success = await PaymentLinkService.copyPaymentLink(product, settings, 1);
-      if (success) {
-        toast({
-          title: "Link copied",
-          description: "Payment link copied to clipboard",
-        });
-      } else {
-        throw new Error("Failed to copy link");
-      }
-    } catch (error) {
-      console.error("Error copying payment link:", error);
-      toast({
-        title: "Error",
-        description: "Could not copy payment link",
-        variant: "destructive",
       });
     }
   };
@@ -152,7 +98,7 @@ const ProductCard = ({
             <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
               {product.description}
             </p>
-            <p className="text-2xl font-bold text-primary">${product.price.toFixed(2)}</p>
+            <p className="text-2xl font-bold text-primary">{getCurrencySymbol(settings.currency)}{product.price.toFixed(2)}</p>
           </div>
           <div className="flex gap-2 mt-4">
             {showPaymentButton && (
@@ -177,16 +123,7 @@ const ProductCard = ({
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={onShare}>
                     <Share2 className="h-4 w-4 mr-2" />
-                    Share Product
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSharePaymentLink}>
-                    <Link2 className="h-4 w-4 mr-2" />
-                    Share Payment Link
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleCopyPaymentLink}>
-                    <Copy className="h-4 w-4 mr-2" />
-                    Copy Payment Link
+                    Share with Friends
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -220,7 +157,7 @@ const ProductCard = ({
         <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
           {product.description}
         </p>
-        <p className="text-2xl font-bold text-primary">${product.price.toFixed(2)}</p>
+        <p className="text-2xl font-bold text-primary">{getCurrencySymbol(settings.currency)}{product.price.toFixed(2)}</p>
       </CardContent>
       <CardFooter className="p-4 pt-0 flex gap-2">
         {showPaymentButton && (
@@ -245,16 +182,7 @@ const ProductCard = ({
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={onShare}>
                 <Share2 className="h-4 w-4 mr-2" />
-                Share Product
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleSharePaymentLink}>
-                <Link2 className="h-4 w-4 mr-2" />
-                Share Payment Link
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleCopyPaymentLink}>
-                <Copy className="h-4 w-4 mr-2" />
-                Copy Payment Link
+                Share with Friends
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

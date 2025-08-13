@@ -7,6 +7,8 @@ import { Package, Clock, CheckCircle, XCircle, ShoppingBag, User, Phone, CreditC
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
+import { useSettings } from "@/contexts/SettingsContext";
+import { getCurrencySymbol } from "@/lib/utils";
 import { toast } from "sonner";
 import { PaymentInfo } from "@/types/payment";
 
@@ -33,6 +35,7 @@ export default function Orders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { settings } = useSettings();
 
   useEffect(() => {
     fetchOrders();
@@ -241,12 +244,12 @@ export default function Orders() {
                         {order.items.map((item, index) => (
                           <div key={index} className="flex justify-between text-sm">
                             <span className="truncate">{item.name} x{item.quantity}</span>
-                            <span className="font-medium">${(item.price * item.quantity).toFixed(2)}</span>
+                            <span className="font-medium">{getCurrencySymbol(settings.currency)}{(item.price * item.quantity).toFixed(2)}</span>
                           </div>
                         ))}
                         <div className="border-t pt-2 flex justify-between font-semibold">
                           <span>Total:</span>
-                          <span>${order.total.toFixed(2)}</span>
+                          <span>{getCurrencySymbol(settings.currency)}{order.total.toFixed(2)}</span>
                         </div>
                       </div>
 

@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { Product, StockTransaction } from '@/types/product';
 import { StockManagementService } from '@/services/StockManagementService';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSettings } from '@/contexts/SettingsContext';
 import { getCurrencySymbol } from '@/lib/utils';
 
 interface StockManagementProps {
@@ -37,6 +38,7 @@ interface StockManagementProps {
 
 export default function StockManagement({ products, onProductUpdate }: StockManagementProps) {
   const { user } = useAuth();
+  const { settings } = useSettings();
   const [loading, setLoading] = useState(false);
   const [statistics, setStatistics] = useState<any>(null);
   const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
@@ -314,7 +316,7 @@ export default function StockManagement({ products, onProductUpdate }: StockMana
                       <div className="flex sm:flex-col items-start sm:items-end justify-between sm:justify-start gap-2 sm:space-y-2">
                         {getStockStatusBadge(product)}
                         <div className="text-sm font-medium">
-                          {getCurrencySymbol('usd')}{product.price}
+                          {getCurrencySymbol(settings.currency)}{product.price}
                         </div>
                       </div>
                     </div>

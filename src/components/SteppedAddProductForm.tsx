@@ -9,6 +9,7 @@ import { useSettings } from "@/contexts/SettingsContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Stepper } from "@/components/ui/stepper";
+import { BackButton } from "@/components/ui/back-button";
 import { toast } from "sonner";
 import { 
   Package, 
@@ -16,7 +17,6 @@ import {
   Image as ImageIcon, 
   Settings, 
   Check,
-  ArrowLeft,
   ArrowRight,
   Save
 } from "lucide-react";
@@ -327,26 +327,22 @@ export function SteppedAddProductForm({ onSuccess, onCancel }: SteppedAddProduct
           <div className="flex justify-between pt-6 border-t">
             <div>
               {!isFirstStep && (
-                <Button
-                  type="button"
+                <BackButton
                   variant="outline"
                   onClick={prevStep}
                   disabled={isLoading}
                 >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
                   Previous
-                </Button>
+                </BackButton>
               )}
               {isFirstStep && (
-                <Button
-                  type="button"
+                <BackButton
                   variant="outline"
                   onClick={onCancel}
                   disabled={isLoading}
                 >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
                   Cancel
-                </Button>
+                </BackButton>
               )}
             </div>
 

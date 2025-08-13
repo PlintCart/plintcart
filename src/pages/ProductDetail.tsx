@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Product } from "@/types/product";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Share2, ShoppingCart } from "lucide-react";
+import { BackButton } from "@/components/ui/back-button";
+import { Share2, ShoppingCart } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const ProductDetail = () => {
@@ -111,14 +112,13 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
-        <Button
-          variant="ghost"
+        <BackButton
           onClick={() => navigate('/storefront')}
           className="mb-6"
+          variant="ghost"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Store
-        </Button>
+        </BackButton>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Product Image */}

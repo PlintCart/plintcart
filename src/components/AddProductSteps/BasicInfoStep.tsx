@@ -6,7 +6,7 @@ import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/comp
 import { Form } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Package, DollarSign, Tag } from "lucide-react";
+import { Package, Coins, Tag } from "lucide-react";
 
 interface BasicInfoStepProps {
   form: UseFormReturn<any>;
@@ -80,7 +80,7 @@ export function BasicInfoStep({ form, isLoading }: BasicInfoStepProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="flex items-center gap-2">
-                  <DollarSign className="w-4 h-4" />
+                  <Coins className="w-4 h-4" />
                   Price *
                 </FormLabel>
                 <FormControl>

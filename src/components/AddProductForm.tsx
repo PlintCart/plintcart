@@ -6,6 +6,7 @@ import { collection, addDoc } from "firebase/firestore";
 import { db, auth, handleNetworkError } from "@/lib/firebase";
 import { NetworkTroubleshootingTips } from "@/components/NetworkStatus";
 import { useSettings } from "@/contexts/SettingsContext";
+import { getCurrencySymbol } from "@/lib/utils";
 import { StockManagementService } from "@/services/StockManagementService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -453,7 +454,7 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Price ($)</FormLabel>
+                    <FormLabel>Price ({getCurrencySymbol(settings.currency)})</FormLabel>
                     <FormControl>
                       <Input
                         id="product-price"

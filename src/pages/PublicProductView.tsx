@@ -11,7 +11,6 @@ import { ProductSharingService } from "@/lib/productSharing";
 import { WhatsAppStorefrontShare } from "@/components/WhatsAppStorefrontShare";
 import { Product } from "@/types/product";
 import { PayNowButton } from "@/components/payments/PayNowButton";
-import { SwyptPaymentButton } from "@/components/payments/SwyptPaymentButton";
 
 export default function PublicProductView() {
   const { id } = useParams();
@@ -441,19 +440,8 @@ export default function PublicProductView() {
                     }}
                     onPaymentError={(error) => {
                       console.error('M-Pesa payment error:', error);
-                      toast.error('M-Pesa payment failed. Try Swypt or WhatsApp order.');
+                      toast.error('M-Pesa payment failed. Try WhatsApp order.');
                     }}
-                  />
-                  
-                  {/* Swypt Payment Button */}
-                  <SwyptPaymentButton
-                    productId={product.id}
-                    productName={product.name}
-                    price={product.price}
-                    description={product.description}
-                    imageUrl={product.imageUrl}
-                    className="w-full"
-                    variant="outline"
                   />
                 </div>
                 

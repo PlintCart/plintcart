@@ -70,7 +70,7 @@ const defaultSettings: BusinessSettings = {
   businessAddress: '',
   businessPhone: '',
   businessEmail: '',
-  currency: 'usd',
+  currency: 'ksh',
   language: 'en',
   timezone: 'utc',
   deliveryFee: 5.00,
@@ -255,10 +255,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useSettings() {
+// Custom hook to use settings context
+export const useSettings = () => {
   const context = useContext(SettingsContext);
   if (context === undefined) {
     throw new Error('useSettings must be used within a SettingsProvider');
   }
   return context;
-}
+};
