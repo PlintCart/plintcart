@@ -21,6 +21,15 @@ export interface BusinessSettings {
   minimumOrder: number;
   acceptCash: boolean;
   
+  // M-Pesa Integration (Backend will handle Daraja API)
+  enableMpesa?: boolean;
+  mpesaMethod?: 'paybill' | 'till' | 'send_money';
+  paybillNumber?: string;
+  accountReference?: string;
+  tillNumber?: string;
+  mpesaPhoneNumber?: string;
+  mpesaInstructions?: string;
+  
   // WhatsApp Integration
   whatsappNumber: string;
   orderMessageTemplate: string;
@@ -67,6 +76,16 @@ const defaultSettings: BusinessSettings = {
   deliveryFee: 5.00,
   minimumOrder: 10.00,
   acceptCash: true,
+  
+  // M-Pesa Integration defaults (Backend handles Daraja API)
+  enableMpesa: false,
+  mpesaMethod: 'paybill',
+  paybillNumber: '',
+  accountReference: '',
+  tillNumber: '',
+  mpesaPhoneNumber: '',
+  mpesaInstructions: '',
+  
   whatsappNumber: '',
   orderMessageTemplate: "Hi! I'd like to place an order:\n\n{order_details}\n\nTotal: {total_amount}\n\nPlease confirm availability.",
   autoSendOrderDetails: true,

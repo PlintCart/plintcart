@@ -7,20 +7,38 @@ import { Button } from "@/components/ui/button";
 import { Grid, List, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ProductSharingService } from "@/lib/productSharing";
+import { useParams } from "react-router-dom";
 
 const Storefront = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [storeInfo, setStoreInfo] = useState<{ name: string; description?: string } | null>(null);
   const { toast } = useToast();
+  const { merchantId } = useParams();
+
+  // Get merchant ID from URL parameter - this is required for public storefront
+  const targetMerchantId = merchantId;
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    if (targetMerchantId) {
+      fetchProducts();
+      fetchStoreInfo();
+    } else {
+      // Redirect to index page if no merchant ID provided
+      window.location.href = '/';
+    }
+  }, [targetMerchantId]);
 
   const fetchProducts = async () => {
+    if (!targetMerchantId) return;
+    
     try {
-      const q = query(collection(db, "products"), where("isVisible", "==", true));
+      const q = query(
+        collection(db, "products"), 
+        where("isVisible", "==", true),
+        where("userId", "==", targetMerchantId)
+      );
       const querySnapshot = await getDocs(q);
       const productList: Product[] = [];
       
@@ -53,11 +71,40 @@ const Storefront = () => {
     }
   };
 
+  const fetchStoreInfo = async () => {
+    if (!targetMerchantId) return;
+    
+    try {
+      // Try to get store info from user settings or profile
+      const userDoc = await getDoc(doc(db, "users", targetMerchantId));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        setStoreInfo({
+          name: userData.storeName || userData.displayName || "Store",
+          description: userData.storeDescription || ""
+        });
+      } else {
+        setStoreInfo({ name: "Store" });
+      }
+    } catch (error) {
+      console.error('Error fetching store info:', error);
+      setStoreInfo({ name: "Store" });
+    }
+  };
+
   const shareProduct = async (product: Product) => {
     try {
-      // Get settings for thumbnail generation
-      const settingsDoc = await getDoc(doc(db, "settings", product.userId));
-      const userSettings = settingsDoc.exists() ? settingsDoc.data() : {};
+      // For public storefront, use minimal settings or defaults
+      let userSettings = {};
+      
+      // Try to get settings but don't fail if not accessible
+      try {
+        const settingsDoc = await getDoc(doc(db, "settings", product.userId));
+        userSettings = settingsDoc.exists() ? settingsDoc.data() : {};
+      } catch (settingsError) {
+        console.warn('Could not load settings, using defaults:', settingsError);
+        // Continue with empty settings - this is normal for public access
+      }
       
       // Use thumbnail sharing
       const result = await ProductSharingService.shareProductThumbnail(product, userSettings);
@@ -105,7 +152,12 @@ const Storefront = () => {
       {/* Header */}
       <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Our Store</h1>
+          <div>
+            <h1 className="text-2xl font-bold">{storeInfo?.name || "Store"}</h1>
+            {storeInfo?.description && (
+              <p className="text-sm text-muted-foreground">{storeInfo.description}</p>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <Button
               variant={viewMode === 'grid' ? 'default' : 'outline'}
@@ -145,6 +197,8 @@ const Storefront = () => {
                 viewMode={viewMode}
                 onShare={() => shareProduct(product)}
                 showShareButton
+                showPaymentButton
+                showOrderButton
               />
             ))}
           </div>

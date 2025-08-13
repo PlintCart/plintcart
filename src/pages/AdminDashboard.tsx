@@ -7,6 +7,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
 import { StoreSetupReminder } from "@/components/StoreSetupReminder";
+import { StorefrontLink } from "@/components/StorefrontLink";
 
 interface Product {
   id: string;
@@ -94,6 +95,9 @@ export default function AdminDashboard() {
 
         {/* Store Setup Reminder */}
         <StoreSetupReminder />
+
+        {/* Storefront Link */}
+        <StorefrontLink />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">

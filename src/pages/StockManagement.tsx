@@ -16,10 +16,14 @@ import {
   Minus,
   BarChart3,
   Search,
-  RefreshCw
+  RefreshCw,
+  Star,
+  DollarSign,
+  ShoppingCart
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { StockManagementService } from '@/services/StockManagementService';
+import { SalesAnalyticsService, ProductSalesAnalytics } from '@/services/SalesAnalyticsService';
 import { Product } from '@/types/product';
 
 export default function StockManagement() {
@@ -27,6 +31,7 @@ export default function StockManagement() {
   const [products, setProducts] = useState<Product[]>([]);
   const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
   const [outOfStockProducts, setOutOfStockProducts] = useState<Product[]>([]);
+  const [mostFrequentProducts, setMostFrequentProducts] = useState<ProductSalesAnalytics[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [adjustmentQuantity, setAdjustmentQuantity] = useState<number>(0);
@@ -73,8 +78,24 @@ export default function StockManagement() {
     }
   };
 
+  // Load sales analytics
+  const loadSalesAnalytics = async () => {
+    if (!auth.currentUser) return;
+    
+    try {
+      const analytics = await SalesAnalyticsService.getMostFrequentlyBoughtProducts(
+        auth.currentUser.uid, 
+        10
+      );
+      setMostFrequentProducts(analytics);
+    } catch (error) {
+      console.error('Error loading sales analytics:', error);
+    }
+  };
+
   useEffect(() => {
     loadProducts();
+    loadSalesAnalytics();
   }, []);
 
   // Filter products based on search (client-side to save Firebase reads)
@@ -107,6 +128,7 @@ export default function StockManagement() {
       setAdjustmentQuantity(0);
       setAdjustmentReason('');
       loadProducts(); // Refresh data
+      loadSalesAnalytics(); // Refresh analytics
       
     } catch (error) {
       console.error('Stock adjustment error:', error);
@@ -138,7 +160,10 @@ export default function StockManagement() {
             <p className="text-muted-foreground">Monitor and manage your inventory</p>
           </div>
           <Button 
-            onClick={loadProducts} 
+            onClick={() => {
+              loadProducts();
+              loadSalesAnalytics();
+            }} 
             disabled={loading}
             className="w-full sm:w-auto"
           >
@@ -188,8 +213,9 @@ export default function StockManagement() {
 
         {/* Stock Management Tabs */}
         <Tabs defaultValue="all" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="all">All Products</TabsTrigger>
+            <TabsTrigger value="analytics">Top Selling</TabsTrigger>
             <TabsTrigger value="low-stock" className="relative">
               Low Stock
               {lowStockProducts.length > 0 && (
@@ -278,6 +304,102 @@ export default function StockManagement() {
                     </div>
                   )}
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Sales Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <BarChart3 className="w-5 h-5 mr-2 text-blue-600" />
+                  Most Frequently Bought Items
+                </CardTitle>
+                <p className="text-muted-foreground">
+                  Identify your best-selling products to make informed investment decisions
+                </p>
+              </CardHeader>
+              <CardContent>
+                {mostFrequentProducts.length > 0 ? (
+                  <div className="space-y-4">
+                    {mostFrequentProducts.map((product, index) => (
+                      <div 
+                        key={product.productId} 
+                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50"
+                      >
+                        <div className="flex items-center space-x-4">
+                          <div className="flex items-center justify-center w-8 h-8 bg-primary text-primary-foreground rounded-full text-sm font-bold">
+                            {index + 1}
+                          </div>
+                          {index < 3 && (
+                            <Star className="w-5 h-5 text-yellow-500" />
+                          )}
+                          <div>
+                            <h3 className="font-medium">{product.productName}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              Category: {product.category} | Price: ${product.price.toFixed(2)}
+                            </p>
+                            {product.lastSaleDate && (
+                              <p className="text-xs text-muted-foreground">
+                                Last sold: {product.lastSaleDate.toLocaleDateString()}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center space-x-6 text-right">
+                          <div>
+                            <div className="flex items-center text-sm">
+                              <ShoppingCart className="w-4 h-4 mr-1" />
+                              <span className="font-semibold">{product.totalSales}</span>
+                              <span className="text-muted-foreground ml-1">orders</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {product.totalQuantitySold} units sold
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <div className="flex items-center text-sm">
+                              <DollarSign className="w-4 h-4 mr-1" />
+                              <span className="font-semibold text-green-600">
+                                ${product.totalRevenue.toFixed(2)}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              Avg: ${product.averageOrderValue.toFixed(2)}
+                            </p>
+                          </div>
+                          
+                          <Badge variant={index < 3 ? "default" : "secondary"} className="flex items-center gap-1">
+                            {index < 3 ? <TrendingUp className="w-3 h-3" /> : <BarChart3 className="w-3 h-3" />}
+                            Top {index + 1}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <h4 className="font-medium text-blue-900 mb-2">💡 Investment Insights</h4>
+                      <div className="text-sm text-blue-800 space-y-1">
+                        <p>• <strong>Top 3 products</strong> generate the most revenue - consider increasing stock levels</p>
+                        <p>• <strong>High-frequency items</strong> have proven market demand - prioritize these for marketing</p>
+                        <p>• <strong>Recent sales data</strong> helps predict future inventory needs</p>
+                        {mostFrequentProducts.length > 0 && (
+                          <p>• Your top seller generates <strong>${mostFrequentProducts[0]?.totalRevenue.toFixed(2)}</strong> in revenue</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <BarChart3 className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                    <p className="text-lg font-medium mb-2">No Sales Data Yet</p>
+                    <p className="mb-4">Start tracking stock transactions to see analytics here.</p>
+                    <p className="text-sm">Sales data is based on stock transactions marked as "sold".</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

@@ -18,11 +18,13 @@ import Orders from "./pages/Orders";
 import Design from "./pages/Design";
 import AdminSettings from "./pages/AdminSettings";
 import Storefront from "./pages/Storefront";
+import MerchantDirectory from "./pages/MerchantDirectory";
 import ProductDetail from "./pages/ProductDetail";
 import PublicProductView from "./pages/PublicProductView";
 import VendorStorefront from "./pages/VendorStorefront";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancelled from "./pages/PaymentCancelled";
+import PaymentPage from "./pages/PaymentPage";
 
 const queryClient = new QueryClient();
 
@@ -42,9 +44,11 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/storefront" element={<Storefront />} />
+            <Route path="/stores" element={<MerchantDirectory />} />
+            <Route path="/storefront/:merchantId" element={<Storefront />} />
             <Route path="/store/:vendorId" element={<VendorStorefront />} />
             <Route path="/product/:id" element={<PublicProductView />} />
+            <Route path="/pay/:productId" element={<PaymentPage />} />
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/payment-cancelled" element={<PaymentCancelled />} />
             <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
