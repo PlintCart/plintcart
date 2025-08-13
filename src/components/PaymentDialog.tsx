@@ -18,6 +18,16 @@ interface PaymentDialogProps {
 }
 
 interface StoredPaymentSettings {
+  // Direct settings format (as stored by AdminSettings)
+  enableMpesa?: boolean;
+  mpesaMethod?: 'paybill' | 'till' | 'send_money';
+  paybillNumber?: string;
+  accountReference?: string;
+  tillNumber?: string;
+  mpesaPhoneNumber?: string;
+  mpesaInstructions?: string;
+  
+  // Legacy nested format (for backward compatibility)
   mpesa?: {
     enabled: boolean;
     method: 'paybill' | 'till' | 'send_money';
@@ -51,12 +61,12 @@ export const PaymentDialog = ({ product, isOpen, onClose }: PaymentDialogProps) 
         setPaymentSettings(settingsDoc.data() as StoredPaymentSettings);
       } else {
         // Set default empty settings if none exist
-        setPaymentSettings({ mpesa: { enabled: false, method: 'paybill' } });
+        setPaymentSettings({ enableMpesa: false, mpesaMethod: 'paybill' });
       }
     } catch (error) {
       console.error("Error loading payment settings:", error);
       // Set default settings on error
-      setPaymentSettings({ mpesa: { enabled: false, method: 'paybill' } });
+      setPaymentSettings({ enableMpesa: false, mpesaMethod: 'paybill' });
     }
   };
 
@@ -70,7 +80,10 @@ export const PaymentDialog = ({ product, isOpen, onClose }: PaymentDialogProps) 
       return;
     }
 
-    if (!paymentSettings?.mpesa?.enabled) {
+    // Check if M-Pesa is enabled - support both formats
+    const isMpesaEnabled = paymentSettings?.enableMpesa || paymentSettings?.mpesa?.enabled;
+    
+    if (!isMpesaEnabled) {
       toast({
         title: "Payment not available",
         description: "M-Pesa payments are not configured for this merchant",
@@ -84,14 +97,15 @@ export const PaymentDialog = ({ product, isOpen, onClose }: PaymentDialogProps) 
     try {
       const orderId = `ORDER_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      // Convert stored settings to MpesaSettings format
+      // Convert stored settings to MpesaSettings format - support both formats
       const mpesaSettings: MpesaSettings = {
-        enableMpesa: paymentSettings.mpesa.enabled,
-        mpesaMethod: paymentSettings.mpesa.method,
-        paybillNumber: paymentSettings.mpesa.paybillNumber,
-        accountReference: paymentSettings.mpesa.accountNumber,
-        tillNumber: paymentSettings.mpesa.tillNumber,
-        mpesaPhoneNumber: paymentSettings.mpesa.phoneNumber,
+        enableMpesa: paymentSettings?.enableMpesa || paymentSettings?.mpesa?.enabled || false,
+        mpesaMethod: paymentSettings?.mpesaMethod || paymentSettings?.mpesa?.method || 'paybill',
+        paybillNumber: paymentSettings?.paybillNumber || paymentSettings?.mpesa?.paybillNumber,
+        accountReference: paymentSettings?.accountReference || paymentSettings?.mpesa?.accountNumber,
+        tillNumber: paymentSettings?.tillNumber || paymentSettings?.mpesa?.tillNumber,
+        mpesaPhoneNumber: paymentSettings?.mpesaPhoneNumber || paymentSettings?.mpesa?.phoneNumber,
+        mpesaInstructions: paymentSettings?.mpesaInstructions,
       };
       
       const paymentRequest: PaymentRequest = {
@@ -252,7 +266,7 @@ export const PaymentDialog = ({ product, isOpen, onClose }: PaymentDialogProps) 
           </div>
 
           {/* Payment Method Info */}
-          {paymentSettings?.mpesa?.enabled ? (
+          {(paymentSettings?.enableMpesa || paymentSettings?.mpesa?.enabled) ? (
             <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
               <div className="flex items-center gap-2 text-green-800">
                 <CreditCard className="h-4 w-4" />
@@ -260,6 +274,9 @@ export const PaymentDialog = ({ product, isOpen, onClose }: PaymentDialogProps) 
               </div>
               <p className="text-sm text-green-700 mt-1">
                 You will receive an STK push notification on your phone
+              </p>
+              <p className="text-xs text-green-600 mt-1">
+                Method: {(paymentSettings?.mpesaMethod || paymentSettings?.mpesa?.method || 'paybill').replace('_', ' ').toUpperCase()}
               </p>
             </div>
           ) : (
@@ -286,7 +303,7 @@ export const PaymentDialog = ({ product, isOpen, onClose }: PaymentDialogProps) 
             </Button>
             <Button
               onClick={handlePayment}
-              disabled={!phoneNumber.trim() || isProcessing}
+              disabled={!phoneNumber.trim() || isProcessing || !(paymentSettings?.enableMpesa || paymentSettings?.mpesa?.enabled)}
               className="flex-1"
             >
               {isProcessing ? (

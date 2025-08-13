@@ -2,43 +2,88 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can read and write their own products
+    // Products - public read for visible products, merchant write for own products
     match /products/{productId} {
+      // Allow public read for visible products (required for public storefront)
+      allow read: if resource.data.isVisible == true;
+      // Allow merchants to manage their own products
       allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
-      // Allow public read for visible products only
-      allow read: if resource.data.isVisible == true;
     }
     
-    // Users can manage their own settings, but allow public read for storefront display
+    // Users collection - for store info and profiles
+    match /users/{userId} {
+      allow read: if true; // Public read for store names/info
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Settings - private to merchant, graceful failure for public access
+    match /settings/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // No public read - this should fail gracefully in the app
+    }
+    
+    // User settings (legacy) - public read for storefront display
     match /userSettings/{userId} {
       allow read: if true; // Allow public read for storefront
       allow write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Users can manage their own profile
+    // User profiles - public read for store info
     match /userProfiles/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if true; // Public read for store information
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Orders - users can create orders and business owners can read their orders
+    // Orders - customers can create, merchants can read their orders
     match /orders/{orderId} {
       allow create: if request.auth != null;
-      allow read, write: if request.auth != null && 
+      allow read: if request.auth != null && 
         (request.auth.uid == resource.data.customerId || 
+         request.auth.uid == resource.data.merchantId ||
          request.auth.uid == resource.data.businessOwnerId);
+      allow update: if request.auth != null && 
+        (request.auth.uid == resource.data.merchantId ||
+         request.auth.uid == resource.data.businessOwnerId);
+    }
+    
+    // Payment transactions - secure access only
+    match /payments/{paymentId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null && 
+        (request.auth.uid == resource.data.customerId || 
+         request.auth.uid == resource.data.merchantId);
+      allow update: if request.auth != null && 
+        request.auth.uid == resource.data.merchantId;
     }
     
     // Business information - public read, owner write
     match /businesses/{businessId} {
-      allow read: if true;
+      allow read: if true; // Public read for storefront display
       allow write: if request.auth != null && request.auth.uid == businessId;
     }
     
-    // Stock transactions - only authenticated users can read/write their own transactions
+    // Stock transactions - merchants can manage their own
     match /stockTransactions/{transactionId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Analytics data - merchants can read/write their own
+    match /analytics/{analyticsId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Store configurations - public read for display, merchant write
+    match /storeConfigs/{configId} {
+      allow read: if true; // Public read for storefront themes/branding
+      allow write: if request.auth != null && request.auth.uid == configId;
+    }
+    
+    // Fallback for other collections - authenticated users only
+    match /{document=**} {
       allow read, write: if request.auth != null;
-      allow create: if request.auth != null;
     }
   }
 }
