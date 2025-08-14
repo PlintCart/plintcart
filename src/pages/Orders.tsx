@@ -22,7 +22,9 @@ import {
   TrendingUp,
   Eye,
   MessageCircle,
-  CheckSquare
+  CheckSquare,
+  Smartphone,
+  Truck
 } from 'lucide-react';
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -38,14 +40,22 @@ interface OrderItem {
   price: number;
 }
 
-interface Order extends PaymentInfo {
+interface Order {
   id: string;
   customerName?: string;
   customerPhone?: string;
+  customerEmail?: string;
+  customerAddress?: string;
   items: OrderItem[];
   total: number;
-  status: 'pending' | 'completed' | 'cancelled';
+  status: 'pending' | 'completed' | 'confirmed' | 'cancelled';
+  paymentStatus?: 'unpaid' | 'paid' | 'cod_pending' | 'pending_confirmation' | 'failed';
+  paymentMethod?: 'mpesa' | 'cash' | 'swypt';
+  paymentReference?: string;
+  paymentInstructions?: string;
+  paymentConfirmedAt?: Date;
   createdAt: Date;
+  updatedAt?: Date;
   productName?: string;
   productPrice?: number;
   message?: string;
@@ -141,6 +151,7 @@ export default function Orders() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'secondary';
+      case 'confirmed': return 'default';
       case 'completed': return 'default';
       case 'cancelled': return 'destructive';
       default: return 'secondary';
@@ -150,6 +161,7 @@ export default function Orders() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'pending': return <Clock className="w-4 h-4" />;
+      case 'confirmed': return <CheckCircle className="w-4 h-4" />;
       case 'completed': return <CheckCircle className="w-4 h-4" />;
       case 'cancelled': return <XCircle className="w-4 h-4" />;
       default: return <Clock className="w-4 h-4" />;
@@ -159,7 +171,8 @@ export default function Orders() {
   const getPaymentStatusColor = (paymentStatus?: string) => {
     switch (paymentStatus) {
       case 'paid': return 'default';
-      case 'pending': return 'secondary';
+      case 'cod_pending': return 'secondary';
+      case 'pending_confirmation': return 'secondary';
       case 'failed': return 'destructive';
       case 'unpaid': return 'outline';
       default: return 'outline';
@@ -169,10 +182,22 @@ export default function Orders() {
   const getPaymentStatusIcon = (paymentStatus?: string) => {
     switch (paymentStatus) {
       case 'paid': return <CheckCircle className="w-4 h-4" />;
-      case 'pending': return <Clock className="w-4 h-4" />;
+      case 'cod_pending': return <Truck className="w-4 h-4" />;
+      case 'pending_confirmation': return <Clock className="w-4 h-4" />;
       case 'failed': return <XCircle className="w-4 h-4" />;
       case 'unpaid': return <CreditCard className="w-4 h-4" />;
       default: return <CreditCard className="w-4 h-4" />;
+    }
+  };
+
+  const getPaymentStatusText = (paymentStatus?: string) => {
+    switch (paymentStatus) {
+      case 'paid': return 'Paid';
+      case 'cod_pending': return 'Cash on Delivery';
+      case 'pending_confirmation': return 'Pending Confirmation';
+      case 'failed': return 'Payment Failed';
+      case 'unpaid': return 'Unpaid';
+      default: return 'Unknown';
     }
   };
 
@@ -192,7 +217,13 @@ export default function Orders() {
               {order.paymentStatus && (
                 <Badge variant={getPaymentStatusColor(order.paymentStatus)} className="flex items-center gap-1 w-fit">
                   {getPaymentStatusIcon(order.paymentStatus)}
-                  <span className="text-xs">{order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}</span>
+                  <span className="text-xs">{getPaymentStatusText(order.paymentStatus)}</span>
+                </Badge>
+              )}
+              {order.paymentMethod && (
+                <Badge variant="outline" className="flex items-center gap-1 w-fit">
+                  {order.paymentMethod === 'mpesa' ? <Smartphone className="w-3 h-3" /> : <CreditCard className="w-3 h-3" />}
+                  <span className="text-xs">{order.paymentMethod.toUpperCase()}</span>
                 </Badge>
               )}
             </div>

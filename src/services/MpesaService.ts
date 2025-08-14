@@ -129,7 +129,7 @@ export class MpesaService {
    */
   static async initiatePayment(request: PaymentRequest): Promise<PaymentResponse> {
     try {
-      // Call your Netlify function
+      // Call the Netlify function (works in both dev and production)
       const response = await fetch('/.netlify/functions/mpesa-initiate', {
         method: 'POST',
         headers: {
@@ -139,6 +139,19 @@ export class MpesaService {
       });
 
       if (!response.ok) {
+        // If function doesn't exist in dev, provide mock response for testing
+        if (import.meta.env.DEV && response.status === 404) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          return {
+            success: true,
+            orderId: request.orderId,
+            message: 'M-Pesa STK push sent to your phone (Development Mode)',
+            transactionId: `DEV_${Date.now()}`,
+            instructions: `Development Mode: Please check your phone ${request.phoneNumber} for the M-Pesa payment prompt to pay KSh ${request.amount}.`
+          };
+        }
+        
         throw new Error(`Payment initiation failed: ${response.statusText}`);
       }
 

@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { doc, getDoc, collection, query, where, getDocs, addDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MessageCircle, Share2, ShoppingCart, CreditCard, Smartphone } from "lucide-react";
+import { ArrowLeft, MessageCircle, Share2, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { ProductSharingService } from "@/lib/productSharing";
-import { WhatsAppStorefrontShare } from "@/components/WhatsAppStorefrontShare";
 import { Product } from "@/types/product";
-import { PayNowButton } from "@/components/payments/PayNowButton";
+import { OrderFirstCheckout } from "@/components/OrderFirstCheckout";
 
 export default function PublicProductView() {
   const { id } = useParams();
@@ -18,7 +17,7 @@ export default function PublicProductView() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [businessSettings, setBusinessSettings] = useState<any>(null);
-  const [currentOrderId, setCurrentOrderId] = useState<string | null>(null);
+  const [showCheckout, setShowCheckout] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -138,37 +137,13 @@ export default function PublicProductView() {
   };
 
   const createOrderForPayment = async () => {
-    if (!product) return null;
+    // This function is replaced by OrderFirstCheckout component
+    setShowCheckout(true);
+  };
 
-    try {
-      const orderData = {
-        businessOwnerId: product.userId,
-        customerName: '', // Will be updated after payment
-        customerPhone: '',
-        items: [{
-          name: product.name,
-          quantity: 1,
-          price: product.price
-        }],
-        total: product.price,
-        status: 'pending',
-        paymentStatus: 'unpaid',
-        paymentProvider: 'swypt',
-        currency: businessSettings?.currency || 'KES',
-        createdAt: new Date(),
-        productName: product.name,
-        productPrice: product.price,
-        message: `Order for ${product.name}`
-      };
-
-      const orderRef = await addDoc(collection(db, 'orders'), orderData);
-      setCurrentOrderId(orderRef.id);
-      return orderRef.id;
-    } catch (error) {
-      console.error('Error creating order:', error);
-      toast.error('Failed to create order');
-      return null;
-    }
+  const handleOrderComplete = (orderId: string) => {
+    toast.success('Order completed successfully!');
+    // Optionally redirect or show success message
   };
 
   const handleShare = async () => {
@@ -277,6 +252,44 @@ export default function PublicProductView() {
     );
   }
 
+  // Show checkout flow if triggered
+  if (showCheckout) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-accent/10 to-background">
+        <div className="container max-w-4xl mx-auto py-8 px-4">
+          {/* Header */}
+          <div className="flex items-center gap-4 mb-6">
+            <Button variant="ghost" onClick={() => setShowCheckout(false)}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Product
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold">Complete Your Order</h1>
+              <p className="text-muted-foreground">{product.name}</p>
+            </div>
+          </div>
+
+          {/* Checkout Component */}
+          <OrderFirstCheckout
+            product={product}
+            businessSettings={businessSettings}
+            mpesaSettings={{
+              enableMpesa: businessSettings?.enableMpesa ?? true, // Default to true if not set
+              mpesaMethod: businessSettings?.mpesaMethod || 'paybill',
+              paybillNumber: businessSettings?.paybillNumber || '174379',
+              accountReference: businessSettings?.accountReference || product.name,
+              tillNumber: businessSettings?.tillNumber || '',
+              mpesaPhoneNumber: businessSettings?.mpesaPhoneNumber || '',
+              mpesaInstructions: businessSettings?.mpesaInstructions || 'Complete payment via M-Pesa'
+            }}
+            onOrderComplete={handleOrderComplete}
+            onCancel={() => setShowCheckout(false)}
+          />
+        </div>
+      </div>
+    );
+  }
+
   const currencySymbol = getCurrencySymbol(businessSettings?.currency || 'usd');
   const businessName = businessSettings?.businessName || product.businessName || 'Store';
   const storeTheme = businessSettings?.storeTheme || 'modern';
@@ -317,14 +330,15 @@ export default function PublicProductView() {
             )}
             <p className="text-xs text-muted-foreground">{businessName}</p>
           </div>
-          <WhatsAppStorefrontShare 
-            product={product}
-            businessSettings={businessSettings}
+          <Button 
             variant="outline"
             size="sm"
+            onClick={handleShare}
             className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-            showIcon={true}
-          />
+          >
+            <Share2 className="w-4 h-4 mr-2" />
+            Share to WhatsApp
+          </Button>
         </div>
       </header>
 
@@ -427,23 +441,16 @@ export default function PublicProductView() {
 
               {/* Action Buttons - Prominent */}
               <div className="space-y-3 pt-2">
-                {/* Payment Options */}
-                <div className="space-y-2">
-                  {/* M-Pesa Payment Button */}
-                  <PayNowButton 
-                    productId={product.id}
-                    productName={product.name}
-                    price={product.price}
-                    onPaymentSuccess={(checkoutRequestId) => {
-                      console.log('M-Pesa payment initiated:', checkoutRequestId);
-                      toast.success('M-Pesa payment initiated! Check your phone.');
-                    }}
-                    onPaymentError={(error) => {
-                      console.error('M-Pesa payment error:', error);
-                      toast.error('M-Pesa payment failed. Try WhatsApp order.');
-                    }}
-                  />
-                </div>
+                {/* Primary Order Button */}
+                <Button 
+                  className="w-full h-12 text-lg font-semibold" 
+                  size="lg"
+                  onClick={() => setShowCheckout(true)}
+                  disabled={product.stockQuantity === 0}
+                >
+                  <ShoppingCart className="w-5 h-5 mr-2" />
+                  Order Now
+                </Button>
                 
                 {/* WhatsApp Fallback */}
                 <Button 
@@ -460,16 +467,8 @@ export default function PublicProductView() {
                 <div className="flex gap-2">
                   <Button variant="outline" className="flex-1" onClick={handleShare}>
                     <Share2 className="w-4 h-4 mr-2" />
-                    Share
+                    Share with friends
                   </Button>
-                  <WhatsAppStorefrontShare 
-                    product={product}
-                    businessSettings={businessSettings}
-                    variant="outline"
-                    className="flex-1 bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-                  >
-                    WhatsApp + Store
-                  </WhatsAppStorefrontShare>
                   <Button variant="outline" onClick={() => navigate(`/store/${product.userId}`)}>
                     View Store
                   </Button>
