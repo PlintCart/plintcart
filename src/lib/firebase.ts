@@ -30,6 +30,29 @@ try {
   db = getFirestore(app);
   storage = getStorage(app);
   
+  // Connect to emulators in development (only if explicitly enabled)
+  if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true') {
+    try {
+      if (!auth._delegate?.emulator) {
+        connectAuthEmulator(auth, "http://localhost:9099");
+        console.log('🔧 Connected to Auth emulator');
+      }
+    } catch (error) {
+      console.log('Auth emulator connection failed:', error);
+    }
+    
+    try {
+      if (!db._delegate?.emulator) {
+        connectFirestoreEmulator(db, "localhost", 8080);
+        console.log('🔧 Connected to Firestore emulator');
+      }
+    } catch (error) {
+      console.log('Firestore emulator connection failed:', error);
+    }
+  } else if (import.meta.env.DEV) {
+    console.log('🔥 Using production Firebase in development mode');
+  }
+  
   // Initialize analytics only if supported and not blocked
   isSupported().then((supported) => {
     if (supported) {

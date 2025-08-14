@@ -172,78 +172,96 @@ export default function StockManagement() {
           </Button>
         </div>
 
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <Package className="h-8 w-8 text-blue-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">Total Products</p>
-                  <p className="text-2xl font-bold">{products.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <AlertTriangle className="h-8 w-8 text-yellow-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">Low Stock</p>
-                  <p className="text-2xl font-bold text-yellow-600">{lowStockProducts.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <TrendingDown className="h-8 w-8 text-red-600" />
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground">Out of Stock</p>
-                  <p className="text-2xl font-bold text-red-600">{outOfStockProducts.length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Stock Management Tabs */}
-        <Tabs defaultValue="all" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="all">All Products</TabsTrigger>
-            <TabsTrigger value="analytics">Top Selling</TabsTrigger>
-            <TabsTrigger value="low-stock" className="relative">
-              Low Stock
-              {lowStockProducts.length > 0 && (
-                <Badge variant="secondary" className="ml-2 text-xs">
-                  {lowStockProducts.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="out-of-stock" className="relative">
-              Out of Stock
-              {outOfStockProducts.length > 0 && (
-                <Badge variant="destructive" className="ml-2 text-xs">
-                  {outOfStockProducts.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Search Bar */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Search products by name or SKU..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
+        ) : (
+          <>
+            {/* Quick Stats - Hidden on mobile, visible on desktop */}
+            <div className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <Package className="h-8 w-8 text-blue-600" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-muted-foreground">Total Products</p>
+                      <p className="text-2xl font-bold">{products.length}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <AlertTriangle className="h-8 w-8 text-yellow-600" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-muted-foreground">Low Stock</p>
+                      <p className="text-2xl font-bold text-yellow-600">{lowStockProducts.length}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <TrendingDown className="h-8 w-8 text-red-600" />
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-muted-foreground">Out of Stock</p>
+                      <p className="text-2xl font-bold text-red-600">{outOfStockProducts.length}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Stock Management Tabs */}
+            <Tabs defaultValue="all" className="space-y-4">
+              <div className="flex flex-col space-y-4">
+                {/* Mobile: Scrollable tabs, Desktop: Grid */}
+                <div className="w-full overflow-x-auto">
+                  <TabsList className="inline-flex h-10 items-center justify-start rounded-md bg-muted p-1 text-muted-foreground w-max md:grid md:w-full md:grid-cols-5">
+                    <TabsTrigger value="all" className="whitespace-nowrap px-3 py-1.5 text-sm">
+                      All Products
+                    </TabsTrigger>
+                    <TabsTrigger value="analytics" className="whitespace-nowrap px-3 py-1.5 text-sm">
+                      Top Selling
+                    </TabsTrigger>
+                    <TabsTrigger value="least-selling" className="whitespace-nowrap px-3 py-1.5 text-sm">
+                      Least Selling
+                    </TabsTrigger>
+                    <TabsTrigger value="low-stock" className="relative whitespace-nowrap px-3 py-1.5 text-sm">
+                      Low Stock
+                      {lowStockProducts.length > 0 && (
+                        <Badge variant="secondary" className="ml-1 text-xs">
+                          {lowStockProducts.length}
+                        </Badge>
+                      )}
+                    </TabsTrigger>
+                    <TabsTrigger value="out-of-stock" className="relative whitespace-nowrap px-3 py-1.5 text-sm">
+                      Out of Stock
+                      {outOfStockProducts.length > 0 && (
+                        <Badge variant="destructive" className="ml-1 text-xs">
+                          {outOfStockProducts.length}
+                        </Badge>
+                      )}
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+
+                {/* Search Bar */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                  <Input
+                    placeholder="Search products by name or SKU..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
 
           {/* All Products Tab */}
           <TabsContent value="all" className="space-y-4">
@@ -398,6 +416,103 @@ export default function StockManagement() {
                     <p className="text-lg font-medium mb-2">No Sales Data Yet</p>
                     <p className="mb-4">Start tracking stock transactions to see analytics here.</p>
                     <p className="text-sm">Sales data is based on stock transactions marked as "sold".</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Least Selling Tab */}
+          <TabsContent value="least-selling" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <TrendingDown className="w-5 h-5 mr-2 text-orange-600" />
+                  Least Selling Products
+                </CardTitle>
+                <p className="text-muted-foreground">
+                  Identify underperforming products and optimize your inventory strategy
+                </p>
+              </CardHeader>
+              <CardContent>
+                {mostFrequentProducts.length > 0 ? (
+                  <div className="space-y-4">
+                    {mostFrequentProducts
+                      .slice()
+                      .reverse()
+                      .slice(0, 10)
+                      .map((product, index) => (
+                      <div 
+                        key={product.productId} 
+                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50"
+                      >
+                        <div className="flex items-center space-x-4">
+                          <div className="flex items-center justify-center w-8 h-8 bg-orange-100 text-orange-600 rounded-full text-sm font-bold">
+                            {index + 1}
+                          </div>
+                          <TrendingDown className="w-5 h-5 text-orange-500" />
+                          <div>
+                            <h3 className="font-medium">{product.productName}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              Category: {product.category} | Price: ${product.price.toFixed(2)}
+                            </p>
+                            {product.lastSaleDate && (
+                              <p className="text-xs text-muted-foreground">
+                                Last sold: {product.lastSaleDate.toLocaleDateString()}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center space-x-6 text-right">
+                          <div>
+                            <div className="flex items-center text-sm">
+                              <ShoppingCart className="w-4 h-4 mr-1" />
+                              <span className="font-semibold">{product.totalSales}</span>
+                              <span className="text-muted-foreground ml-1">orders</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {product.totalQuantitySold} units sold
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <div className="flex items-center text-sm">
+                              <DollarSign className="w-4 h-4 mr-1" />
+                              <span className="font-semibold text-orange-600">
+                                ${product.totalRevenue.toFixed(2)}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              Avg: ${product.averageOrderValue.toFixed(2)}
+                            </p>
+                          </div>
+                          
+                          <Badge variant="secondary" className="flex items-center gap-1">
+                            <TrendingDown className="w-3 h-3" />
+                            Low Seller
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                    
+                    <div className="mt-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                      <h4 className="font-medium text-orange-900 mb-2">🔍 Optimization Insights</h4>
+                      <div className="text-sm text-orange-800 space-y-1">
+                        <p>• <strong>Low-selling products</strong> might need price adjustments or marketing boost</p>
+                        <p>• <strong>Consider bundling</strong> these items with popular products</p>
+                        <p>• <strong>Review product descriptions</strong> and images for improvement opportunities</p>
+                        <p>• <strong>Seasonal factors</strong> may affect sales - check timing patterns</p>
+                        <p>• <strong>Customer feedback</strong> can reveal why these products underperform</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <TrendingDown className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                    <p className="text-lg font-medium mb-2">No Sales Data Available</p>
+                    <p className="mb-4">Start selling products to see analytics here.</p>
+                    <p className="text-sm">Sales analytics help identify optimization opportunities.</p>
                   </div>
                 )}
               </CardContent>
@@ -561,6 +676,8 @@ export default function StockManagement() {
               </CardContent>
             </Card>
           </div>
+        )}
+            </>
         )}
       </div>
     </AdminLayout>
