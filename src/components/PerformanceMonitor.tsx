@@ -13,29 +13,38 @@ export const PerformanceMonitor = () => {
           
           if (entry.entryType === 'navigation') {
             const nav = entry as PerformanceNavigationTiming;
-            console.log('🚀 Performance Metrics:', {
+            const metrics = {
               'DNS Lookup': nav.domainLookupEnd - nav.domainLookupStart,
               'TCP Connection': nav.connectEnd - nav.connectStart,
               'Request': nav.responseStart - nav.requestStart,
               'Response': nav.responseEnd - nav.responseStart,
               'DOM Content Loaded': nav.domContentLoadedEventEnd - nav.domContentLoadedEventStart,
               'Total Load Time': nav.loadEventEnd - nav.startTime,
-            });
+            };
+            
+            // Only log performance metrics once
+            if (!sessionStorage.getItem('performance-logged')) {
+              console.log('🚀 Performance Metrics:', metrics);
+              sessionStorage.setItem('performance-logged', 'true');
+            }
           }
         });
       });
 
       observer.observe({ entryTypes: ['measure', 'navigation', 'paint'] });
 
-      // Monitor memory usage
+      // Monitor memory usage less frequently
       const checkMemory = () => {
         if ('memory' in performance) {
           const memory = (performance as any).memory;
-          console.log('💾 Memory Usage:', {
+          const memoryInfo = {
             'Used': `${Math.round(memory.usedJSHeapSize / 1024 / 1024)}MB`,
             'Total': `${Math.round(memory.totalJSHeapSize / 1024 / 1024)}MB`,
             'Limit': `${Math.round(memory.jsHeapSizeLimit / 1024 / 1024)}MB`,
-          });
+          };
+          
+          // Only log memory every 30 seconds instead of every 5
+          console.log('💾 Memory Usage:', memoryInfo);
         }
       };
 

@@ -8,7 +8,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { getAuth } from '@/lib/firebase';
 import { toast } from 'sonner';
 
 interface AuthContextType {
@@ -39,16 +39,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
+    let unsubscribe: (() => void) | undefined;
+    
+    const initAuth = async () => {
+      try {
+        const auth = await getAuth();
+        unsubscribe = onAuthStateChanged(auth, (user) => {
+          setUser(user);
+          setLoading(false);
+        });
+      } catch (error) {
+        console.error('Failed to initialize auth:', error);
+        setLoading(false);
+      }
+    };
 
-    return unsubscribe;
+    initAuth();
+
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
     try {
+      const auth = await getAuth();
       await signInWithEmailAndPassword(auth, email, password);
       toast.success('Successfully signed in!');
     } catch (error: any) {
@@ -59,6 +76,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const signUp = async (email: string, password: string) => {
     try {
+      const auth = await getAuth();
       await createUserWithEmailAndPassword(auth, email, password);
       toast.success('Account created successfully!');
     } catch (error: any) {
@@ -69,6 +87,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const signInWithGoogle = async () => {
     try {
+      const auth = await getAuth();
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       toast.success('Successfully signed in with Google!');
@@ -80,6 +99,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = async () => {
     try {
+      const auth = await getAuth();
       await signOut(auth);
       toast.success('Successfully signed out!');
     } catch (error: any) {

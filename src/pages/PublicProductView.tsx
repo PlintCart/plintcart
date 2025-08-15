@@ -262,16 +262,20 @@ export default function PublicProductView() {
   if (showCheckout) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-accent/10 to-background">
-        <div className="container max-w-4xl mx-auto py-8 px-4">
+        <div className="container max-w-4xl mx-auto py-4 sm:py-8 px-4">
           {/* Header */}
-          <div className="flex items-center gap-4 mb-6">
-            <Button variant="ghost" onClick={() => setShowCheckout(false)}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Product
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+            <Button 
+              variant="ghost" 
+              onClick={() => setShowCheckout(false)}
+              className="shrink-0 p-2 sm:p-3 h-auto"
+            >
+              <ArrowLeft className="w-4 h-4 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+              <span className="text-sm sm:text-base">Back to Product</span>
             </Button>
-            <div>
-              <h1 className="text-2xl font-bold">Complete Your Order</h1>
-              <p className="text-muted-foreground">{product.name}</p>
+            <div className="flex-1">
+              <h1 className="text-xl sm:text-2xl font-bold">Complete Your Order</h1>
+              <p className="text-sm sm:text-base text-muted-foreground truncate">{product.name}</p>
             </div>
           </div>
 
@@ -479,12 +483,20 @@ export default function PublicProductView() {
                   Order via WhatsApp
                 </Button>
                 
-                <div className="flex gap-2">
-                  <Button variant="outline" className="flex-1" onClick={handleShare}>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 h-11 sm:h-10 text-sm sm:text-base" 
+                    onClick={handleShare}
+                  >
                     <Share2 className="w-4 h-4 mr-2" />
                     Share with friends
                   </Button>
-                  <Button variant="outline" onClick={() => navigate(`/store/${product.userId}`)}>
+                  <Button 
+                    variant="outline" 
+                    className="sm:w-auto h-11 sm:h-10 text-sm sm:text-base px-4" 
+                    onClick={() => navigate(`/store/${product.userId}`)}
+                  >
                     View Store
                   </Button>
                 </div>

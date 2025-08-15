@@ -26,7 +26,7 @@ import {
   Smartphone,
   Truck
 } from 'lucide-react';
-import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, where, orderBy, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
@@ -150,6 +150,71 @@ export default function Orders() {
     }
   };
 
+  const markOrderComplete = async (orderId: string) => {
+    try {
+      await updateDoc(doc(db, 'orders', orderId), {
+        status: 'completed',
+        updatedAt: new Date()
+      });
+      
+      // Update local state
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order.id === orderId 
+            ? { ...order, status: 'completed' as const }
+            : order
+        )
+      );
+      
+      toast.success('Order marked as complete!');
+    } catch (error) {
+      console.error('Error updating order:', error);
+      toast.error('Failed to update order status');
+    }
+  };
+
+  const cancelOrder = async (orderId: string) => {
+    try {
+      await updateDoc(doc(db, 'orders', orderId), {
+        status: 'cancelled',
+        updatedAt: new Date()
+      });
+      
+      // Update local state
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order.id === orderId 
+            ? { ...order, status: 'cancelled' as const }
+            : order
+        )
+      );
+      
+      toast.success('Order cancelled');
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      toast.error('Failed to cancel order');
+    }
+  };
+
+  const contactCustomer = (customerPhone?: string) => {
+    if (!customerPhone) {
+      toast.error('No phone number available');
+      return;
+    }
+    
+    // Clean phone number and create WhatsApp or SMS link
+    const cleanPhone = customerPhone.replace(/[^\d+]/g, '');
+    
+    // Try WhatsApp first
+    const whatsappUrl = `https://wa.me/${cleanPhone}?text=Hello! Regarding your recent order...`;
+    
+    // Fallback to SMS
+    const smsUrl = `sms:${cleanPhone}?body=Hello! Regarding your recent order...`;
+    
+    // Open WhatsApp in new tab, fallback to SMS if user cancels
+    window.open(whatsappUrl, '_blank') || window.open(smsUrl, '_self');
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'secondary';
@@ -266,17 +331,32 @@ export default function Orders() {
           <div className="flex flex-col sm:flex-row gap-2">
             {order.status === 'pending' && (
               <>
-                <Button size="sm" variant="outline" className="text-xs">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="text-xs"
+                  onClick={() => markOrderComplete(order.id)}
+                >
                   <CheckCircle className="w-3 h-3 mr-1" />
                   Mark Complete
                 </Button>
-                <Button size="sm" variant="outline" className="text-xs">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="text-xs"
+                  onClick={() => cancelOrder(order.id)}
+                >
                   <XCircle className="w-3 h-3 mr-1" />
                   Cancel
                 </Button>
               </>
             )}
-            <Button size="sm" variant="outline" className="text-xs">
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="text-xs"
+              onClick={() => contactCustomer(order.customerPhone)}
+            >
               <Phone className="w-3 h-3 mr-1" />
               Contact Customer
             </Button>
