@@ -2,6 +2,8 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import { visualizer } from 'rollup-plugin-visualizer';
+import viteCompression from 'vite-plugin-compression';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -12,13 +14,30 @@ export default defineConfig(({ mode }) => ({
       'Cache-Control': 'no-cache, no-store, must-revalidate',
       'X-Content-Type-Options': 'nosniff',
       'Content-Security-Policy': "frame-ancestors 'self'",
-      'X-Frame-Options': 'SAMEORIGIN', // Keeping for older browser compatibility
+      'X-Frame-Options': 'SAMEORIGIN',
     },
   },
   plugins: [
     react(),
-    mode === 'development' &&
-    componentTagger(),
+    mode === 'development' && componentTagger(),
+    // Enable gzip compression for production
+    mode === 'production' && viteCompression({
+      algorithm: 'gzip',
+      threshold: 1024,
+    }),
+    // Enable brotli compression for production (better than gzip)
+    mode === 'production' && viteCompression({
+      algorithm: 'brotliCompress',
+      ext: '.br',
+      threshold: 1024,
+    }),
+    // Add bundle analyzer
+    mode === 'production' && visualizer({
+      filename: 'dist/stats.html',
+      open: false, // Don't auto-open to speed up build
+      gzipSize: true,
+      brotliSize: true,
+    }),
   ].filter(Boolean),
   resolve: {
     alias: {
@@ -94,20 +113,20 @@ export default defineConfig(({ mode }) => ({
     },
     
     // Much stricter chunk size limits
-    chunkSizeWarningLimit: 300, // Warn for chunks larger than 300KB
+    chunkSizeWarningLimit: 200, // Warn for chunks larger than 200KB (more aggressive)
     
     // Enable source maps for production debugging but make them external
-    sourcemap: mode === 'production' ? 'hidden' : true,
+    sourcemap: mode === 'production' ? false : true, // Disable sourcemaps in prod for smaller size
     
     // CSS optimizations
     cssCodeSplit: true,
-    cssMinify: true,
+    cssMinify: 'esbuild', // Faster CSS minification
     
     // Additional build optimizations
-    reportCompressedSize: true,
+    reportCompressedSize: false, // Disable to speed up build
     
     // Optimize asset handling
-    assetsInlineLimit: 4096, // Inline assets smaller than 4KB
+    assetsInlineLimit: 2048, // Reduce inline limit to 2KB for smaller bundles
   },
   optimizeDeps: {
     // Pre-bundle heavy dependencies

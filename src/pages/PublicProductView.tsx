@@ -1,15 +1,21 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MessageCircle, Share2, ShoppingCart } from "lucide-react";
+import { ArrowLeft, MessageCircle, Share2, ShoppingCart, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ProductSharingService } from "@/lib/productSharing";
 import { Product } from "@/types/product";
-import { OrderFirstCheckout } from "@/components/OrderFirstCheckout";
+
+// Lazy load the heavy checkout component
+const OrderFirstCheckout = lazy(() => 
+  import("@/components/OrderFirstCheckout").then(module => ({
+    default: module.OrderFirstCheckout
+  }))
+);
 
 export default function PublicProductView() {
   const { id } = useParams();
@@ -270,21 +276,30 @@ export default function PublicProductView() {
           </div>
 
           {/* Checkout Component */}
-          <OrderFirstCheckout
-            product={product}
-            businessSettings={businessSettings}
-            mpesaSettings={{
-              enableMpesa: businessSettings?.enableMpesa ?? true, // Default to true if not set
-              mpesaMethod: businessSettings?.mpesaMethod || 'paybill',
-              paybillNumber: businessSettings?.paybillNumber || '174379',
-              accountReference: businessSettings?.accountReference || product.name,
-              tillNumber: businessSettings?.tillNumber || '',
-              mpesaPhoneNumber: businessSettings?.mpesaPhoneNumber || '',
-              mpesaInstructions: businessSettings?.mpesaInstructions || 'Complete payment via M-Pesa'
-            }}
-            onOrderComplete={handleOrderComplete}
-            onCancel={() => setShowCheckout(false)}
-          />
+          <Suspense fallback={
+            <Card className="p-6">
+              <div className="flex items-center justify-center space-x-2">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Loading checkout...</span>
+              </div>
+            </Card>
+          }>
+            <OrderFirstCheckout
+              product={product}
+              businessSettings={businessSettings}
+              mpesaSettings={{
+                enableMpesa: businessSettings?.enableMpesa ?? true,
+                mpesaMethod: businessSettings?.mpesaMethod || 'paybill',
+                paybillNumber: businessSettings?.paybillNumber || '174379',
+                accountReference: businessSettings?.accountReference || product.name,
+                tillNumber: businessSettings?.tillNumber || '',
+                mpesaPhoneNumber: businessSettings?.mpesaPhoneNumber || '',
+                mpesaInstructions: businessSettings?.mpesaInstructions || 'Complete payment via M-Pesa'
+              }}
+              onOrderComplete={handleOrderComplete}
+              onCancel={() => setShowCheckout(false)}
+            />
+          </Suspense>
         </div>
       </div>
     );

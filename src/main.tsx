@@ -3,7 +3,23 @@ import App from './App.tsx'
 import './index.css'
 import { PerformanceMonitor } from './components/PerformanceMonitor'
 
-// Preload critical fonts
+// Add loading indicator immediately
+const showLoadingSpinner = () => {
+  const root = document.getElementById('root');
+  if (root && !root.hasChildNodes()) {
+    root.innerHTML = `
+      <div class="loading-spinner">
+        <div class="spinner"></div>
+        <p>Loading application...</p>
+      </div>
+    `;
+  }
+};
+
+// Show loading immediately
+showLoadingSpinner();
+
+// Optimize font loading with display=swap
 if (typeof window !== 'undefined') {
   const preloadFont = (href: string) => {
     const link = document.createElement('link');
@@ -15,8 +31,18 @@ if (typeof window !== 'undefined') {
     document.head.appendChild(link);
   };
 
-  // Add your critical font preloads here
-  // preloadFont('/fonts/your-critical-font.woff2');
+  // Critical performance: defer non-critical scripts
+  const deferNonCritical = () => {
+    // Remove browser extension interference
+    const removeExtensionScripts = () => {
+      const extensionScripts = document.querySelectorAll('script[src*="chrome-extension"]');
+      extensionScripts.forEach(script => script.remove());
+    };
+    
+    setTimeout(removeExtensionScripts, 0);
+  };
+  
+  deferNonCritical();
 }
 
 const root = createRoot(document.getElementById("root")!);
