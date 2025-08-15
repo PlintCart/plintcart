@@ -57,11 +57,11 @@ export default function StockManagement() {
         ...doc.data()
       })) as Product[];
       
-      // Filter for stock tracking in memory (free tier friendly - no additional Firebase reads)
-      const stockTrackedProducts = loadedProducts.filter(p => p.trackStock === true);
-      setProducts(stockTrackedProducts);
+      // Show ALL products, not just stock tracked ones
+      setProducts(loadedProducts);
       
-      // Filter for alerts (free tier friendly - filter in memory vs complex queries)
+      // Filter for stock alerts (only for products that track stock)
+      const stockTrackedProducts = loadedProducts.filter(p => p.trackStock === true);
       const lowStock = stockTrackedProducts.filter(p => 
         p.stockQuantity <= (p.minStockLevel || 5) && p.stockQuantity > 0
       );
@@ -272,34 +272,37 @@ export default function StockManagement() {
               <CardContent>
                 <div className="space-y-4">
                   {filteredProducts.map((product) => (
-                    <div key={product.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-4">
+                    <div key={product.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg space-y-3 sm:space-y-0">
+                      <div className="flex items-start sm:items-center space-x-4 flex-1 min-w-0">
                         {product.imageUrl && (
                           <img 
                             src={product.imageUrl} 
                             alt={product.name} 
-                            className="w-12 h-12 object-cover rounded"
+                            className="w-12 h-12 object-cover rounded flex-shrink-0"
                           />
                         )}
-                        <div>
-                          <h3 className="font-medium">{product.name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            SKU: {product.sku || 'N/A'} | Price: ${product.price}
-                          </p>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-medium text-sm sm:text-base truncate">{product.name}</h3>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
+                            <span>SKU: {product.sku || 'N/A'}</span>
+                            <span className="hidden sm:inline">|</span>
+                            <span>Price: ${product.price}</span>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-4">
+                      <div className="flex items-center justify-between sm:justify-end space-x-3 sm:space-x-4 flex-shrink-0">
                         <div className="text-center">
-                          <p className="text-sm text-muted-foreground">Stock</p>
-                          <p className="font-bold">{product.stockQuantity || 0}</p>
+                          <p className="text-xs text-muted-foreground">Stock</p>
+                          <p className="font-bold text-sm">{product.stockQuantity || 0}</p>
                         </div>
-                        <Badge variant={getStockBadgeVariant(product)}>
+                        <Badge variant={getStockBadgeVariant(product)} className="text-xs">
                           {getStockStatus(product)}
                         </Badge>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => setSelectedProduct(product)}
+                          className="text-xs px-2 py-1"
                         >
                           Adjust
                         </Button>
@@ -531,27 +534,30 @@ export default function StockManagement() {
               <CardContent>
                 <div className="space-y-4">
                   {lowStockProducts.map((product) => (
-                    <div key={product.id} className="flex items-center justify-between p-4 border border-yellow-200 rounded-lg bg-yellow-50">
-                      <div className="flex items-center space-x-4">
+                    <div key={product.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-yellow-200 rounded-lg bg-yellow-50 space-y-3 sm:space-y-0">
+                      <div className="flex items-start sm:items-center space-x-4 flex-1 min-w-0">
                         {product.imageUrl && (
                           <img 
                             src={product.imageUrl} 
                             alt={product.name} 
-                            className="w-12 h-12 object-cover rounded"
+                            className="w-12 h-12 object-cover rounded flex-shrink-0"
                           />
                         )}
-                        <div>
-                          <h3 className="font-medium">{product.name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Current: {product.stockQuantity} | Min Level: {product.minStockLevel || 5}
-                          </p>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-medium text-sm sm:text-base truncate">{product.name}</h3>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
+                            <span>Current: {product.stockQuantity}</span>
+                            <span className="hidden sm:inline">|</span>
+                            <span>Min Level: {product.minStockLevel || 5}</span>
+                          </div>
                         </div>
                       </div>
                       <Button
                         size="sm"
                         onClick={() => setSelectedProduct(product)}
+                        className="self-end sm:self-auto text-xs px-3 py-1"
                       >
-                        <Plus className="w-4 h-4 mr-2" />
+                        <Plus className="w-3 h-3 mr-1" />
                         Restock
                       </Button>
                     </div>
@@ -578,27 +584,30 @@ export default function StockManagement() {
               <CardContent>
                 <div className="space-y-4">
                   {outOfStockProducts.map((product) => (
-                    <div key={product.id} className="flex items-center justify-between p-4 border border-red-200 rounded-lg bg-red-50">
-                      <div className="flex items-center space-x-4">
+                    <div key={product.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-red-200 rounded-lg bg-red-50 space-y-3 sm:space-y-0">
+                      <div className="flex items-start sm:items-center space-x-4 flex-1 min-w-0">
                         {product.imageUrl && (
                           <img 
                             src={product.imageUrl} 
                             alt={product.name} 
-                            className="w-12 h-12 object-cover rounded"
+                            className="w-12 h-12 object-cover rounded flex-shrink-0"
                           />
                         )}
-                        <div>
-                          <h3 className="font-medium">{product.name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            SKU: {product.sku || 'N/A'} | Price: ${product.price}
-                          </p>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-medium text-sm sm:text-base truncate">{product.name}</h3>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
+                            <span>SKU: {product.sku || 'N/A'}</span>
+                            <span className="hidden sm:inline">|</span>
+                            <span>Price: ${product.price}</span>
+                          </div>
                         </div>
                       </div>
                       <Button
                         size="sm"
                         onClick={() => setSelectedProduct(product)}
+                        className="self-end sm:self-auto text-xs px-3 py-1"
                       >
-                        <Plus className="w-4 h-4 mr-2" />
+                        <Plus className="w-3 h-3 mr-1" />
                         Add Stock
                       </Button>
                     </div>

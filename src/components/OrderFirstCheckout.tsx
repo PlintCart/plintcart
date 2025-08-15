@@ -75,6 +75,30 @@ export function OrderFirstCheckout({
   const deliveryFee = businessSettings?.deliveryFee || 0;
   const total = product.price + deliveryFee;
 
+  // Create stock transaction for sales analytics
+  const createStockTransaction = async (orderId: string) => {
+    try {
+      const transaction = {
+        userId: product.userId,
+        productId: product.id,
+        productName: product.name,
+        type: 'sold',
+        quantity: 1, // Always 1 for single product orders
+        reason: `Order ${orderId}`,
+        timestamp: new Date(),
+        orderId: orderId,
+        unitPrice: product.price,
+        totalValue: product.price * 1
+      };
+
+      await addDoc(collection(db, 'stockTransactions'), transaction);
+      console.log('Stock transaction created for analytics');
+    } catch (error) {
+      console.error('Error creating stock transaction:', error);
+      // Don't show error to user as this is for analytics only
+    }
+  };
+
   // Step 1: Create order immediately with customer info
   const createOrder = async () => {
     if (!validateCustomerInfo()) return;
@@ -207,6 +231,9 @@ export function OrderFirstCheckout({
           updatedAt: new Date()
         });
 
+        // Create stock transaction for sales analytics (COD orders are confirmed immediately)
+        await createStockTransaction(orderStatus.orderId);
+
         toast.success('Order confirmed! Pay cash on delivery.');
         onOrderComplete?.(orderStatus.orderId);
       }
@@ -238,9 +265,12 @@ export function OrderFirstCheckout({
         await updateDoc(doc(db, 'orders', orderStatus.orderId), {
           paymentStatus: 'paid',
           paymentConfirmedAt: new Date(),
-          status: 'confirmed',
+          status: 'completed',
           updatedAt: new Date()
         });
+
+        // Create stock transaction for sales analytics
+        await createStockTransaction(orderStatus.orderId);
 
         setOrderStatus(prev => ({ ...prev, status: 'payment_completed' }));
         toast.success('Payment confirmed! Your order is being processed.');

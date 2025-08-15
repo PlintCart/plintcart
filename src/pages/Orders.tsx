@@ -75,7 +75,9 @@ export default function Orders() {
   // Computed order statistics
   const totalOrders = orders.length;
   const pendingOrders = orders.filter(order => order.status === 'pending');
-  const completedOrders = orders.filter(order => order.status === 'completed');
+  const completedOrders = orders.filter(order => 
+    order.status === 'completed' || order.status === 'confirmed'
+  );
   const cancelledOrders = orders.filter(order => order.status === 'cancelled');
   const todayOrders = orders.filter(order => {
     const today = new Date();
