@@ -17,24 +17,6 @@ const Index = () => {
         <Features />
         <Pricing />
         
-        {/* Demo Section */}
-        <section id="demo" className="py-24 bg-gradient-to-r from-primary/5 to-brand-green/5">
-          <div className="container mx-auto px-6 text-center">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">See it in Action</h2>
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Experience how easy it is to create your business storefront with Plint
-            </p>
-            <Button 
-              size="xl" 
-              variant="success" 
-              onClick={() => navigate('/storefront')}
-              className="animate-pulse hover:animate-none"
-            >
-              View Live Demo
-            </Button>
-          </div>
-        </section>
-
         {/* Support Section */}
         <section id="support" className="py-24 bg-background">
           <div className="container mx-auto px-6 text-center">

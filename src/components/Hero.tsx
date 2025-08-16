@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Play } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const Hero = () => {
@@ -10,9 +10,9 @@ const Hero = () => {
     navigate('/auth?mode=signup');
   };
 
-  const handleViewDemo = () => {
-    // Navigate to storefront to show the demo
-    navigate('/storefront');
+  const handleLearnMore = () => {
+    // Scroll to features section
+    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
@@ -62,9 +62,9 @@ const Hero = () => {
               Start Free Trial
               <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
             </Button>
-            <Button variant="outline" size="xl" className="group min-w-[180px] border-white/30 text-white hover:bg-white hover:text-primary" onClick={handleViewDemo}>
-              <Play className="w-5 h-5 transition-transform group-hover:scale-110" />
-              View Demo
+            <Button variant="outline" size="xl" className="group min-w-[180px] border-white/30 text-white hover:bg-white hover:text-primary" onClick={handleLearnMore}>
+              <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+              Learn More
             </Button>
           </div>
 
