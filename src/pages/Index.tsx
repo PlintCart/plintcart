@@ -22,7 +22,7 @@ const Index = () => {
           <div className="container mx-auto px-6 text-center">
             <h2 className="text-4xl md:text-5xl font-bold mb-6">See it in Action</h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Experience how easy it is to create your restaurant's ordering system
+              Experience how easy it is to create your business storefront with Plint
             </p>
             <Button 
               size="xl" 
@@ -40,7 +40,7 @@ const Index = () => {
           <div className="container mx-auto px-6 text-center">
             <h2 className="text-4xl md:text-5xl font-bold mb-6">Need Help?</h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              We're here to help you get started with your restaurant ordering system
+              We're here to help you get started with your business storefront
             </p>
             <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
               <div className="p-6 rounded-lg border">

@@ -158,7 +158,7 @@ const ProductDetail = () => {
             <div className="flex gap-4">
               <Button onClick={handleOrder} size="lg" className="flex-1">
                 <ShoppingCart className="h-5 w-5 mr-2" />
-                Order Now
+                Pay Now
               </Button>
               <Button onClick={handleShare} variant="outline" size="lg">
                 <Share2 className="h-5 w-5 mr-2" />

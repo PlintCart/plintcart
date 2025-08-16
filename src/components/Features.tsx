@@ -66,7 +66,7 @@ const Features = () => {
             </span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Built specifically for food businesses that want to start selling online quickly and easily.
+            Built for any business that wants to start selling online quickly and easily - retail, services, digital products, and more.
           </p>
         </div>
 
@@ -105,16 +105,16 @@ const Features = () => {
         {/* Bottom CTA */}
         <div className="text-center mt-20 animate-fade-in">
           <p className="text-lg text-muted-foreground mb-6">
-            Join thousands of businesses already using Take.App
+            Join thousands of businesses already using Plint
           </p>
           <div className="flex justify-center items-center space-x-12 opacity-60">
             <div className="text-center">
-              <div className="text-3xl font-bold text-primary">10K+</div>
-              <div className="text-sm text-muted-foreground">Active Restaurants</div>
+              <div className="text-3xl font-bold text-primary">5K+</div>
+              <div className="text-sm text-muted-foreground">Active Businesses</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-primary">1M+</div>
-              <div className="text-sm text-muted-foreground">Orders Processed</div>
+              <div className="text-3xl font-bold text-primary">100K+</div>
+              <div className="text-sm text-muted-foreground">Products Shared</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-primary">99.9%</div>

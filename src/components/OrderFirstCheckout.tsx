@@ -8,6 +8,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { 
   Smartphone, 
   CreditCard, 
@@ -71,6 +72,7 @@ export function OrderFirstCheckout({
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPaymentConfirmation, setShowPaymentConfirmation] = useState(false);
+  const [showPaymentPendingDialog, setShowPaymentPendingDialog] = useState(false);
   const [notes, setNotes] = useState('');
   const deliveryFee = businessSettings?.deliveryFee || 0;
   const total = product.price + deliveryFee;
@@ -281,7 +283,8 @@ export function OrderFirstCheckout({
           updatedAt: new Date()
         });
 
-        toast.info('Payment pending. You can confirm later or contact support.');
+        // Show centered dialog instead of just toast
+        setShowPaymentPendingDialog(true);
       }
     } catch (error) {
       console.error('Error confirming payment:', error);
@@ -633,5 +636,45 @@ export function OrderFirstCheckout({
     );
   }
 
-  return null;
+  return (
+    <>
+      {/* Payment Pending Dialog */}
+      <Dialog open={showPaymentPendingDialog} onOpenChange={setShowPaymentPendingDialog}>
+        <DialogContent className="max-w-md mx-auto">
+          <div className="text-center p-6">
+            <div className="text-6xl mb-4">⏰</div>
+            <h3 className="text-xl font-bold mb-4">Payment Pending</h3>
+            <p className="text-muted-foreground mb-4">
+              No worries! Your order has been saved successfully.
+            </p>
+            <p className="text-sm text-muted-foreground mb-6">
+              You can complete the payment later or contact our support team for assistance.
+            </p>
+            <div className="space-y-3">
+              <Button 
+                onClick={() => {
+                  setShowPaymentPendingDialog(false);
+                  // Redirect to storefront
+                  if (onOrderComplete) {
+                    onOrderComplete(orderStatus.orderId || '');
+                  } else {
+                    // Fallback redirect
+                    window.location.href = `/store/${product?.userId}`;
+                  }
+                }}
+                className="w-full"
+                style={{ backgroundColor: businessSettings?.primaryColor || '#059669' }}
+              >
+                ✅ Got it, go to store
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                Your order ID: {orderStatus.orderId}
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {null}
+    </>
+  );
 }

@@ -25,7 +25,6 @@ export default function PublicProductView() {
   const [loading, setLoading] = useState(true);
   const [businessSettings, setBusinessSettings] = useState<any>(null);
   const [showCheckout, setShowCheckout] = useState(false);
-  const [showPaymentConfirmation, setShowPaymentConfirmation] = useState(false);
   const [paymentDialogType, setPaymentDialogType] = useState<'success' | 'failed' | null>(null);
 
   useEffect(() => {
@@ -145,11 +144,6 @@ export default function PublicProductView() {
     window.open(whatsappUrl, '_blank');
   };
 
-  const createOrderForPayment = async () => {
-    // This function is replaced by OrderFirstCheckout component
-    setShowCheckout(true);
-  };
-
   const handleOrderComplete = (orderId: string) => {
     // Close checkout modal
     setShowCheckout(false);
@@ -158,17 +152,6 @@ export default function PublicProductView() {
     setTimeout(() => {
       checkPaymentStatus();
     }, 1000); // Small delay to let UI settle
-  };
-
-  const handlePaymentConfirmation = (hasPaid: boolean) => {
-    setShowPaymentConfirmation(false);
-    setPaymentDialogType(hasPaid ? 'success' : 'failed');
-    
-    // Auto-close dialog after 5 seconds and redirect to store
-    setTimeout(() => {
-      setPaymentDialogType(null);
-      navigate(`/store/${product?.userId}`);
-    }, 5000);
   };
 
   const checkPaymentStatus = async () => {
@@ -195,15 +178,23 @@ export default function PublicProductView() {
           navigate(`/store/${product?.userId}`);
         }, 5000);
       } else {
-        // Payment not detected automatically, ask customer for confirmation
-        toast.info('Please confirm your payment status');
-        setShowPaymentConfirmation(true);
+        // Payment not detected automatically, show success anyway and redirect
+        toast.success('🎉 Order placed successfully! 🎉');
+        setPaymentDialogType('success');
+        setTimeout(() => {
+          setPaymentDialogType(null);
+          navigate(`/store/${product?.userId}`);
+        }, 3000);
       }
     } catch (error) {
       console.error('Payment detection failed:', error);
-      // Fallback to manual confirmation if automatic detection fails
-      toast.warning('Unable to detect payment automatically. Please confirm manually.');
-      setShowPaymentConfirmation(true);
+      // Show success and redirect anyway
+      toast.success('🎉 Order placed successfully! 🎉');
+      setPaymentDialogType('success');
+      setTimeout(() => {
+        setPaymentDialogType(null);
+        navigate(`/store/${product?.userId}`);
+      }, 3000);
     }
   };
 
@@ -313,57 +304,6 @@ export default function PublicProductView() {
     );
   }
 
-  // Show checkout flow if triggered
-  if (showCheckout) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-accent/10 to-background">
-        <div className="container max-w-4xl mx-auto py-4 sm:py-8 px-4">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-            <Button 
-              variant="ghost" 
-              onClick={() => setShowCheckout(false)}
-              className="shrink-0 p-2 sm:p-3 h-auto"
-            >
-              <ArrowLeft className="w-4 h-4 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              <span className="text-sm sm:text-base">Create your own store</span>
-            </Button>
-            <div className="flex-1">
-              <h1 className="text-xl sm:text-2xl font-bold">Complete Your Order</h1>
-              <p className="text-sm sm:text-base text-muted-foreground truncate">{product.name}</p>
-            </div>
-          </div>
-
-          {/* Checkout Component */}
-          <Suspense fallback={
-            <Card className="p-6">
-              <div className="flex items-center justify-center space-x-2">
-                <Loader2 className="w-5 h-5 animate-spin" />
-                <span>Loading checkout...</span>
-              </div>
-            </Card>
-          }>
-            <OrderFirstCheckout
-              product={product}
-              businessSettings={businessSettings}
-              mpesaSettings={{
-                enableMpesa: businessSettings?.enableMpesa ?? true,
-                mpesaMethod: businessSettings?.mpesaMethod || 'paybill',
-                paybillNumber: businessSettings?.paybillNumber || '174379',
-                accountReference: businessSettings?.accountReference || product.name,
-                tillNumber: businessSettings?.tillNumber || '',
-                mpesaPhoneNumber: businessSettings?.mpesaPhoneNumber || '',
-                mpesaInstructions: businessSettings?.mpesaInstructions || 'Complete payment via M-Pesa'
-              }}
-              onOrderComplete={handleOrderComplete}
-              onCancel={() => setShowCheckout(false)}
-            />
-          </Suspense>
-        </div>
-      </div>
-    );
-  }
-
   const currencySymbol = getCurrencySymbol(businessSettings?.currency || 'usd');
   const businessName = businessSettings?.businessName || product.businessName || 'Store';
   const storeTheme = businessSettings?.storeTheme || 'modern';
@@ -408,49 +348,51 @@ export default function PublicProductView() {
         </div>
       </header>
 
-      {/* Product Details - Professional Layout */}
-      <div className="container mx-auto px-4 py-8 max-w-lg">
-        <Card className="overflow-hidden shadow-lg">
+
+      {/* Simple Product Card - Like Storefront */}
+      <div className="container mx-auto px-4 py-8 max-w-md">
+        <Card className="overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
           <CardContent className="p-0">
-            {/* Product Image */}
-            <div className="relative aspect-square bg-muted">
+            <div className="relative aspect-square overflow-hidden">
               {product.imageUrl ? (
                 <img
                   src={product.imageUrl}
                   alt={product.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <div className="text-center">
-                    <ShoppingCart className="w-16 h-16 text-muted-foreground/50 mx-auto mb-2" />
-                    <span className="text-muted-foreground">Product Image</span>
-                  </div>
+                <div className="w-full h-full flex items-center justify-center bg-muted">
+                  <ShoppingCart className="w-16 h-16 text-muted-foreground/50" />
                 </div>
               )}
               
               {/* Price Badge */}
-              <div className="absolute top-4 right-4">
+              <div className="absolute top-3 right-3">
                 <div 
-                  className="text-white px-4 py-2 rounded-lg font-bold shadow-lg text-lg"
+                  className="text-white px-2 py-1 rounded-full text-sm font-bold shadow-lg"
                   style={{ backgroundColor: primaryColor }}
                 >
                   {currencySymbol}{product.price}
                 </div>
               </div>
+            </div>
 
-              {/* Featured Badge */}
-              {product.featured && (
-                <div className="absolute top-4 left-4">
-                  <Badge variant="secondary" className="bg-yellow-500 text-white shadow-lg">
-                    ⭐ Featured
-                  </Badge>
+            {/* Product Info */}
+            <div className="p-6">
+              <div className="space-y-4 mb-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <h1 className="text-2xl font-bold leading-tight">{product.name}</h1>
+                    <Badge variant="outline" className="mt-2">{product.category}</Badge>
+                  </div>
                 </div>
-              )}
+                
+                <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+              </div>
 
               {/* Stock Status */}
               {product.stockQuantity !== undefined && (
-                <div className="absolute bottom-4 left-4">
+                <div className="mb-6">
                   <Badge 
                     variant={product.stockQuantity > 0 ? "default" : "destructive"}
                     className="shadow-lg"
@@ -463,65 +405,19 @@ export default function PublicProductView() {
                   </Badge>
                 </div>
               )}
-            </div>
-
-            {/* Product Information */}
-            <div className="p-6">
-              {/* Header Info */}
-              <div className="space-y-4 mb-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <h1 className="text-2xl font-bold leading-tight">{product.name}</h1>
-                    <Badge variant="outline" className="mt-2">{product.category}</Badge>
-                  </div>
-                </div>
-                
-                <p className="text-muted-foreground leading-relaxed">{product.description}</p>
-              </div>
-
-              {/* Product Tags */}
-              {product.tags && product.tags.length > 0 && (
-                <div className="mb-6">
-                  <div className="flex flex-wrap gap-2">
-                    {product.tags.slice(0, 4).map((tag, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs">
-                        #{tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Quick Specifications */}
-              {product.specifications && Object.keys(product.specifications).length > 0 && (
-                <div className="mb-6 p-4 bg-muted/30 rounded-lg">
-                  <h3 className="font-semibold mb-3 text-sm">Product Details</h3>
-                  <div className="grid grid-cols-1 gap-2">
-                    {Object.entries(product.specifications).slice(0, 4).map(([key, value]) => (
-                      <div key={key} className="flex justify-between text-sm">
-                        <span className="text-muted-foreground font-medium">{key}:</span>
-                        <span className="font-semibold">{value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {/* Action Buttons */}
               <div className="space-y-3">
-                {/* Primary Order Button */}
                 <Button 
                   className="w-full h-14 text-lg font-semibold" 
-                  size="lg"
                   onClick={() => setShowCheckout(true)}
                   disabled={product.stockQuantity === 0}
                   style={{ backgroundColor: primaryColor }}
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
-                  {product.stockQuantity === 0 ? 'Out of Stock' : 'Order Now'}
+                  {product.stockQuantity === 0 ? 'Out of Stock' : 'Pay Now'}
                 </Button>
                 
-                {/* Contact Vendor Button */}
                 <Button 
                   variant="outline"
                   className="w-full h-12 text-base font-medium border-2" 
@@ -533,7 +429,6 @@ export default function PublicProductView() {
                   Contact vendor
                 </Button>
                 
-                {/* Secondary Actions */}
                 <div className="grid grid-cols-2 gap-3 pt-2">
                   <Button 
                     variant="outline" 
@@ -554,60 +449,21 @@ export default function PublicProductView() {
               </div>
 
               {/* Business Info Footer */}
-              {showBusinessInfo && (
-                <div className="border-t mt-6 pt-6 text-center">
-                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-2">
-                    <div className="flex items-center gap-2">
-                      <ShoppingCart className="w-4 h-4" />
-                      <span>Sold by <span className="font-semibold text-foreground">{businessName}</span></span>
-                    </div>
+              <div className="border-t mt-6 pt-6 text-center">
+                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-2">
+                  <div className="flex items-center gap-2">
+                    <ShoppingCart className="w-4 h-4" />
+                    <span>Sold by <span className="font-semibold text-foreground">{businessName}</span></span>
                   </div>
-                  {businessSettings?.storeDescription && (
-                    <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
-                      {businessSettings.storeDescription}
-                    </p>
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    Powered by <span className="font-semibold" style={{ color: primaryColor }}>pl<span className="text-green-600">int</span></span>
-                  </p>
                 </div>
-              )}
+                <p className="text-xs text-muted-foreground">
+                  Powered by <span className="font-semibold" style={{ color: primaryColor }}>pl<span className="text-green-600">int</span></span>
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Payment Confirmation Dialog */}
-      <Dialog open={showPaymentConfirmation} onOpenChange={setShowPaymentConfirmation}>
-        <DialogContent className="max-w-md mx-auto">
-          <div className="text-center p-6">
-            <div className="text-6xl mb-4">⏳</div>
-            <h3 className="text-xl font-bold mb-4">Payment Status Check</h3>
-            <p className="text-muted-foreground mb-4">
-              We couldn't automatically detect your payment. 
-            </p>
-            <p className="text-sm text-muted-foreground mb-6">
-              Please let us know if you've completed the payment for your order:
-            </p>
-            <div className="flex gap-3">
-              <Button 
-                onClick={() => handlePaymentConfirmation(true)}
-                className="flex-1"
-                style={{ backgroundColor: businessSettings?.primaryColor || '#059669' }}
-              >
-                ✅ Yes, I've paid
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => handlePaymentConfirmation(false)}
-                className="flex-1"
-              >
-                ❌ Not yet
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       {/* Payment Success Dialog */}
       <Dialog open={paymentDialogType === 'success'} onOpenChange={() => setPaymentDialogType(null)}>
@@ -663,35 +519,33 @@ export default function PublicProductView() {
       </Dialog>
 
       {/* Checkout Modal */}
-      {showCheckout && product && (
-        <Dialog open={showCheckout} onOpenChange={setShowCheckout}>
-          <DialogContent className="max-w-md mx-auto max-h-[90vh] overflow-y-auto">
-            <div className="relative">
-              <Suspense fallback={
-                <div className="flex items-center justify-center p-8">
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                </div>
-              }>
-                <OrderFirstCheckout
-                  product={product}
-                  businessSettings={businessSettings}
-                  mpesaSettings={{
-                    enableMpesa: businessSettings?.enableMpesa ?? true,
-                    mpesaMethod: businessSettings?.mpesaMethod || 'paybill',
-                    paybillNumber: businessSettings?.paybillNumber || '174379',
-                    accountReference: businessSettings?.accountReference || product.name,
-                    tillNumber: businessSettings?.tillNumber || '',
-                    mpesaPhoneNumber: businessSettings?.mpesaPhoneNumber || '',
-                    mpesaInstructions: businessSettings?.mpesaInstructions || 'Complete payment via M-Pesa'
-                  }}
-                  onOrderComplete={handleOrderComplete}
-                  onCancel={() => setShowCheckout(false)}
-                />
-              </Suspense>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+      <Dialog open={showCheckout} onOpenChange={setShowCheckout}>
+        <DialogContent className="max-w-2xl mx-auto max-h-[95vh] overflow-y-auto">
+          <div className="relative">
+            <Suspense fallback={
+              <div className="flex items-center justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            }>
+              <OrderFirstCheckout
+                product={product}
+                businessSettings={businessSettings}
+                mpesaSettings={{
+                  enableMpesa: businessSettings?.enableMpesa ?? true,
+                  mpesaMethod: businessSettings?.mpesaMethod || 'paybill',
+                  paybillNumber: businessSettings?.paybillNumber || '174379',
+                  accountReference: businessSettings?.accountReference || product.name,
+                  tillNumber: businessSettings?.tillNumber || '',
+                  mpesaPhoneNumber: businessSettings?.mpesaPhoneNumber || '',
+                  mpesaInstructions: businessSettings?.mpesaInstructions || 'Complete payment via M-Pesa'
+                }}
+                onOrderComplete={handleOrderComplete}
+                onCancel={() => setShowCheckout(false)}
+              />
+            </Suspense>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

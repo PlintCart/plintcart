@@ -45,7 +45,7 @@ const Footer = () => {
           <div className="container mx-auto px-6 py-16">
             <div className="max-w-4xl mx-auto text-center">
               <h3 className="text-3xl font-bold mb-4">
-                Stay updated with Take.App
+                Stay updated with Plint
               </h3>
               <p className="text-white/80 mb-8 text-lg">
                 Get the latest updates, tips, and insights delivered to your inbox.
@@ -72,21 +72,21 @@ const Footer = () => {
             <div className="lg:col-span-2">
               <div className="mb-6">
                 <h2 className="text-3xl font-bold mb-4">
-                  Take<span className="text-brand-green-light">.App</span>
+                  pl<span className="text-brand-green-light">int</span>
                 </h2>
                 <p className="text-white/80 text-lg leading-relaxed">
-                  The easiest way to create an online ordering system that connects directly to WhatsApp.
+                  The easiest way to create a beautiful online storefront that connects directly to WhatsApp for any business.
                 </p>
               </div>
               
               <div className="space-y-3">
                 <div className="flex items-center gap-3 text-white/80">
                   <Mail className="w-5 h-5" />
-                  <span>hello@take.app</span>
+                  <span>hello@plint.co.ke</span>
                 </div>
                 <div className="flex items-center gap-3 text-white/80">
                   <Phone className="w-5 h-5" />
-                  <span>+1 (555) 123-4567</span>
+                  <span>+254 (0) 700 123456</span>
                 </div>
                 <div className="flex items-center gap-3 text-white/80">
                   <MessageCircle className="w-5 h-5" />
@@ -119,7 +119,7 @@ const Footer = () => {
           <div className="border-t border-white/20 mt-16 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="text-white/60 text-sm">
-                © 2024 Take.App. All rights reserved.
+                © 2024 Plint. All rights reserved.
               </div>
               <div className="flex items-center gap-6">
                 <a href="#" className="text-white/60 hover:text-white transition-smooth">

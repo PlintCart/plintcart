@@ -5,14 +5,15 @@ const Pricing = () => {
   const plans = [
     {
       name: "Starter",
-      price: "$0",
+      price: "KSh 0",
       period: "/month",
       description: "Perfect for getting started",
       features: [
         "Up to 50 products",
-        "WhatsApp integration",
+        "WhatsApp integration", 
         "Basic analytics",
         "Mobile responsive",
+        "Product sharing",
         "Email support"
       ],
       buttonText: "Get Started",
@@ -20,40 +21,23 @@ const Pricing = () => {
       popular: false
     },
     {
-      name: "Professional",
-      price: "$29",
+      name: "Professional", 
+      price: "KSh 2,500",
       period: "/month",
       description: "Most popular choice for growing businesses",
       features: [
         "Unlimited products",
         "Advanced analytics",
-        "Custom branding",
+        "Custom branding & themes", 
         "Priority support",
-        "Multi-language support",
-        "Custom integrations",
-        "Advanced reporting"
+        "Multi-currency support",
+        "Custom business settings",
+        "Advanced product sharing",
+        "Store customization"
       ],
       buttonText: "Get Started",
       buttonVariant: "success" as const,
       popular: true
-    },
-    {
-      name: "Enterprise",
-      price: "$99",
-      period: "/month",
-      description: "For large businesses with advanced needs",
-      features: [
-        "Everything in Professional",
-        "Custom integrations",
-        "Dedicated support",
-        "White-label solution",
-        "Custom domains",
-        "API access",
-        "Advanced security"
-      ],
-      buttonText: "Get Started",
-      buttonVariant: "premium" as const,
-      popular: false
     }
   ];
 
@@ -81,7 +65,7 @@ const Pricing = () => {
         </div>
 
         {/* Pricing Cards */}
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {plans.map((plan, index) => (
             <div
               key={index}
@@ -166,7 +150,7 @@ const Pricing = () => {
           <div className="gradient-cta rounded-3xl p-12 shadow-large max-w-4xl mx-auto text-white">
             <h3 className="text-4xl font-bold mb-4">Ready to start selling?</h3>
             <p className="text-xl mb-8 opacity-90">
-              Join thousands of businesses already using Take.App to boost their sales
+              Join thousands of businesses already using Plint to boost their sales
             </p>
             <Button variant="success" size="xl" className="bg-white text-primary hover:bg-white/90 shadow-medium">
               Start Your Free Trial

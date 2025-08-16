@@ -28,14 +28,11 @@ export default function VendorStorefront() {
       setLoading(true);
       
       // Fetch vendor settings
-      console.log('Fetching settings for vendor:', vendorId);
       const settingsDoc = await getDoc(doc(db, 'userSettings', vendorId));
       
       if (settingsDoc.exists()) {
-        console.log('Settings found:', settingsDoc.data());
         setBusinessSettings(settingsDoc.data());
       } else {
-        console.log('No settings found for vendor:', vendorId);
         // Set default settings if none exist
         setBusinessSettings({
           businessName: 'Online Store',
@@ -45,7 +42,6 @@ export default function VendorStorefront() {
       }
 
       // Fetch vendor products (only visible ones)
-      console.log('Fetching products for vendor:', vendorId);
       const productsQuery = query(
         collection(db, 'products'),
         where('userId', '==', vendorId),
@@ -53,7 +49,6 @@ export default function VendorStorefront() {
       );
       
       const productsSnapshot = await getDocs(productsQuery);
-      console.log('Products found:', productsSnapshot.size);
       
       const productsData = productsSnapshot.docs.map(doc => {
         const data = doc.data();
@@ -298,23 +293,56 @@ export default function VendorStorefront() {
                       </div>
                       
                       <div className="space-y-3">
+                        {/* Primary Action - Pay Now */}
                         <Button 
-                          className="w-full text-lg py-6"
+                          className="w-full h-14 text-lg font-semibold rounded-xl"
                           onClick={() => navigate(`/product/${featuredProduct.shareableId || featuredProduct.id}`)}
                           style={{ backgroundColor: primaryColor }}
                           disabled={featuredProduct.stockQuantity === 0}
                         >
-                          {featuredProduct.stockQuantity === 0 ? 'Out of Stock' : 'View Product Details'}
+                          <ShoppingCart className="w-5 h-5 mr-2" />
+                          {featuredProduct.stockQuantity === 0 ? 'Out of Stock' : 'Pay Now'}
                         </Button>
                         
+                        {/* Contact Vendor Button */}
                         <Button 
                           variant="outline" 
-                          className="w-full"
-                          onClick={() => shareProduct(featuredProduct)}
+                          className="w-full h-12 text-base font-medium border-2"
+                          style={{ 
+                            borderColor: primaryColor, 
+                            color: primaryColor 
+                          }}
+                          onClick={() => {
+                            if (businessSettings?.whatsappNumber || businessSettings?.businessPhone) {
+                              const phoneNumber = businessSettings.whatsappNumber || businessSettings.businessPhone;
+                              const message = `Hi! I'm interested in ${featuredProduct.name} from your store.`;
+                              const whatsappUrl = `https://wa.me/${phoneNumber.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+                              window.open(whatsappUrl, '_blank');
+                            }
+                          }}
                         >
-                          <Share2 className="w-4 h-4 mr-2" />
-                          Share this Product
+                          <MessageCircle className="w-5 h-5 mr-2" />
+                          Contact vendor
                         </Button>
+
+                        {/* Secondary Actions Grid */}
+                        <div className="grid grid-cols-2 gap-3 pt-2">
+                          <Button 
+                            variant="outline" 
+                            className="h-11 text-sm"
+                            onClick={() => shareProduct(featuredProduct)}
+                          >
+                            <Share2 className="w-4 h-4 mr-2" />
+                            Share
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            className="h-11 text-sm"
+                            onClick={() => navigate(`/product/${featuredProduct.shareableId || featuredProduct.id}`)}
+                          >
+                            View Details
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -431,7 +459,7 @@ export default function VendorStorefront() {
                             style={{ backgroundColor: primaryColor }}
                           >
                             <ShoppingCart className="w-5 h-5 mr-2" />
-                            {product.stockQuantity === 0 ? 'Out of Stock' : 'Order Now'}
+                            {product.stockQuantity === 0 ? 'Out of Stock' : 'Pay Now'}
                           </Button>
                           
                           {/* Contact Vendor Button */}
