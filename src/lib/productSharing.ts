@@ -29,21 +29,19 @@ export class ProductSharingService {
 
   // Generate WhatsApp sharing URL with image support
   static generateWhatsAppLink(product: Product, settings: any): string {
-    const shareUrl = this.generateShareableLink(product);
-    const storeUrl = `${this.baseUrl}/store/${product.userId}`;
+    const storeUrl = `${this.baseUrl}/store/${product.userId}`; // Only storefront link
     const currencySymbol = this.getCurrencySymbol(settings.currency);
     const businessName = settings.businessName || 'Our Store';
     const whatsappNumber = settings.whatsappNumber;
     
-    // Create a more concise message that includes both product and store links
-    const message = `🛍️ *${product.name}*\n\n` +
-      `Check out this amazing product!\n\n` +
-      `${shareUrl}\n\n` +
-      `💰 Price: ${currencySymbol}${product.price}${product.salePrice ? ` ~~${currencySymbol}${product.salePrice}~~` : ''}\n\n` +
-      `📝 ${product.description.length > 100 ? product.description.substring(0, 100) + '...' : product.description}\n\n` +
-      `🏪 Visit our full store: ${storeUrl}\n\n` +
-      `Available at: *${businessName}*\n\n` +
-      `#${product.category.replace(/\s+/g, '')} #${businessName.replace(/\s+/g, '')}`;
+    // Create a message that only includes the storefront link (no admin/merchant links)
+    const message = `🛍️✨ *${product.name}* ✨🛍️\n\n` +
+      `🌟 Check out this amazing product! 🌟\n\n` +
+      `💰💳 *Price:* ${currencySymbol}${product.price}${product.salePrice ? ` 🔥 ~~${currencySymbol}${product.salePrice}~~ 🔥` : ''}\n\n` +
+      `📝✨ *Description:* ${product.description.length > 100 ? product.description.substring(0, 100) + '...' : product.description}\n\n` +
+      `🏪🛒 *Visit our store:* ${storeUrl}\n\n` +
+      `🏢✨ Available at: *${businessName}* ✨\n\n` +
+      `🏷️ #${product.category.replace(/\s+/g, '')} #${businessName.replace(/\s+/g, '')} 🏷️`;
 
     const encodedMessage = encodeURIComponent(message);
     
@@ -56,14 +54,13 @@ export class ProductSharingService {
 
   // Generate WhatsApp link with image sharing (alternative method)
   static generateWhatsAppImageShare(product: Product, settings: any): string {
-    const shareUrl = this.generateShareableLink(product);
-    const storeUrl = `${this.baseUrl}/store/${product.userId}`;
+    const storeUrl = `${this.baseUrl}/store/${product.userId}`; // Only storefront link
     const currencySymbol = this.getCurrencySymbol(settings.currency);
     const businessName = settings.businessName || 'Our Store';
     const whatsappNumber = settings.whatsappNumber;
     
-    // For image sharing, we create a shorter message that prioritizes the links
-    const message = `🛍️ *${product.name}* - ${currencySymbol}${product.price}\n\n${shareUrl}\n\n🏪 Full store: ${storeUrl}\n\nAvailable at ${businessName}`;
+    // For image sharing, we create a shorter message that only includes storefront link
+    const message = `🛍️✨ *${product.name}* ✨ - 💰 ${currencySymbol}${product.price}\n\n🏪🛒 *Visit our store:* ${storeUrl}\n\n🏢✨ Available at ${businessName} ✨`;
 
     const encodedMessage = encodeURIComponent(message);
     
@@ -94,29 +91,26 @@ export class ProductSharingService {
       // Generate thumbnail
       const thumbnailBlob = await this.generateProductThumbnail(product, businessSettings);
       
-      // Create comprehensive sharing message with store link
-      const productUrl = `${window.location.origin}/product/${product.shareableId || product.id}`;
-      const storeUrl = `${window.location.origin}/store/${product.userId}`;
+      // Create comprehensive sharing message with only storefront link
+      const storeUrl = `${window.location.origin}/store/${product.userId}`; // Only storefront link
       const currencySymbol = this.getCurrencySymbol(businessSettings?.currency || 'usd');
       const businessName = businessSettings?.businessName || 'Our Store';
       const whatsappNumber = businessSettings?.whatsappNumber || businessSettings?.businessPhone || '';
       
-      // Enhanced message with store link
-      const message = `🛍️ *${product.name}*
+      // Enhanced message with only storefront link (no admin/merchant links)
+      const message = `🛍️✨ *${product.name}* ✨
 
-💰 Price: ${currencySymbol}${product.price}${product.salePrice ? ` (Sale: ${currencySymbol}${product.salePrice})` : ''}
+💰💳 *Price:* ${currencySymbol}${product.price}${product.salePrice ? ` 🔥 (Sale: ${currencySymbol}${product.salePrice}) 🔥` : ''}
 
-📝 ${product.description}
+📝✨ *Description:* ${product.description}
 
-🏪 *${businessName}*
+�✨ *${businessName}* ✨
 
-🔗 *Product Link:* ${productUrl}
+�🛒 *Visit Our Store:* ${storeUrl}
 
-🏬 *Visit Our Store:* ${storeUrl}
+${product.tags && product.tags.length > 0 ? `🏷️ ${product.tags.map(tag => `#${tag.replace(/\s+/g, '')}`).join(' ')} #${businessName.replace(/\s+/g, '')} 🏷️` : ''}
 
-${product.tags && product.tags.length > 0 ? `\n${product.tags.map(tag => `#${tag.replace(/\s+/g, '')}`).join(' ')} #${businessName.replace(/\s+/g, '')}` : ''}
-
-${whatsappNumber ? `\n📞 Contact: ${whatsappNumber}` : ''}`;
+${whatsappNumber ? `📞💬 *Contact:* ${whatsappNumber}` : ''}`;
 
       // Strategy 1: Try downloading image + opening WhatsApp with message (most reliable)
       try {
@@ -443,23 +437,22 @@ ${whatsappNumber ? `📞 ${whatsappNumber}` : ''}
       // Generate thumbnail
       const thumbnailBlob = await this.generateProductThumbnail(product, businessSettings);
       
-      // Create message
-      const productUrl = `${window.location.origin}/product/${product.shareableId || product.id}`;
-      const storeUrl = `${window.location.origin}/store/${product.userId}`;
+      // Create message with only storefront link
+      const storeUrl = `${window.location.origin}/store/${product.userId}`; // Only storefront link
       const currencySymbol = this.getCurrencySymbol(businessSettings?.currency || 'usd');
       const businessName = businessSettings?.businessName || 'Our Store';
       const whatsappNumber = businessSettings?.whatsappNumber || businessSettings?.businessPhone || '';
       
-      const message = `🛍️ *${product.name}*
-💰 ${currencySymbol}${product.price}
+      const message = `🛍️✨ *${product.name}* ✨🛍️
 
-📝 ${product.description}
+💰💳 ${currencySymbol}${product.price}
 
-🏪 ${businessName}
-🔗 ${productUrl}
-🏬 ${storeUrl}
+📝✨ ${product.description}
 
-${whatsappNumber ? `📞 ${whatsappNumber}` : ''}`;
+🏪✨ ${businessName} ✨
+🏬🛒 Visit our store: ${storeUrl}
+
+${whatsappNumber ? `📞💬 ${whatsappNumber}` : ''}`;
 
       // Try native sharing first (works best on mobile)
       if (navigator.share) {
@@ -610,10 +603,10 @@ ${product.description}
     const currencySymbol = this.getCurrencySymbol(settings.currency);
     const businessName = settings.businessName || 'Our Store';
     
-    const message = `🛍️ *${product.name}*\n\n` +
-      `💰 ${currencySymbol}${product.price}\n\n` +
-      `📱 Order now: ${shareUrl}\n\n` +
-      `🏪 ${businessName}`;
+    const message = `🛍️✨ *${product.name}* ✨🛍️\n\n` +
+      `💰💳 ${currencySymbol}${product.price}\n\n` +
+      `📱🛒 Order now: ${shareUrl}\n\n` +
+      `🏪✨ ${businessName} ✨`;
 
     return {
       shareUrl,

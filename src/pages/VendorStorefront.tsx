@@ -5,7 +5,7 @@ import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Share2, ShoppingCart, MapPin, Phone, Mail, Globe } from "lucide-react";
+import { ArrowLeft, Share2, ShoppingCart, MessageCircle, MapPin, Phone, Mail, Globe } from "lucide-react";
 import { toast } from "sonner";
 import { Product } from "@/types/product";
 import { ProductSharingService } from "@/lib/productSharing";
@@ -146,7 +146,7 @@ export default function VendorStorefront() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Button variant="ghost" onClick={() => navigate('/')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
+            Create your own store
           </Button>
           <div className="text-center">
             {logoUrl ? (
@@ -227,7 +227,7 @@ export default function VendorStorefront() {
         </div>
       )}
 
-      {/* Products Grid */}
+      {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
         {products.length === 0 ? (
           <div className="text-center py-16">
@@ -237,85 +237,252 @@ export default function VendorStorefront() {
           </div>
         ) : (
           <>
-            <div className="text-center mb-8">
-              <h2 className="text-2xl font-bold mb-2">Our Products</h2>
-              <p className="text-muted-foreground">
-                {products.length} product{products.length !== 1 ? 's' : ''} available
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {products.map((product) => (
-                <Card key={product.id} className="group hover:shadow-lg transition-shadow">
-                  <CardContent className="p-0">
-                    <div className="relative aspect-square overflow-hidden rounded-t-lg">
-                      {product.imageUrl ? (
+            {/* Featured Product Display */}
+            {(() => {
+              const featuredProduct = products.find(p => p.featured) || products[0];
+              return (
+                <div className="max-w-4xl mx-auto mb-12">
+                  <div className="grid lg:grid-cols-2 gap-8 items-start">
+                    {/* Product Image */}
+                    <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
+                      {featuredProduct.imageUrl ? (
                         <img
-                          src={product.imageUrl}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          src={featuredProduct.imageUrl}
+                          alt={featuredProduct.name}
+                          className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-muted flex items-center justify-center">
-                          <ShoppingCart className="w-12 h-12 text-muted-foreground" />
+                        <div className="w-full h-full flex items-center justify-center">
+                          <ShoppingCart className="w-24 h-24 text-muted-foreground" />
                         </div>
                       )}
                       
-                      {/* Price Badge */}
-                      <div className="absolute top-3 right-3">
-                        <div 
-                          className="text-white px-2 py-1 rounded-full text-sm font-bold shadow-lg"
-                          style={{ backgroundColor: primaryColor }}
-                        >
-                          {currencySymbol}{product.price}
-                        </div>
-                      </div>
-
                       {/* Featured Badge */}
-                      {product.featured && (
-                        <div className="absolute top-3 left-3">
+                      {featuredProduct.featured && (
+                        <div className="absolute top-4 left-4">
                           <Badge className="bg-yellow-500 text-white">⭐ Featured</Badge>
                         </div>
                       )}
                     </div>
                     
-                    <div className="p-4 space-y-3">
+                    {/* Product Details */}
+                    <div className="space-y-6">
                       <div>
-                        <h3 className="font-semibold line-clamp-1">{product.name}</h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2">
-                          {product.description}
+                        <h1 className="text-3xl font-bold mb-2">{featuredProduct.name}</h1>
+                        <p className="text-lg text-muted-foreground leading-relaxed">
+                          {featuredProduct.description}
                         </p>
                       </div>
                       
-                      <div className="flex items-center justify-between">
-                        <Badge variant="outline">{product.category}</Badge>
-                        {product.stockQuantity !== undefined && (
-                          <span className="text-xs text-muted-foreground">
-                            {product.stockQuantity > 0 ? `${product.stockQuantity} in stock` : 'Out of stock'}
-                          </span>
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div 
+                            className="text-3xl font-bold text-white px-4 py-2 rounded-lg"
+                            style={{ backgroundColor: primaryColor }}
+                          >
+                            {currencySymbol}{featuredProduct.price}
+                          </div>
+                          <Badge variant="outline" className="text-lg px-3 py-1">
+                            {featuredProduct.category}
+                          </Badge>
+                        </div>
+                        
+                        {featuredProduct.stockQuantity !== undefined && (
+                          <div className="text-sm text-muted-foreground">
+                            {featuredProduct.stockQuantity > 0 
+                              ? `${featuredProduct.stockQuantity} in stock` 
+                              : 'Out of stock'
+                            }
+                          </div>
                         )}
                       </div>
                       
-                      <div className="flex gap-2">
+                      <div className="space-y-3">
                         <Button 
-                          className="flex-1"
-                          onClick={() => navigate(`/product/${product.shareableId || product.id}`)}
+                          className="w-full text-lg py-6"
+                          onClick={() => navigate(`/product/${featuredProduct.shareableId || featuredProduct.id}`)}
                           style={{ backgroundColor: primaryColor }}
+                          disabled={featuredProduct.stockQuantity === 0}
                         >
-                          View Details
+                          {featuredProduct.stockQuantity === 0 ? 'Out of Stock' : 'View Product Details'}
                         </Button>
+                        
                         <Button 
                           variant="outline" 
-                          size="sm"
-                          onClick={() => shareProduct(product)}
+                          className="w-full"
+                          onClick={() => shareProduct(featuredProduct)}
                         >
-                          <Share2 className="w-4 h-4" />
+                          <Share2 className="w-4 h-4 mr-2" />
+                          Share this Product
                         </Button>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+                  </div>
+                </div>
+              );
+            })()}
+            
+            {/* View All Products Section */}
+            {products.length > 1 && (
+              <div className="text-center">
+                <div className="border-t pt-8">
+                  <h3 className="text-xl font-bold mb-4">More Products Available</h3>
+                  <p className="text-muted-foreground mb-6">
+                    We have {products.length - 1} more product{products.length - 1 !== 1 ? 's' : ''} in our store
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    size="lg"
+                    onClick={() => {
+                      // Scroll to show all products in grid
+                      const element = document.getElementById('all-products');
+                      if (element) {
+                        element.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }}
+                  >
+                    View All Products
+                  </Button>
+                </div>
+              </div>
+            )}
+            
+            {/* All Products Grid (Hidden by default, shown when "View All" is clicked) */}
+            <div id="all-products" className="mt-16 pt-8 border-t">
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-bold mb-2">All Products</h2>
+                <p className="text-muted-foreground">
+                  Browse our complete collection
+                </p>
+              </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {products.map((product) => (
+                  <Card key={product.id} className="group hover:shadow-lg transition-shadow">
+                    <CardContent className="p-0">
+                      <div className="relative aspect-square overflow-hidden rounded-t-lg">
+                        {product.imageUrl ? (
+                          <img
+                            src={product.imageUrl}
+                            alt={product.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-muted flex items-center justify-center">
+                            <ShoppingCart className="w-12 h-12 text-muted-foreground" />
+                          </div>
+                        )}
+                        
+                        {/* Price Badge */}
+                        <div className="absolute top-3 right-3">
+                          <div 
+                            className="text-white px-2 py-1 rounded-full text-sm font-bold shadow-lg"
+                            style={{ backgroundColor: primaryColor }}
+                          >
+                            {currencySymbol}{product.price}
+                          </div>
+                        </div>
+
+                        {/* Featured Badge */}
+                        {product.featured && (
+                          <div className="absolute top-3 left-3">
+                            <Badge className="bg-yellow-500 text-white">⭐ Featured</Badge>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="p-6">
+                        {/* Header Info */}
+                        <div className="space-y-4 mb-6">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                              <h1 className="text-2xl font-bold leading-tight">{product.name}</h1>
+                              <Badge variant="outline" className="mt-2">{product.category}</Badge>
+                            </div>
+                          </div>
+                          
+                          <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+                        </div>
+
+                        {/* Stock Status */}
+                        {product.stockQuantity !== undefined && (
+                          <div className="mb-6">
+                            <Badge 
+                              variant={product.stockQuantity > 0 ? "default" : "destructive"}
+                              className="shadow-lg"
+                              style={{ backgroundColor: product.stockQuantity > 0 ? primaryColor : undefined }}
+                            >
+                              {product.stockQuantity > 0 
+                                ? `${product.stockQuantity} in stock` 
+                                : 'Out of stock'
+                              }
+                            </Badge>
+                          </div>
+                        )}
+
+                        {/* Action Buttons */}
+                        <div className="space-y-3">
+                          {/* Primary Order Button */}
+                          <Button 
+                            className="w-full h-14 text-lg font-semibold" 
+                            size="lg"
+                            onClick={() => navigate(`/product/${product.shareableId || product.id}`)}
+                            disabled={product.stockQuantity === 0}
+                            style={{ backgroundColor: primaryColor }}
+                          >
+                            <ShoppingCart className="w-5 h-5 mr-2" />
+                            {product.stockQuantity === 0 ? 'Out of Stock' : 'Order Now'}
+                          </Button>
+                          
+                          {/* Contact Vendor Button */}
+                          <Button 
+                            variant="outline"
+                            className="w-full h-12 text-base font-medium border-2" 
+                            onClick={() => shareProduct(product)}
+                            disabled={product.stockQuantity === 0}
+                            style={{ borderColor: primaryColor, color: primaryColor }}
+                          >
+                            <MessageCircle className="w-5 h-5 mr-2" />
+                            Contact vendor
+                          </Button>
+                          
+                          {/* Secondary Actions */}
+                          <div className="grid grid-cols-2 gap-3 pt-2">
+                            <Button 
+                              variant="outline" 
+                              className="h-11 text-sm" 
+                              onClick={() => shareProduct(product)}
+                            >
+                              <Share2 className="w-4 h-4 mr-2" />
+                              Share
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              className="h-11 text-sm" 
+                              onClick={() => navigate(`/product/${product.shareableId || product.id}`)}
+                            >
+                              View Details
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Business Info Footer */}
+                        <div className="border-t mt-6 pt-6 text-center">
+                          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-2">
+                            <div className="flex items-center gap-2">
+                              <ShoppingCart className="w-4 h-4" />
+                              <span>Sold by <span className="font-semibold text-foreground">{businessName}</span></span>
+                            </div>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Powered by <span className="font-semibold" style={{ color: primaryColor }}>pl<span className="text-green-600">int</span></span>
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
           </>
         )}

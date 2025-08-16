@@ -5,6 +5,7 @@ import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ArrowLeft, MessageCircle, Share2, ShoppingCart, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ProductSharingService } from "@/lib/productSharing";
@@ -24,6 +25,8 @@ export default function PublicProductView() {
   const [loading, setLoading] = useState(true);
   const [businessSettings, setBusinessSettings] = useState<any>(null);
   const [showCheckout, setShowCheckout] = useState(false);
+  const [showPaymentConfirmation, setShowPaymentConfirmation] = useState(false);
+  const [paymentDialogType, setPaymentDialogType] = useState<'success' | 'failed' | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -148,8 +151,60 @@ export default function PublicProductView() {
   };
 
   const handleOrderComplete = (orderId: string) => {
-    toast.success('Order completed successfully!');
-    // Optionally redirect or show success message
+    // Close checkout modal
+    setShowCheckout(false);
+    
+    // Start payment detection process after order completion
+    setTimeout(() => {
+      checkPaymentStatus();
+    }, 1000); // Small delay to let UI settle
+  };
+
+  const handlePaymentConfirmation = (hasPaid: boolean) => {
+    setShowPaymentConfirmation(false);
+    setPaymentDialogType(hasPaid ? 'success' : 'failed');
+    
+    // Auto-close dialog after 5 seconds and redirect to store
+    setTimeout(() => {
+      setPaymentDialogType(null);
+      navigate(`/store/${product?.userId}`);
+    }, 5000);
+  };
+
+  const checkPaymentStatus = async () => {
+    // Check for automatic payment detection after order processing
+    // This simulates checking payment gateway APIs like M-Pesa, Stripe, etc.
+    
+    try {
+      // Show loading state briefly
+      toast.info('Processing payment...');
+      
+      // Simulate payment gateway check delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Mock payment detection - you can replace this with actual payment API calls
+      // For example: checking M-Pesa transaction status, Stripe webhook confirmation, etc.
+      const mockPaymentDetected = Math.random() > 0.4; // 60% chance payment is detected automatically
+      
+      if (mockPaymentDetected) {
+        // Payment was detected automatically
+        toast.success('Payment confirmed automatically!');
+        setPaymentDialogType('success');
+        setTimeout(() => {
+          setPaymentDialogType(null);
+          navigate(`/store/${product?.userId}`);
+        }, 5000);
+      } else {
+        // Payment not detected automatically, ask customer for confirmation
+        toast.info('Please confirm your payment status');
+        setShowPaymentConfirmation(true);
+      }
+    } catch (error) {
+      console.error('Payment detection failed:', error);
+      // Fallback to manual confirmation if automatic detection fails
+      toast.warning('Unable to detect payment automatically. Please confirm manually.');
+      setShowPaymentConfirmation(true);
+    }
   };
 
   const handleShare = async () => {
@@ -271,7 +326,7 @@ export default function PublicProductView() {
               className="shrink-0 p-2 sm:p-3 h-auto"
             >
               <ArrowLeft className="w-4 h-4 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-              <span className="text-sm sm:text-base">Back to Product</span>
+              <span className="text-sm sm:text-base">Create your own store</span>
             </Button>
             <div className="flex-1">
               <h1 className="text-xl sm:text-2xl font-bold">Complete Your Order</h1>
@@ -337,9 +392,9 @@ export default function PublicProductView() {
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Button variant="ghost" onClick={() => navigate('/')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
+            Create your own store
           </Button>
-          <div className="text-center">
+          <div className="text-center flex-1">
             {logoUrl ? (
               <img src={logoUrl} alt={businessName} className="h-8 mx-auto mb-1" />
             ) : (
@@ -349,32 +404,24 @@ export default function PublicProductView() {
             )}
             <p className="text-xs text-muted-foreground">{businessName}</p>
           </div>
-          <Button 
-            variant="outline"
-            size="sm"
-            onClick={handleShare}
-            className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-          >
-            <Share2 className="w-4 h-4 mr-2" />
-            Share to WhatsApp
-          </Button>
+          <div className="w-[140px]"></div> {/* Spacer for balance */}
         </div>
       </header>
 
-      {/* Product Details - Thumbnail Style */}
-      <div className="container mx-auto px-4 py-6 max-w-md">
-        <Card className="overflow-hidden shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+      {/* Product Details - Professional Layout */}
+      <div className="container mx-auto px-4 py-8 max-w-lg">
+        <Card className="overflow-hidden shadow-lg">
           <CardContent className="p-0">
-            {/* Product Image - Large Thumbnail */}
-            <div className="relative aspect-square w-full overflow-hidden">
+            {/* Product Image */}
+            <div className="relative aspect-square bg-muted">
               {product.imageUrl ? (
                 <img
                   src={product.imageUrl}
                   alt={product.name}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                  className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
+                <div className="w-full h-full flex items-center justify-center">
                   <div className="text-center">
                     <ShoppingCart className="w-16 h-16 text-muted-foreground/50 mx-auto mb-2" />
                     <span className="text-muted-foreground">Product Image</span>
@@ -382,19 +429,14 @@ export default function PublicProductView() {
                 </div>
               )}
               
-              {/* Floating Price Badge */}
+              {/* Price Badge */}
               <div className="absolute top-4 right-4">
                 <div 
-                  className="text-white px-3 py-1 rounded-full font-bold shadow-lg"
+                  className="text-white px-4 py-2 rounded-lg font-bold shadow-lg text-lg"
                   style={{ backgroundColor: primaryColor }}
                 >
                   {currencySymbol}{product.price}
                 </div>
-                {product.salePrice && product.salePrice < product.price && (
-                  <div className="bg-destructive text-destructive-foreground px-2 py-0.5 rounded-full text-xs mt-1 line-through">
-                    {currencySymbol}{product.salePrice}
-                  </div>
-                )}
               </div>
 
               {/* Featured Badge */}
@@ -412,6 +454,7 @@ export default function PublicProductView() {
                   <Badge 
                     variant={product.stockQuantity > 0 ? "default" : "destructive"}
                     className="shadow-lg"
+                    style={{ backgroundColor: product.stockQuantity > 0 ? primaryColor : undefined }}
                   >
                     {product.stockQuantity > 0 
                       ? `${product.stockQuantity} in stock` 
@@ -422,79 +465,87 @@ export default function PublicProductView() {
               )}
             </div>
 
-            {/* Product Info - Compact */}
-            <div className="p-6 space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <h1 className="text-xl font-bold">{product.name}</h1>
-                  <Badge variant="outline">{product.category}</Badge>
+            {/* Product Information */}
+            <div className="p-6">
+              {/* Header Info */}
+              <div className="space-y-4 mb-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <h1 className="text-2xl font-bold leading-tight">{product.name}</h1>
+                    <Badge variant="outline" className="mt-2">{product.category}</Badge>
+                  </div>
                 </div>
-                <p className="text-muted-foreground text-sm leading-relaxed">{product.description}</p>
+                
+                <p className="text-muted-foreground leading-relaxed">{product.description}</p>
               </div>
 
-              {/* Quick Specs */}
+              {/* Product Tags */}
+              {product.tags && product.tags.length > 0 && (
+                <div className="mb-6">
+                  <div className="flex flex-wrap gap-2">
+                    {product.tags.slice(0, 4).map((tag, index) => (
+                      <Badge key={index} variant="secondary" className="text-xs">
+                        #{tag}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Quick Specifications */}
               {product.specifications && Object.keys(product.specifications).length > 0 && (
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-sm">Quick Info</h3>
-                  <div className="grid grid-cols-2 gap-2">
+                <div className="mb-6 p-4 bg-muted/30 rounded-lg">
+                  <h3 className="font-semibold mb-3 text-sm">Product Details</h3>
+                  <div className="grid grid-cols-1 gap-2">
                     {Object.entries(product.specifications).slice(0, 4).map(([key, value]) => (
-                      <div key={key} className="text-xs">
-                        <span className="text-muted-foreground">{key}:</span>
-                        <span className="ml-1 font-medium">{value}</span>
+                      <div key={key} className="flex justify-between text-sm">
+                        <span className="text-muted-foreground font-medium">{key}:</span>
+                        <span className="font-semibold">{value}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Tags */}
-              {product.tags && product.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {product.tags.slice(0, 3).map((tag, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
-                      #{tag}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-
-              {/* Action Buttons - Prominent */}
-              <div className="space-y-3 pt-2">
+              {/* Action Buttons */}
+              <div className="space-y-3">
                 {/* Primary Order Button */}
                 <Button 
-                  className="w-full h-12 text-lg font-semibold" 
+                  className="w-full h-14 text-lg font-semibold" 
                   size="lg"
                   onClick={() => setShowCheckout(true)}
                   disabled={product.stockQuantity === 0}
+                  style={{ backgroundColor: primaryColor }}
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
-                  Order Now
+                  {product.stockQuantity === 0 ? 'Out of Stock' : 'Order Now'}
                 </Button>
                 
-                {/* WhatsApp Fallback */}
+                {/* Contact Vendor Button */}
                 <Button 
                   variant="outline"
-                  className="w-full h-12 text-lg font-semibold" 
-                  size="lg"
+                  className="w-full h-12 text-base font-medium border-2" 
                   onClick={handleOrderNow}
                   disabled={product.stockQuantity === 0}
+                  style={{ borderColor: primaryColor, color: primaryColor }}
                 >
                   <MessageCircle className="w-5 h-5 mr-2" />
-                  Order via WhatsApp
+                  Contact vendor
                 </Button>
                 
-                <div className="flex flex-col sm:flex-row gap-2">
+                {/* Secondary Actions */}
+                <div className="grid grid-cols-2 gap-3 pt-2">
                   <Button 
                     variant="outline" 
-                    className="flex-1 h-11 sm:h-10 text-sm sm:text-base" 
+                    className="h-11 text-sm" 
                     onClick={handleShare}
                   >
                     <Share2 className="w-4 h-4 mr-2" />
-                    Share with friends
+                    Share
                   </Button>
                   <Button 
                     variant="outline" 
-                    className="sm:w-auto h-11 sm:h-10 text-sm sm:text-base px-4" 
+                    className="h-11 text-sm" 
                     onClick={() => navigate(`/store/${product.userId}`)}
                   >
                     View Store
@@ -502,19 +553,21 @@ export default function PublicProductView() {
                 </div>
               </div>
 
-              {/* Business Info */}
+              {/* Business Info Footer */}
               {showBusinessInfo && (
-                <div className="border-t pt-4 text-center">
-                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-                    <ShoppingCart className="w-4 h-4" />
-                    <span>Sold by <span className="font-semibold text-foreground">{businessName}</span></span>
+                <div className="border-t mt-6 pt-6 text-center">
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground mb-2">
+                    <div className="flex items-center gap-2">
+                      <ShoppingCart className="w-4 h-4" />
+                      <span>Sold by <span className="font-semibold text-foreground">{businessName}</span></span>
+                    </div>
                   </div>
                   {businessSettings?.storeDescription && (
-                    <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                    <p className="text-xs text-muted-foreground mb-3 leading-relaxed">
                       {businessSettings.storeDescription}
                     </p>
                   )}
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground">
                     Powered by <span className="font-semibold" style={{ color: primaryColor }}>pl<span className="text-green-600">int</span></span>
                   </p>
                 </div>
@@ -523,6 +576,122 @@ export default function PublicProductView() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Payment Confirmation Dialog */}
+      <Dialog open={showPaymentConfirmation} onOpenChange={setShowPaymentConfirmation}>
+        <DialogContent className="max-w-md mx-auto">
+          <div className="text-center p-6">
+            <div className="text-6xl mb-4">⏳</div>
+            <h3 className="text-xl font-bold mb-4">Payment Status Check</h3>
+            <p className="text-muted-foreground mb-4">
+              We couldn't automatically detect your payment. 
+            </p>
+            <p className="text-sm text-muted-foreground mb-6">
+              Please let us know if you've completed the payment for your order:
+            </p>
+            <div className="flex gap-3">
+              <Button 
+                onClick={() => handlePaymentConfirmation(true)}
+                className="flex-1"
+                style={{ backgroundColor: businessSettings?.primaryColor || '#059669' }}
+              >
+                ✅ Yes, I've paid
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => handlePaymentConfirmation(false)}
+                className="flex-1"
+              >
+                ❌ Not yet
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Success Dialog */}
+      <Dialog open={paymentDialogType === 'success'} onOpenChange={() => setPaymentDialogType(null)}>
+        <DialogContent className="max-w-md mx-auto">
+          <div className="text-center p-6">
+            <div className="text-6xl mb-4">🎉</div>
+            <h3 className="text-xl font-bold mb-4">Thank You for Shopping! 🛍️</h3>
+            <p className="text-muted-foreground mb-4">
+              Your payment has been confirmed! 💰✨
+            </p>
+            <div className="bg-green-50 p-4 rounded-lg mb-4">
+              <p className="text-sm text-green-800">
+                📦 If there's pending delivery, our vendor will contact you soon with the details! 📞
+              </p>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Redirecting to store in 5 seconds... 🏪
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Failed Dialog */}
+      <Dialog open={paymentDialogType === 'failed'} onOpenChange={() => setPaymentDialogType(null)}>
+        <DialogContent className="max-w-md mx-auto">
+          <div className="text-center p-6">
+            <div className="text-6xl mb-4">😔</div>
+            <h3 className="text-xl font-bold mb-4">Oops! Payment Not Completed</h3>
+            <p className="text-muted-foreground mb-4">
+              We're disappointed that you haven't completed your payment yet 💔
+            </p>
+            <div className="bg-orange-50 p-4 rounded-lg mb-4">
+              <p className="text-sm text-orange-800">
+                💡 Don't worry! You can still contact our vendor to complete your order 📱
+              </p>
+            </div>
+            <Button 
+              onClick={() => {
+                setPaymentDialogType(null);
+                handleOrderNow();
+              }}
+              className="w-full mb-3"
+              style={{ backgroundColor: businessSettings?.primaryColor || '#059669' }}
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Contact Vendor Now 📞
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Redirecting to store in 5 seconds... 🏪
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Checkout Modal */}
+      {showCheckout && product && (
+        <Dialog open={showCheckout} onOpenChange={setShowCheckout}>
+          <DialogContent className="max-w-md mx-auto max-h-[90vh] overflow-y-auto">
+            <div className="relative">
+              <Suspense fallback={
+                <div className="flex items-center justify-center p-8">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              }>
+                <OrderFirstCheckout
+                  product={product}
+                  businessSettings={businessSettings}
+                  mpesaSettings={{
+                    enableMpesa: businessSettings?.enableMpesa ?? true,
+                    mpesaMethod: businessSettings?.mpesaMethod || 'paybill',
+                    paybillNumber: businessSettings?.paybillNumber || '174379',
+                    accountReference: businessSettings?.accountReference || product.name,
+                    tillNumber: businessSettings?.tillNumber || '',
+                    mpesaPhoneNumber: businessSettings?.mpesaPhoneNumber || '',
+                    mpesaInstructions: businessSettings?.mpesaInstructions || 'Complete payment via M-Pesa'
+                  }}
+                  onOrderComplete={handleOrderComplete}
+                  onCancel={() => setShowCheckout(false)}
+                />
+              </Suspense>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

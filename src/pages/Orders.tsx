@@ -344,6 +344,15 @@ export default function Orders() {
                   size="sm" 
                   variant="outline" 
                   className="text-xs"
+                  onClick={() => contactCustomer(order.customerPhone)}
+                >
+                  <Phone className="w-3 h-3 mr-1" />
+                  Contact Customer
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="text-xs"
                   onClick={() => cancelOrder(order.id)}
                 >
                   <XCircle className="w-3 h-3 mr-1" />
@@ -351,15 +360,6 @@ export default function Orders() {
                 </Button>
               </>
             )}
-            <Button 
-              size="sm" 
-              variant="outline" 
-              className="text-xs"
-              onClick={() => contactCustomer(order.customerPhone)}
-            >
-              <Phone className="w-3 h-3 mr-1" />
-              Contact Customer
-            </Button>
           </div>
         </div>
       </CardContent>

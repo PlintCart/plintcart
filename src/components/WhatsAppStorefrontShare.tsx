@@ -27,9 +27,8 @@ export function WhatsAppStorefrontShare({
   
   const handleWhatsAppShare = async () => {
     try {
-      // Generate enhanced message with prominent storefront link
-      const productUrl = `${window.location.origin}/product/${product.shareableId || product.id}`;
-      const storeUrl = `${window.location.origin}/store/${product.userId}`;
+      // Generate enhanced message with only storefront link
+      const storeUrl = `${window.location.origin}/store/${product.userId}`; // Only storefront link
       const currencySymbol = getCurrencySymbol(businessSettings?.currency || 'usd');
       const businessName = businessSettings?.businessName || 'Our Store';
       const whatsappNumber = businessSettings?.whatsappNumber || businessSettings?.businessPhone || '';
@@ -41,14 +40,12 @@ export function WhatsAppStorefrontShare({
 
 🏪 *${businessName}*
 
-🔗 View This Product: ${productUrl}
-
-🏬 *🌟 BROWSE OUR FULL STORE 🌟*
+🏬 *🌟 VISIT OUR STORE 🌟*
 ${storeUrl}
 
 ${whatsappNumber ? `📞 Contact Us: ${whatsappNumber}` : ''}
 
-_✨ Click the store link to see all our amazing products! ✨_
+_✨ Visit our store to see all our amazing products! ✨_
 
 #${businessName.replace(/\s+/g, '')} #${product.category?.replace(/\s+/g, '') || 'Products'}`;
 
