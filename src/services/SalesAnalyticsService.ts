@@ -59,7 +59,7 @@ export class SalesAnalyticsService {
           quantity: data.quantity,
           type: data.type,
           userId: data.userId,
-          timestamp: data.timestamp?.toDate(),
+          timestamp: data.timestamp?.toDate ? data.timestamp.toDate() : new Date(data.timestamp),
           ...data
         };
       });
@@ -206,7 +206,7 @@ export class SalesAnalyticsService {
           quantity: data.quantity,
           type: data.type,
           userId: data.userId,
-          timestamp: data.timestamp?.toDate(),
+          timestamp: data.timestamp?.toDate ? data.timestamp.toDate() : new Date(data.timestamp),
           ...data
         };
       }).filter(t => t.timestamp >= startDate);

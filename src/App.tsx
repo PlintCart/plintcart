@@ -9,6 +9,7 @@ import { SettingsProvider } from "@/contexts/SettingsContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { PerformanceMonitor } from "@/components/PerformanceMonitor";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 // Lazy load pages for better performance with route-based splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -87,99 +88,101 @@ const queryClient = new QueryClient({
 });
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <PerformanceMonitor />
-    <AuthProvider>
-      <SettingsProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter
-            future={{
-              v7_startTransition: true,
-              v7_relativeSplatPath: true,
-            }}
-          >
-          <Suspense fallback={<LoadingSpinner />}>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/stores" element={
-                <Suspense fallback={<PublicLoadingSpinner />}>
-                  <MerchantDirectory />
-                </Suspense>
-              } />
-              <Route path="/storefront/:merchantId" element={
-                <Suspense fallback={<PublicLoadingSpinner />}>
-                  <Storefront />
-                </Suspense>
-              } />
-              <Route path="/store/:vendorId" element={
-                <Suspense fallback={<PublicLoadingSpinner />}>
-                  <VendorStorefront />
-                </Suspense>
-              } />
-              <Route path="/product/:id" element={
-                <Suspense fallback={<PublicLoadingSpinner />}>
-                  <PublicProductView />
-                </Suspense>
-              } />
-              <Route path="/pay/:productId" element={
-                <Suspense fallback={<PublicLoadingSpinner />}>
-                  <PaymentPage />
-                </Suspense>
-              } />
-              <Route path="/payment-success" element={<PaymentSuccess />} />
-              <Route path="/payment-cancelled" element={<PaymentCancelled />} />
-              
-              {/* Admin Routes with dedicated loading */}
-              <Route path="/admin" element={
-                <Suspense fallback={<AdminLoadingSpinner />}>
-                  <ProtectedRoute><AdminDashboard /></ProtectedRoute>
-                </Suspense>
-              } />
-              <Route path="/admin/products" element={
-                <Suspense fallback={<AdminLoadingSpinner />}>
-                  <ProtectedRoute><Products /></ProtectedRoute>
-                </Suspense>
-              } />
-              <Route path="/admin/products/add" element={
-                <Suspense fallback={<AdminLoadingSpinner />}>
-                  <ProtectedRoute><AddProduct /></ProtectedRoute>
-                </Suspense>
-              } />
-              <Route path="/admin/stock" element={
-                <Suspense fallback={<AdminLoadingSpinner />}>
-                  <ProtectedRoute><StockManagement /></ProtectedRoute>
-                </Suspense>
-              } />
-              <Route path="/admin/orders" element={
-                <Suspense fallback={<AdminLoadingSpinner />}>
-                  <ProtectedRoute><Orders /></ProtectedRoute>
-                </Suspense>
-              } />
-              <Route path="/admin/design" element={
-                <Suspense fallback={<AdminLoadingSpinner />}>
-                  <ProtectedRoute><Design /></ProtectedRoute>
-                </Suspense>
-              } />
-              <Route path="/admin/settings" element={
-                <Suspense fallback={<AdminLoadingSpinner />}>
-                  <ProtectedRoute><AdminSettings /></ProtectedRoute>
-                </Suspense>
-              } />
-              
-              {/* Catch-all 404 route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </BrowserRouter>
-        <NetworkStatus />
-      </TooltipProvider>
-    </SettingsProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <PerformanceMonitor />
+      <AuthProvider>
+        <SettingsProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter
+              future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true,
+              }}
+            >
+            <Suspense fallback={<LoadingSpinner />}>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/stores" element={
+                  <Suspense fallback={<PublicLoadingSpinner />}>
+                    <MerchantDirectory />
+                  </Suspense>
+                } />
+                <Route path="/storefront/:merchantId" element={
+                  <Suspense fallback={<PublicLoadingSpinner />}>
+                    <Storefront />
+                  </Suspense>
+                } />
+                <Route path="/store/:vendorId" element={
+                  <Suspense fallback={<PublicLoadingSpinner />}>
+                    <VendorStorefront />
+                  </Suspense>
+                } />
+                <Route path="/product/:id" element={
+                  <Suspense fallback={<PublicLoadingSpinner />}>
+                    <PublicProductView />
+                  </Suspense>
+                } />
+                <Route path="/pay/:productId" element={
+                  <Suspense fallback={<PublicLoadingSpinner />}>
+                    <PaymentPage />
+                  </Suspense>
+                } />
+                <Route path="/payment-success" element={<PaymentSuccess />} />
+                <Route path="/payment-cancelled" element={<PaymentCancelled />} />
+                
+                {/* Admin Routes with dedicated loading */}
+                <Route path="/admin" element={
+                  <Suspense fallback={<AdminLoadingSpinner />}>
+                    <ProtectedRoute><AdminDashboard /></ProtectedRoute>
+                  </Suspense>
+                } />
+                <Route path="/admin/products" element={
+                  <Suspense fallback={<AdminLoadingSpinner />}>
+                    <ProtectedRoute><Products /></ProtectedRoute>
+                  </Suspense>
+                } />
+                <Route path="/admin/products/add" element={
+                  <Suspense fallback={<AdminLoadingSpinner />}>
+                    <ProtectedRoute><AddProduct /></ProtectedRoute>
+                  </Suspense>
+                } />
+                <Route path="/admin/stock" element={
+                  <Suspense fallback={<AdminLoadingSpinner />}>
+                    <ProtectedRoute><StockManagement /></ProtectedRoute>
+                  </Suspense>
+                } />
+                <Route path="/admin/orders" element={
+                  <Suspense fallback={<AdminLoadingSpinner />}>
+                    <ProtectedRoute><Orders /></ProtectedRoute>
+                  </Suspense>
+                } />
+                <Route path="/admin/design" element={
+                  <Suspense fallback={<AdminLoadingSpinner />}>
+                    <ProtectedRoute><Design /></ProtectedRoute>
+                  </Suspense>
+                } />
+                <Route path="/admin/settings" element={
+                  <Suspense fallback={<AdminLoadingSpinner />}>
+                    <ProtectedRoute><AdminSettings /></ProtectedRoute>
+                  </Suspense>
+                } />
+                
+                {/* Catch-all 404 route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+          <NetworkStatus />
+        </TooltipProvider>
+      </SettingsProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

@@ -363,7 +363,7 @@ export default function StockManagement() {
                             </p>
                             {product.lastSaleDate && (
                               <p className="text-xs text-muted-foreground">
-                                Last sold: {product.lastSaleDate.toLocaleDateString()}
+                                Last sold: {new Date(product.lastSaleDate).toLocaleDateString()}
                               </p>
                             )}
                           </div>
@@ -461,7 +461,7 @@ export default function StockManagement() {
                             </p>
                             {product.lastSaleDate && (
                               <p className="text-xs text-muted-foreground">
-                                Last sold: {product.lastSaleDate.toLocaleDateString()}
+                                Last sold: {new Date(product.lastSaleDate).toLocaleDateString()}
                               </p>
                             )}
                           </div>

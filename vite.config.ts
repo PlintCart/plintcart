@@ -16,6 +16,11 @@ export default defineConfig(({ mode }) => ({
       'Content-Security-Policy': "frame-ancestors 'self'",
       'X-Frame-Options': 'SAMEORIGIN',
     },
+    // Add MIME type handling for development
+    middlewareMode: false,
+    fs: {
+      strict: true,
+    },
   },
   plugins: [
     react(),
