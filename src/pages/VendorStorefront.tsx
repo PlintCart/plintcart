@@ -5,17 +5,51 @@ import { db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Share2, ShoppingCart, MessageCircle, MapPin, Phone, Mail, Globe } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { ArrowLeft, Share2, ShoppingCart, MessageCircle, MapPin, Phone, Mail, Globe, Search, Grid, List, ShoppingBag } from "lucide-react";
 import { toast } from "sonner";
 import { Product } from "@/types/product";
 import { ProductSharingService } from "@/lib/productSharing";
+import ProductCard from "@/components/ProductCard";
 
 export default function VendorStorefront() {
   const { vendorId } = useParams();
   const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [businessSettings, setBusinessSettings] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [categories, setCategories] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  useEffect(() => {
+    if (vendorId) {
+      fetchVendorStore();
+    }
+  }, [vendorId]);
+
+  // Filter products based on search and category
+  useEffect(() => {
+    let filtered = products;
+
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter(product => 
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (product.category && product.category.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+
+    // Filter by category
+    if (selectedCategory !== "all") {
+      filtered = filtered.filter(product => product.category === selectedCategory);
+    }
+
+    setFilteredProducts(filtered);
+  }, [products, searchTerm, selectedCategory]);
 
   useEffect(() => {
     if (vendorId) {
@@ -27,17 +61,23 @@ export default function VendorStorefront() {
     try {
       setLoading(true);
       
-      // Fetch vendor settings
-      const settingsDoc = await getDoc(doc(db, 'userSettings', vendorId));
+      // Fetch vendor settings from the correct settings collection
+      const settingsDoc = await getDoc(doc(db, 'settings', vendorId));
       
       if (settingsDoc.exists()) {
-        setBusinessSettings(settingsDoc.data());
+        const settingsData = settingsDoc.data();
+        setBusinessSettings(settingsData);
+        
+        // Apply CSS variables for theming
+        if (settingsData.primaryColor) {
+          document.documentElement.style.setProperty('--primary', settingsData.primaryColor);
+        }
       } else {
         // Set default settings if none exist
         setBusinessSettings({
           businessName: 'Online Store',
-          theme: 'modern',
-          primaryColor: '#10b981'
+          storeTheme: 'modern',
+          primaryColor: '#059669'
         });
       }
 
@@ -73,6 +113,10 @@ export default function VendorStorefront() {
       });
       
       setProducts(productsData);
+      
+      // Extract unique categories
+      const uniqueCategories = [...new Set(productsData.map(p => p.category))].filter(Boolean);
+      setCategories(uniqueCategories);
     } catch (error) {
       console.error('Error fetching vendor store:', error);
       toast.error('Failed to load store');

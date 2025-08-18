@@ -3,238 +3,437 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Upload, Palette, Layout, Eye } from "lucide-react";
+import { Palette, Eye, Store, Brush, Settings, ExternalLink, Upload, Image } from "lucide-react";
+import { useSettings } from "@/contexts/SettingsContext";
+import { auth, storage } from "@/lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { toast } from "sonner";
 import { useState } from "react";
 
 export default function Design() {
-  const [selectedTheme, setSelectedTheme] = useState("green");
-  const [showPrices, setShowPrices] = useState(true);
-  const [showDescriptions, setShowDescriptions] = useState(true);
-  const [viewMode, setViewMode] = useState("grid");
+  const { settings, updateSettings } = useSettings();
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [heroUploading, setHeroUploading] = useState(false);
+
+  const uploadImage = async (file: File, path: string): Promise<string> => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("User not authenticated");
+
+    const fileRef = ref(storage, `${path}/${user.uid}/${Date.now()}_${file.name}`);
+    const snapshot = await uploadBytes(fileRef, file);
+    return await getDownloadURL(snapshot.ref);
+  };
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image size should be less than 5MB");
+      return;
+    }
+
+    try {
+      setLogoUploading(true);
+      const logoUrl = await uploadImage(file, 'logos');
+      updateSettings({ logoUrl });
+      toast.success("Logo uploaded successfully!");
+    } catch (error) {
+      console.error("Error uploading logo:", error);
+      toast.error("Failed to upload logo");
+    } finally {
+      setLogoUploading(false);
+      // Reset the input
+      event.target.value = '';
+    }
+  };
+
+  const handleHeroUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    // Validate file size (max 10MB for hero images)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image size should be less than 10MB");
+      return;
+    }
+
+    try {
+      setHeroUploading(true);
+      const heroUrl = await uploadImage(file, 'hero-images');
+      updateSettings({ coverImageUrl: heroUrl });
+      toast.success("Hero image uploaded successfully!");
+    } catch (error) {
+      console.error("Error uploading hero image:", error);
+      toast.error("Failed to upload hero image");
+    } finally {
+      setHeroUploading(false);
+      // Reset the input
+      event.target.value = '';
+    }
+  };
+
+  const handlePreviewStorefront = () => {
+    const user = auth.currentUser;
+    if (user) {
+      // Open storefront in new tab with correct customer view URL
+      window.open(`/store/${user.uid}`, '_blank');
+    } else {
+      toast.error("Please make sure you're logged in");
+    }
+  };
 
   const themes = [
-    { id: "green", name: "Green", primary: "#22c55e", accent: "#16a34a" },
-    { id: "blue", name: "Blue", primary: "#3b82f6", accent: "#2563eb" },
-    { id: "purple", name: "Purple", primary: "#8b5cf6", accent: "#7c3aed" },
-    { id: "orange", name: "Orange", primary: "#f97316", accent: "#ea580c" },
+    { 
+      id: "modern", 
+      name: "Modern & Clean", 
+      description: "Clean lines and minimal design",
+      preview: "#059669"
+    },
+    { 
+      id: "elegant", 
+      name: "Elegant & Minimal", 
+      description: "Sophisticated and refined",
+      preview: "#6366f1"
+    },
+    { 
+      id: "vibrant", 
+      name: "Vibrant & Colorful", 
+      description: "Bold colors and dynamic layout",
+      preview: "#f59e0b"
+    },
+    { 
+      id: "classic", 
+      name: "Classic & Professional", 
+      description: "Traditional and trustworthy",
+      preview: "#1f2937"
+    }
   ];
 
   return (
     <AdminLayout>
       <div className="space-y-6">
+        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold">Design</h1>
-            <p className="text-muted-foreground">Customize your storefront appearance</p>
+            <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-3">
+              <Store className="w-8 h-8 text-primary" />
+              Customize Your Store
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Design your storefront to match your brand and attract customers
+            </p>
           </div>
-          <Button variant="outline" className="w-full sm:w-auto">
+          <Button 
+            onClick={handlePreviewStorefront}
+            className="w-full sm:w-auto"
+          >
             <Eye className="w-4 h-4 mr-2" />
-            Preview Store
+            Preview Live Store
+            <ExternalLink className="w-4 h-4 ml-2" />
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          {/* Hero Banner */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Upload className="w-5 h-5" />
-                Hero Banner
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="border-2 border-dashed border-border rounded-lg p-4 sm:p-8 text-center">
-                <Upload className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-4 text-muted-foreground" />
-                <p className="text-xs sm:text-sm text-muted-foreground mb-2">
-                  Upload a hero banner image
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Recommended: 1200x400px
-                </p>
-                <Button variant="outline" className="mt-4 text-xs sm:text-sm">
-                  Choose Image
-                </Button>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="hero-title">Hero Title</Label>
-                <Input
-                  id="hero-title"
-                  placeholder="Welcome to our store"
-                  defaultValue="Welcome to our store"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="hero-subtitle">Hero Subtitle</Label>
-                <Textarea
-                  id="hero-subtitle"
-                  placeholder="Discover amazing products..."
-                  defaultValue="Discover amazing products at great prices"
-                  rows={3}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Theme Selection */}
-          <Card>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Store Theme & Branding */}
+          <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Palette className="w-5 h-5" />
-                Color Theme
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {themes.map((theme) => (
-                  <button
-                    key={theme.id}
-                    onClick={() => setSelectedTheme(theme.id)}
-                    className={`p-3 sm:p-4 rounded-lg border-2 transition-colors ${
-                      selectedTheme === theme.id 
-                        ? "border-primary bg-primary/5" 
-                        : "border-border hover:border-primary/50"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 sm:gap-3">
-                      <div 
-                        className="w-5 h-5 sm:w-6 sm:h-6 rounded-full"
-                        style={{ backgroundColor: theme.primary }}
-                      />
-                      <span className="font-medium text-sm sm:text-base">{theme.name}</span>
-                    </div>
-                    <div className="flex gap-1 mt-2">
-                      <div 
-                        className="w-3 h-3 sm:w-4 sm:h-4 rounded"
-                        style={{ backgroundColor: theme.primary }}
-                      />
-                      <div 
-                        className="w-3 h-3 sm:w-4 sm:h-4 rounded"
-                        style={{ backgroundColor: theme.accent }}
-                      />
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="custom-primary">Custom Primary Color</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="custom-primary"
-                    type="color"
-                    defaultValue="#22c55e"
-                    className="w-12 h-8 sm:w-16 sm:h-10 p-1"
-                  />
-                  <Input
-                    placeholder="#22c55e"
-                    defaultValue="#22c55e"
-                    className="flex-1 text-sm"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Layout Options */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Layout className="w-5 h-5" />
-                Layout Settings
+                Theme & Branding
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label>Product View</Label>
-                <Select value={viewMode} onValueChange={setViewMode}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="grid">Grid View</SelectItem>
-                    <SelectItem value="list">List View</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* Theme Selection */}
+              <div className="space-y-3">
+                <Label className="text-base font-medium">Store Theme</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  {themes.map((theme) => (
+                    <div
+                      key={theme.id}
+                      className={`border-2 rounded-lg p-4 cursor-pointer transition-all hover:shadow-md ${
+                        settings.storeTheme === theme.id 
+                          ? 'border-primary bg-primary/5' 
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                      onClick={() => updateSettings({ storeTheme: theme.id })}
+                    >
+                      <div 
+                        className="w-full h-12 rounded mb-3"
+                        style={{ backgroundColor: theme.preview }}
+                      />
+                      <h4 className="font-medium text-sm">{theme.name}</h4>
+                      <p className="text-xs text-muted-foreground mt-1">{theme.description}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div className="flex items-start sm:items-center justify-between gap-4">
-                <div className="space-y-0.5">
-                  <Label className="text-sm">Show Prices</Label>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    Display product prices on the storefront
+              {/* Brand Colors */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="primary-color" className="text-base font-medium">Brand Color</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="primary-color"
+                      type="color"
+                      value={settings.primaryColor || "#059669"}
+                      onChange={(e) => updateSettings({ primaryColor: e.target.value })}
+                      className="w-16 h-12 p-1 border rounded"
+                    />
+                    <Input
+                      type="text"
+                      value={settings.primaryColor || "#059669"}
+                      onChange={(e) => updateSettings({ primaryColor: e.target.value })}
+                      placeholder="#059669"
+                      className="flex-1"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    This color will be used for buttons, links, and highlights
                   </p>
                 </div>
-                <Switch
-                  checked={showPrices}
-                  onCheckedChange={setShowPrices}
-                />
-              </div>
-
-              <div className="flex items-start sm:items-center justify-between gap-4">
-                <div className="space-y-0.5">
-                  <Label className="text-sm">Show Descriptions</Label>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    Display product descriptions on cards
-                  </p>
-                </div>
-                <Switch
-                  checked={showDescriptions}
-                  onCheckedChange={setShowDescriptions}
-                />
               </div>
             </CardContent>
           </Card>
 
-          {/* Store Information */}
+          {/* Store Identity */}
           <Card>
             <CardHeader>
-              <CardTitle>Store Information</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <Brush className="w-5 h-5" />
+                Store Identity
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="store-name">Store Name</Label>
-                <Input
-                  id="store-name"
-                  placeholder="My Awesome Store"
-                  defaultValue="My Awesome Store"
-                />
+                <Label htmlFor="logo-url" className="text-base font-medium">Logo</Label>
+                <div className="space-y-3">
+                  {/* URL Input */}
+                  <div className="space-y-1">
+                    <Label className="text-sm text-muted-foreground">Option 1: Use URL</Label>
+                    <Input
+                      id="logo-url"
+                      type="url"
+                      placeholder="https://example.com/logo.png"
+                      value={settings.logoUrl || ""}
+                      onChange={(e) => updateSettings({ logoUrl: e.target.value })}
+                    />
+                  </div>
+                  
+                  {/* File Upload */}
+                  <div className="space-y-1">
+                    <Label className="text-sm text-muted-foreground">Option 2: Upload Image</Label>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleLogoUpload}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          disabled={logoUploading}
+                        />
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          disabled={logoUploading}
+                        >
+                          {logoUploading ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="w-4 h-4 mr-2" />
+                              Choose Logo
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                      {settings.logoUrl && (
+                        <div className="w-12 h-12 border rounded overflow-hidden">
+                          <img 
+                            src={settings.logoUrl} 
+                            alt="Logo preview" 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Recommended: Square image, 200x200px or larger. Max 5MB.
+                </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="store-description">Store Description</Label>
+                <Label htmlFor="cover-image" className="text-base font-medium">Hero Banner Image</Label>
+                <div className="space-y-3">
+                  {/* URL Input */}
+                  <div className="space-y-1">
+                    <Label className="text-sm text-muted-foreground">Option 1: Use URL</Label>
+                    <Input
+                      id="cover-image"
+                      type="url"
+                      placeholder="https://example.com/hero-image.jpg"
+                      value={settings.coverImageUrl || ""}
+                      onChange={(e) => updateSettings({ coverImageUrl: e.target.value })}
+                    />
+                  </div>
+                  
+                  {/* File Upload */}
+                  <div className="space-y-1">
+                    <Label className="text-sm text-muted-foreground">Option 2: Upload Image</Label>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleHeroUpload}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          disabled={heroUploading}
+                        />
+                        <Button 
+                          variant="outline" 
+                          className="w-full"
+                          disabled={heroUploading}
+                        >
+                          {heroUploading ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <Image className="w-4 h-4 mr-2" />
+                              Choose Hero Image
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                      {settings.coverImageUrl && (
+                        <div className="w-20 h-12 border rounded overflow-hidden">
+                          <img 
+                            src={settings.coverImageUrl} 
+                            alt="Hero preview" 
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Recommended: Wide image, 1200x400px or larger. Max 10MB.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="store-description" className="text-base font-medium">Store Description</Label>
                 <Textarea
                   id="store-description"
                   placeholder="Tell customers about your business..."
-                  defaultValue="We offer high-quality products at competitive prices"
-                  rows={3}
+                  rows={4}
+                  value={settings.storeDescription || ""}
+                  onChange={(e) => updateSettings({ storeDescription: e.target.value })}
+                />
+                <p className="text-xs text-muted-foreground">
+                  This will appear on your storefront homepage
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Display Options */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Display Options
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-0.5">
+                  <Label className="text-base font-medium">Show Business Info</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Display contact details on storefront
+                  </p>
+                </div>
+                <Switch 
+                  checked={settings.showBusinessInfo ?? true} 
+                  onCheckedChange={(checked) => updateSettings({ showBusinessInfo: checked })}
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="store-logo">Store Logo</Label>
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <Input
-                    id="store-logo"
-                    type="file"
-                    accept="image/*"
-                    className="flex-1 text-sm"
-                  />
-                  <Button variant="outline" className="text-sm">Upload</Button>
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-0.5">
+                  <Label className="text-base font-medium">Show Social Proof</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Display customer reviews and ratings
+                  </p>
                 </div>
+                <Switch 
+                  checked={settings.showSocialProof ?? false} 
+                  onCheckedChange={(checked) => updateSettings({ showSocialProof: checked })}
+                />
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-end gap-2">
-          <Button variant="outline" className="text-sm">Reset to Default</Button>
-          <Button className="text-sm">Save Changes</Button>
-        </div>
+        {/* Preview Section */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center space-y-4">
+              <div className="max-w-2xl mx-auto">
+                <h3 className="text-lg font-semibold mb-2">Ready to see your store in action?</h3>
+                <p className="text-muted-foreground mb-4">
+                  Preview your customized storefront to see how customers will experience your brand
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Button 
+                    size="lg"
+                    onClick={handlePreviewStorefront}
+                    className="w-full sm:w-auto"
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    Preview Your Store
+                    <ExternalLink className="w-4 h-4 ml-2" />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="lg"
+                    onClick={() => {
+                      toast.success("Settings saved! Your changes are now live.");
+                    }}
+                    className="w-full sm:w-auto"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Save Changes
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </AdminLayout>
   );

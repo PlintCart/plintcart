@@ -17,7 +17,7 @@ const navigation = [
   { name: "Products", href: "/admin/products", icon: Package },
   { name: "Orders", href: "/admin/orders", icon: ShoppingBag },
   { name: "Stock", href: "/admin/stock", icon: PackageCheck },
-  { name: "Design", href: "/admin/design", icon: Palette },
+  { name: "Customize Store", href: "/admin/design", icon: Palette },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
