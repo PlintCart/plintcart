@@ -19,7 +19,8 @@ interface StepperProps {
 export const Stepper = ({ steps, currentStep, onStepClick, allowSkipping = false }: StepperProps) => {
   return (
     <nav aria-label="Progress" className="mb-8">
-      <ol className="flex items-center justify-between w-full">
+      {/* Desktop stepper */}
+      <ol className="hidden md:flex items-center justify-between w-full">
         {steps.map((step, index) => {
           const isCompleted = index < currentStep;
           const isCurrent = index === currentStep;
@@ -51,15 +52,21 @@ export const Stepper = ({ steps, currentStep, onStepClick, allowSkipping = false
                     </div>
                   )}
                 </button>
+                
+                {/* Step label - hidden on small screens */}
+                <div className="mt-2 text-center">
+                  <p className="text-sm font-medium text-foreground">{step.title}</p>
+                  <p className="text-xs text-muted-foreground">{step.description}</p>
+                </div>
               </div>
 
               {/* Connecting line */}
               {index < steps.length - 1 && (
                 <div className="flex-1 mx-4 relative">
-                  <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-border transform -translate-y-1/2" />
+                  <div className="absolute top-6 left-0 right-0 h-0.5 bg-border" />
                   <div 
                     className={cn(
-                      "absolute top-1/2 left-0 h-0.5 bg-primary transform -translate-y-1/2 transition-all duration-500 ease-in-out",
+                      "absolute top-6 left-0 h-0.5 bg-primary transition-all duration-500 ease-in-out",
                       isCompleted ? "w-full" : "w-0"
                     )}
                   />
@@ -69,6 +76,46 @@ export const Stepper = ({ steps, currentStep, onStepClick, allowSkipping = false
           );
         })}
       </ol>
+
+      {/* Mobile stepper */}
+      <div className="md:hidden">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-2">
+            <div
+              className={cn(
+                "flex items-center justify-center w-8 h-8 rounded-full border-2",
+                {
+                  "bg-primary border-primary text-primary-foreground": currentStep >= 0,
+                  "border-muted bg-background text-muted-foreground": currentStep < 0,
+                }
+              )}
+            >
+              {currentStep > 0 ? (
+                <Check className="w-4 h-4" />
+              ) : (
+                <div className="w-4 h-4">
+                  {steps[currentStep]?.icon}
+                </div>
+              )}
+            </div>
+            <div>
+              <p className="text-sm font-medium">{steps[currentStep]?.title}</p>
+              <p className="text-xs text-muted-foreground">{steps[currentStep]?.description}</p>
+            </div>
+          </div>
+          <div className="text-sm text-muted-foreground">
+            {currentStep + 1} of {steps.length}
+          </div>
+        </div>
+        
+        {/* Progress bar */}
+        <div className="w-full bg-border rounded-full h-2">
+          <div 
+            className="bg-primary h-2 rounded-full transition-all duration-500 ease-in-out"
+            style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+          />
+        </div>
+      </div>
     </nav>
   );
 };

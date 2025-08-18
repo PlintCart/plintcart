@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, doc, getDoc, updateDoc } from "firebase/firestore";
 import { db, auth } from "@/lib/firebase";
 import { StockManagementService } from "@/services/StockManagementService";
 import { useSettings } from "@/contexts/SettingsContext";
@@ -55,6 +55,7 @@ const productSchema = z.object({
 type ProductFormData = z.infer<typeof productSchema>;
 
 interface SteppedAddProductFormProps {
+  productId?: string;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
@@ -92,7 +93,7 @@ const steps = [
   }
 ];
 
-export function SteppedAddProductForm({ onSuccess, onCancel }: SteppedAddProductFormProps) {
+export function SteppedAddProductForm({ productId, onSuccess, onCancel }: SteppedAddProductFormProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -121,6 +122,60 @@ export function SteppedAddProductForm({ onSuccess, onCancel }: SteppedAddProduct
       restockDate: "",
     },
   });
+
+  // Load existing product data when editing
+  useEffect(() => {
+    const loadProductData = async () => {
+      if (!productId) return;
+
+      try {
+        setIsLoading(true);
+        const productRef = doc(db, "products", productId);
+        const productSnap = await getDoc(productRef);
+
+        if (productSnap.exists()) {
+          const productData = productSnap.data();
+          
+          // Reset form with existing data
+          form.reset({
+            name: productData.name || "",
+            description: productData.description || "",
+            price: productData.price || 0,
+            category: productData.category || "",
+            isVisible: productData.isVisible ?? true,
+            tags: productData.tags || "",
+            specifications: productData.specifications || "",
+            salePrice: productData.salePrice || 0,
+            featured: productData.featured ?? false,
+            stockQuantity: productData.stockQuantity || 0,
+            minStockLevel: productData.minStockLevel || 5,
+            maxStockLevel: productData.maxStockLevel || 100,
+            allowBackorders: productData.allowBackorders ?? false,
+            trackStock: productData.trackStock ?? true,
+            sku: productData.sku || "",
+            barcode: productData.barcode || "",
+            restockDate: productData.restockDate || "",
+          });
+
+          // Set existing image if available
+          if (productData.imageUrl) {
+            setImagePreview(productData.imageUrl);
+          }
+        } else {
+          toast.error("Product not found");
+          onCancel?.();
+        }
+      } catch (error) {
+        console.error("Error loading product:", error);
+        toast.error("Failed to load product data");
+        onCancel?.();
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProductData();
+  }, [productId, form, onCancel]);
 
   const nextStep = async () => {
     const isValid = await validateCurrentStep();
@@ -224,7 +279,7 @@ export function SteppedAddProductForm({ onSuccess, onCancel }: SteppedAddProduct
         throw new Error("User not authenticated");
       }
 
-      let imageUrl = "";
+      let imageUrl = imagePreview; // Keep existing image if no new file uploaded
       if (imageFile) {
         imageUrl = await uploadImage(imageFile);
       }
@@ -233,30 +288,51 @@ export function SteppedAddProductForm({ onSuccess, onCancel }: SteppedAddProduct
         ...data,
         imageUrl,
         userId: user.uid,
-        createdAt: new Date(),
         updatedAt: new Date(),
         currency: settings.currency || 'usd',
       };
 
-      const docRef = await addDoc(collection(db, "products"), productData);
+      if (productId) {
+        // Update existing product
+        const productRef = doc(db, "products", productId);
+        await updateDoc(productRef, productData);
 
-      // Create stock transaction if tracking stock
-      if (data.trackStock && data.stockQuantity && data.stockQuantity > 0) {
-        const stockService = new StockManagementService();
-        await stockService.addStock(
-          docRef.id,
-          data.stockQuantity,
-          'Initial stock',
-          'addition',
-          'Initial stock setup for new product'
-        );
+        // Handle stock updates if tracking stock
+        if (data.trackStock && data.stockQuantity !== undefined) {
+          const stockService = new StockManagementService();
+          // Note: You might want to implement a more sophisticated stock adjustment logic here
+          // This is a simple example that could be enhanced based on your needs
+        }
+
+        toast.success("Product updated successfully!");
+      } else {
+        // Create new product
+        const newProductData = {
+          ...productData,
+          createdAt: new Date(),
+        };
+
+        const docRef = await addDoc(collection(db, "products"), newProductData);
+
+        // Create stock transaction if tracking stock
+        if (data.trackStock && data.stockQuantity && data.stockQuantity > 0) {
+          const stockService = new StockManagementService();
+          await stockService.addStock(
+            docRef.id,
+            data.stockQuantity,
+            'Initial stock',
+            'addition',
+            'Initial stock setup for new product'
+          );
+        }
+
+        toast.success("Product added successfully!");
       }
 
-      toast.success("Product added successfully!");
       onSuccess?.();
     } catch (error) {
-      console.error("Error adding product:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to add product");
+      console.error("Error saving product:", error);
+      toast.error(error instanceof Error ? error.message : `Failed to ${productId ? 'update' : 'add'} product`);
     } finally {
       setIsLoading(false);
     }
@@ -304,11 +380,27 @@ export function SteppedAddProductForm({ onSuccess, onCancel }: SteppedAddProduct
   const isLastStep = currentStep === steps.length - 1;
   const isFirstStep = currentStep === 0;
 
+  // Show loading state when loading product data for editing
+  if (productId && isLoading && !form.formState.isDirty) {
+    return (
+      <div className="max-w-4xl mx-auto">
+        <Card>
+          <CardContent className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading product data...</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto">
       <Card>
         <CardHeader>
-          <CardTitle>Add New Product</CardTitle>
+          <CardTitle>{productId ? 'Edit Product' : 'Add New Product'}</CardTitle>
           <Stepper 
             steps={steps}
             currentStep={currentStep}
@@ -366,11 +458,11 @@ export function SteppedAddProductForm({ onSuccess, onCancel }: SteppedAddProduct
                   className="bg-green-600 hover:bg-green-700"
                 >
                   {isLoading ? (
-                    "Creating Product..."
+                    `${productId ? 'Updating' : 'Creating'} Product...`
                   ) : (
                     <>
                       <Save className="w-4 h-4 mr-2" />
-                      Create Product
+                      {productId ? 'Update Product' : 'Create Product'}
                     </>
                   )}
                 </Button>

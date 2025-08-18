@@ -250,7 +250,13 @@ export default function Products() {
                         showIcon={true}
                       />
                     </div>
-                    <Button variant="outline" size="sm" title="Edit product" className="p-1.5 sm:p-2 flex-shrink-0">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      title="Edit product" 
+                      className="p-1.5 sm:p-2 flex-shrink-0"
+                      onClick={() => navigate(`/admin/products/edit/${product.id}`)}
+                    >
                       <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                     </Button>
                     <Button

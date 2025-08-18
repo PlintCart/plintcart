@@ -1,7 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Check, Star, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Pricing = () => {
+  const navigate = useNavigate();
+
+  const handleGetStarted = () => {
+    // Navigate to auth page for sign up
+    navigate('/auth?mode=signup');
+  };
   const plans = [
     {
       name: "Starter",
@@ -117,6 +124,7 @@ const Pricing = () => {
                       variant={plan.buttonVariant}
                       size="lg"
                       className="w-full group"
+                      onClick={handleGetStarted}
                     >
                       {plan.buttonText}
                       <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
@@ -152,7 +160,12 @@ const Pricing = () => {
             <p className="text-xl mb-8 opacity-90">
               Join thousands of businesses already using Plint to boost their sales
             </p>
-            <Button variant="success" size="xl" className="bg-white text-primary hover:bg-white/90 shadow-medium">
+            <Button 
+              variant="success" 
+              size="xl" 
+              className="bg-white text-primary hover:bg-white/90 shadow-medium"
+              onClick={handleGetStarted}
+            >
               Start Your Free Trial
               <ArrowRight className="w-5 h-5" />
             </Button>

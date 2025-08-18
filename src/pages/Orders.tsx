@@ -449,7 +449,7 @@ export default function Orders() {
               <div className="flex flex-col space-y-4">
                 {/* Mobile: Scrollable tabs, Desktop: Grid */}
                 <div className="w-full overflow-x-auto">
-                  <TabsList className="inline-flex h-10 items-center justify-start rounded-md bg-muted p-1 text-muted-foreground w-max md:grid md:w-full md:grid-cols-4">
+                  <TabsList className="inline-flex h-10 items-center justify-start rounded-md bg-muted p-1 text-muted-foreground w-max md:grid md:w-full md:grid-cols-5">
                     <TabsTrigger value="all" className="whitespace-nowrap px-3 py-1.5 text-sm">
                       All Orders
                     </TabsTrigger>
@@ -463,6 +463,14 @@ export default function Orders() {
                     </TabsTrigger>
                     <TabsTrigger value="completed" className="whitespace-nowrap px-3 py-1.5 text-sm">
                       Completed
+                    </TabsTrigger>
+                    <TabsTrigger value="cancelled" className="relative whitespace-nowrap px-3 py-1.5 text-sm">
+                      Cancelled
+                      {cancelledOrders.length > 0 && (
+                        <Badge variant="destructive" className="ml-1 text-xs">
+                          {cancelledOrders.length}
+                        </Badge>
+                      )}
                     </TabsTrigger>
                     <TabsTrigger value="analytics" className="whitespace-nowrap px-3 py-1.5 text-sm">
                       Analytics
@@ -582,6 +590,50 @@ export default function Orders() {
                     ) : (
                       <div className="space-y-4">
                         {completedOrders
+                          .filter(order => 
+                            searchTerm === "" || 
+                            order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            order.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                            order.customerPhone?.toLowerCase().includes(searchTerm.toLowerCase())
+                          )
+                          .map((order) => (
+                            <OrderCard key={order.id} order={order} settings={settings} />
+                          ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Cancelled Orders Tab */}
+              <TabsContent value="cancelled" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <XCircle className="w-5 h-5 mr-2 text-red-600" />
+                      Cancelled Orders ({cancelledOrders.filter(order => 
+                        searchTerm === "" || 
+                        order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        order.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        order.customerPhone?.toLowerCase().includes(searchTerm.toLowerCase())
+                      ).length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {cancelledOrders.filter(order => 
+                      searchTerm === "" || 
+                      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      order.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      order.customerPhone?.toLowerCase().includes(searchTerm.toLowerCase())
+                    ).length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <XCircle className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                        <p className="text-lg font-medium mb-2">No cancelled orders</p>
+                        <p>Cancelled orders will appear here.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {cancelledOrders
                           .filter(order => 
                             searchTerm === "" || 
                             order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||

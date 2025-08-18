@@ -151,6 +151,11 @@ const App = () => (
                     <ProtectedRoute><AddProduct /></ProtectedRoute>
                   </Suspense>
                 } />
+                <Route path="/admin/products/edit/:id" element={
+                  <Suspense fallback={<AdminLoadingSpinner />}>
+                    <ProtectedRoute><AddProduct /></ProtectedRoute>
+                  </Suspense>
+                } />
                 <Route path="/admin/stock" element={
                   <Suspense fallback={<AdminLoadingSpinner />}>
                     <ProtectedRoute><StockManagement /></ProtectedRoute>

@@ -1,10 +1,12 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { AdminLayout } from "@/components/AdminLayout";
 import { SteppedAddProductForm } from "@/components/SteppedAddProductForm";
 import { BackButton } from "@/components/ui/back-button";
 
 export default function AddProduct() {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditing = !!id;
 
   const handleSuccess = () => {
     navigate("/admin/products");
@@ -25,13 +27,24 @@ export default function AddProduct() {
             Back to Products
           </BackButton>
           <div>
-            <h1 className="text-3xl font-bold">Add New Product</h1>
-            <p className="text-muted-foreground">Follow the steps to create a new product for your store</p>
+            <h1 className="text-3xl font-bold">
+              {isEditing ? 'Edit Product' : 'Add New Product'}
+            </h1>
+            <p className="text-muted-foreground">
+              {isEditing 
+                ? 'Update your product information' 
+                : 'Follow the steps to create a new product for your store'
+              }
+            </p>
           </div>
         </div>
 
         {/* Stepped Form */}
-        <SteppedAddProductForm onSuccess={handleSuccess} onCancel={handleCancel} />
+        <SteppedAddProductForm 
+          productId={id}
+          onSuccess={handleSuccess} 
+          onCancel={handleCancel} 
+        />
       </div>
     </AdminLayout>
   );
