@@ -61,9 +61,8 @@ const ProductDetail = () => {
 
   const handleOrder = () => {
     if (!product) return;
-    const message = `Hi! I'd like to order ${product.name} for $${product.price.toFixed(2)}`;
-    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+    // Navigate directly to checkout instead of opening WhatsApp
+    navigate(`/checkout/${product.id}`);
   };
 
   const handleShare = async () => {

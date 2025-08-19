@@ -340,7 +340,7 @@ export default function VendorStorefront() {
                         {/* Primary Action - Pay Now */}
                         <Button 
                           className="w-full h-14 text-lg font-semibold rounded-xl"
-                          onClick={() => navigate(`/product/${featuredProduct.shareableId || featuredProduct.id}`)}
+                          onClick={() => navigate(`/checkout/${featuredProduct.id}`)}
                           style={{ backgroundColor: primaryColor }}
                           disabled={featuredProduct.stockQuantity === 0}
                         >
@@ -498,7 +498,7 @@ export default function VendorStorefront() {
                           <Button 
                             className="w-full h-14 text-lg font-semibold" 
                             size="lg"
-                            onClick={() => navigate(`/product/${product.shareableId || product.id}`)}
+                            onClick={() => navigate(`/checkout/${product.id}`)}
                             disabled={product.stockQuantity === 0}
                             style={{ backgroundColor: primaryColor }}
                           >

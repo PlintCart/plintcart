@@ -35,13 +35,16 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Orders - customers can create, merchants can read their orders
+    // Orders - allow public creation for guest checkout, merchants can read their orders
     match /orders/{orderId} {
-      allow create: if request.auth != null;
+      // Allow public order creation for guest checkout
+      allow create: if true;
+      // Allow read for authenticated users (customers and merchants)
       allow read: if request.auth != null && 
         (request.auth.uid == resource.data.customerId || 
          request.auth.uid == resource.data.merchantId ||
          request.auth.uid == resource.data.businessOwnerId);
+      // Allow merchants to update their orders
       allow update: if request.auth != null && 
         (request.auth.uid == resource.data.merchantId ||
          request.auth.uid == resource.data.businessOwnerId);

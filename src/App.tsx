@@ -22,6 +22,8 @@ const MerchantDirectory = lazy(() => import("./pages/MerchantDirectory"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
 const PublicProductView = lazy(() => import("./pages/PublicProductView"));
 const VendorStorefront = lazy(() => import("./pages/VendorStorefront"));
+const Checkout = lazy(() => import("./pages/Checkout"));
+const OrderSuccess = lazy(() => import("./pages/OrderSuccess"));
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const PaymentCancelled = lazy(() => import("./pages/PaymentCancelled"));
 const PaymentPage = lazy(() => import("./pages/PaymentPage"));
@@ -127,6 +129,8 @@ const App = () => (
                     <PublicProductView />
                   </Suspense>
                 } />
+                <Route path="/checkout/:productId" element={<Checkout />} />
+                <Route path="/order-success/:orderId" element={<OrderSuccess />} />
                 <Route path="/pay/:productId" element={
                   <Suspense fallback={<PublicLoadingSpinner />}>
                     <PaymentPage />
