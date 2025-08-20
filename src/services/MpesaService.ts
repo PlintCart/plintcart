@@ -129,7 +129,7 @@ export class MpesaService {
    */
   static async initiatePayment(request: PaymentRequest): Promise<PaymentResponse> {
     try {
-      // EMERGENCY: Use simplified function
+      // EMERGENCY: Use simplified function with correct data format
       const response = await fetch('/.netlify/functions/emergency-stk', {
         method: 'POST',
         headers: {
@@ -137,7 +137,7 @@ export class MpesaService {
         },
         body: JSON.stringify({
           phoneNumber: request.phoneNumber,
-          amount: request.amount
+          amount: parseInt(String(request.amount)) // Ensure amount is integer
         })
       });
 
