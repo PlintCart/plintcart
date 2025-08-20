@@ -15,7 +15,13 @@ exports.handler = async (event, context) => {
     // Parse request
     let { phoneNumber, amount } = JSON.parse(event.body || '{}');
     
+    console.log('🔍 RECEIVED DATA:');
+    console.log('  Original phoneNumber:', phoneNumber);
+    console.log('  Amount:', amount);
+    
     // FIX: Ensure phone number is in correct format for M-Pesa
+    const originalPhone = phoneNumber;
+    
     if (phoneNumber.startsWith('0')) {
       phoneNumber = '254' + phoneNumber.substring(1);
     }
@@ -23,17 +29,32 @@ exports.handler = async (event, context) => {
       phoneNumber = '254' + phoneNumber;
     }
     
+    console.log('🔧 PHONE TRANSFORMATION:');
+    console.log('  Original:', originalPhone);
+    console.log('  Transformed:', phoneNumber);
+    console.log('  Length:', phoneNumber.length);
+    console.log('  Regex test:', /^254\d{9}$/.test(phoneNumber));
+    
     // Ensure phone number is exactly 12 digits starting with 254
     if (!/^254\d{9}$/.test(phoneNumber)) {
+      console.log('❌ Phone validation failed');
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({
           success: false,
-          error: `Invalid phone number format. Got: ${phoneNumber}. Expected: 254XXXXXXXXX (12 digits)`
+          error: `Invalid phone number format. Got: ${phoneNumber}. Expected: 254XXXXXXXXX (12 digits)`,
+          debug: {
+            original: originalPhone,
+            transformed: phoneNumber,
+            length: phoneNumber.length,
+            regexTest: /^254\d{9}$/.test(phoneNumber)
+          }
         })
       };
     }
+    
+    console.log('✅ Phone validation passed');
     
     // Get access token
     const credentials = Buffer.from(
@@ -69,6 +90,12 @@ exports.handler = async (event, context) => {
       AccountReference: `ORDER_${Date.now()}`,
       TransactionDesc: "Payment"
     };
+    
+    console.log('📱 STK REQUEST DATA:');
+    console.log('  PhoneNumber:', phoneNumber);
+    console.log('  Amount:', amount);
+    console.log('  BusinessShortCode:', process.env.MPESA_BUSINESS_SHORT_CODE);
+    console.log('  Full STK Data:', JSON.stringify(stkData, null, 2));
     
     const stkResponse = await fetch('https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest', {
       method: 'POST',
