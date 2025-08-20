@@ -81,8 +81,9 @@ exports.handler = async (event, context) => {
   try {
     console.log('🚀 Init payment function called');
     console.log('Request body:', event.body);
+    console.log('Request headers:', event.headers);
 
-    // Check environment variables
+    // Check environment variables first
     const requiredVars = [
       'MPESA_CONSUMER_KEY', 
       'MPESA_CONSUMER_SECRET', 
@@ -105,7 +106,21 @@ exports.handler = async (event, context) => {
       };
     }
 
+    console.log('✅ All environment variables present');
+
     // Parse request body
+    if (!event.body) {
+      console.error('❌ No request body provided');
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          message: 'Request body is required'
+        })
+      };
+    }
+
     const requestData = JSON.parse(event.body);
     console.log('📥 Raw request data:', requestData);
 
@@ -119,15 +134,19 @@ exports.handler = async (event, context) => {
 
     // Validate input
     if (!phoneNumber || !amount || !orderId) {
+      console.error('❌ Missing required fields:', { phoneNumber, amount, orderId });
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({
           success: false,
-          message: 'Missing required fields: phoneNumber, amount, orderId'
+          message: 'Missing required fields: phoneNumber, amount, orderId',
+          received: { phoneNumber, amount, orderId, description }
         })
       };
     }
+
+    console.log('✅ All required fields present');
 
     // Format phone number to 254XXXXXXXXX
     let formattedPhone = phoneNumber.toString().replace(/\D/g, '');
@@ -144,12 +163,14 @@ exports.handler = async (event, context) => {
     // Validate amount
     const numAmount = Number(amount);
     if (isNaN(numAmount) || numAmount < 1 || numAmount > 300000) {
+      console.error('❌ Invalid amount:', { amount, numAmount });
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({
           success: false,
-          message: 'Invalid amount. Must be between 1 and 300,000 KES'
+          message: 'Invalid amount. Must be between 1 and 300,000 KES',
+          received: { amount, numAmount }
         })
       };
     }
