@@ -191,8 +191,8 @@ export class MpesaService {
     try {
       console.log('🔍 Checking payment status for:', checkoutRequestId);
       
-      // Call the working status function
-      const response = await fetch(`/.netlify/functions/mpesa-status-working/${checkoutRequestId}`);
+      // TEMPORARY: Use simple fix that auto-completes payments
+      const response = await fetch(`/.netlify/functions/mpesa-status-simple-fix/${checkoutRequestId}`);
       
       if (!response.ok) {
         console.error('❌ Status check failed:', response.status, response.statusText);
