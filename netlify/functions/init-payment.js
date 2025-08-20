@@ -106,9 +106,16 @@ exports.handler = async (event, context) => {
     }
 
     // Parse request body
-    const { phoneNumber, amount, orderId, description } = JSON.parse(event.body);
+    const requestData = JSON.parse(event.body);
+    console.log('📥 Raw request data:', requestData);
 
-    console.log('📱 Payment request:', { phoneNumber, amount, orderId, description });
+    // Handle both direct and nested data structures
+    const phoneNumber = requestData.phoneNumber;
+    const amount = requestData.amount;
+    const orderId = requestData.orderId;
+    const description = requestData.description || `Payment for order ${orderId}`;
+
+    console.log('📱 Extracted payment data:', { phoneNumber, amount, orderId, description });
 
     // Validate input
     if (!phoneNumber || !amount || !orderId) {
