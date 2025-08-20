@@ -141,6 +141,14 @@ exports.handler = async (event, context) => {
     console.log('📥 Request data type:', typeof requestData);
     console.log('📥 Request data keys:', requestData ? Object.keys(requestData) : 'null/undefined');
 
+    // Detailed field analysis
+    console.log('🔍 DETAILED FIELD ANALYSIS:');
+    console.log(`  phoneNumber: "${requestData.phoneNumber}" (type: ${typeof requestData.phoneNumber}, length: ${requestData.phoneNumber ? requestData.phoneNumber.length : 'N/A'})`);
+    console.log(`  amount: ${requestData.amount} (type: ${typeof requestData.amount})`);
+    console.log(`  orderId: "${requestData.orderId}" (type: ${typeof requestData.orderId})`);
+    console.log(`  description: "${requestData.description}" (type: ${typeof requestData.description})`);
+    console.log(`  merchantSettings: ${JSON.stringify(requestData.merchantSettings)} (type: ${typeof requestData.merchantSettings})`);
+
     // Handle both direct and nested data structures  
     const phoneNumber = requestData.phoneNumber;
     const amount = requestData.amount;
