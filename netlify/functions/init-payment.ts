@@ -72,34 +72,53 @@ function formatPhoneNumber(phone: string): string {
 
 // Initiate STK Push
 async function initiateSTKPush(paymentData: PaymentRequest): Promise<any> {
-  const accessToken = await getAccessToken();
-  const timestamp = generateTimestamp();
-  const password = generatePassword(timestamp);
-  
-  const stkPushData = {
-    BusinessShortCode: MPESA_CONFIG.business_short_code,
-    Password: password,
-    Timestamp: timestamp,
-    TransactionType: "CustomerPayBillOnline",
-    Amount: paymentData.amount,
-    PartyA: formatPhoneNumber(paymentData.phone),
-    PartyB: MPESA_CONFIG.business_short_code,
-    PhoneNumber: formatPhoneNumber(paymentData.phone),
-    CallBackURL: MPESA_CONFIG.callback_url,
-    AccountReference: paymentData.reference,
-    TransactionDesc: paymentData.description
-  };
+  try {
+    console.log('Getting access token...');
+    const accessToken = await getAccessToken();
+    console.log('Access token received');
+    
+    const timestamp = generateTimestamp();
+    const password = generatePassword(timestamp);
+    
+    console.log('STK Push data prepared:', {
+      BusinessShortCode: MPESA_CONFIG.business_short_code,
+      Amount: paymentData.amount,
+      PartyA: formatPhoneNumber(paymentData.phone),
+      AccountReference: paymentData.reference
+    });
+    
+    const stkPushData = {
+      BusinessShortCode: MPESA_CONFIG.business_short_code,
+      Password: password,
+      Timestamp: timestamp,
+      TransactionType: "CustomerPayBillOnline",
+      Amount: paymentData.amount,
+      PartyA: formatPhoneNumber(paymentData.phone),
+      PartyB: MPESA_CONFIG.business_short_code,
+      PhoneNumber: formatPhoneNumber(paymentData.phone),
+      CallBackURL: MPESA_CONFIG.callback_url,
+      AccountReference: paymentData.reference,
+      TransactionDesc: paymentData.description
+    };
 
-  const response = await fetch(`${MPESA_CONFIG.base_url}/mpesa/stkpush/v1/processrequest`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(stkPushData),
-  });
+    console.log('Sending STK Push request...');
+    const response = await fetch(`${MPESA_CONFIG.base_url}/mpesa/stkpush/v1/processrequest`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(stkPushData),
+    });
 
-  return await response.json();
+    const result = await response.json();
+    console.log('STK Push response:', result);
+    
+    return result;
+  } catch (error) {
+    console.error('STK Push error:', error);
+    throw error;
+  }
 }
 
 export const handler: Handler = async (event, context) => {
@@ -128,7 +147,28 @@ export const handler: Handler = async (event, context) => {
   }
 
   try {
+    // Log incoming request for debugging
+    console.log('Init payment request received:', {
+      method: event.httpMethod,
+      body: event.body,
+      headers: event.headers
+    });
+
+    // Check if environment variables are loaded
+    if (!MPESA_CONFIG.consumer_key || !MPESA_CONFIG.consumer_secret) {
+      console.error('M-Pesa credentials not configured');
+      return {
+        statusCode: 500,
+        headers: corsHeaders,
+        body: JSON.stringify({ 
+          error: 'Payment service not configured properly' 
+        }),
+      };
+    }
+
     const paymentData: PaymentRequest = JSON.parse(event.body || '{}');
+    
+    console.log('Parsed payment data:', paymentData);
     
     // Validate required fields
     if (!paymentData.phone || !paymentData.amount || !paymentData.reference) {
