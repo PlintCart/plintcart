@@ -138,6 +138,8 @@ exports.handler = async (event, context) => {
     }
     
     console.log('📥 Raw request data:', requestData);
+    console.log('📥 Request data type:', typeof requestData);
+    console.log('📥 Request data keys:', requestData ? Object.keys(requestData) : 'null/undefined');
 
     // Handle both direct and nested data structures  
     const phoneNumber = requestData.phoneNumber;
@@ -146,6 +148,12 @@ exports.handler = async (event, context) => {
     const description = requestData.description || `Payment for order ${orderId}`;
 
     console.log('📱 Extracted payment data:', { phoneNumber, amount, orderId, description });
+    console.log('📱 Data types:', { 
+      phoneNumber: typeof phoneNumber, 
+      amount: typeof amount, 
+      orderId: typeof orderId, 
+      description: typeof description 
+    });
 
     // Validate input with detailed error reporting
     if (!phoneNumber) {
