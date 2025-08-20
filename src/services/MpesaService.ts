@@ -130,7 +130,7 @@ export class MpesaService {
   static async initiatePayment(request: PaymentRequest): Promise<PaymentResponse> {
     try {
       // Call the Netlify function (works in both dev and production)
-      const response = await fetch('/.netlify/functions/init-payment-minimal', {
+      const response = await fetch('/.netlify/functions/init-payment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

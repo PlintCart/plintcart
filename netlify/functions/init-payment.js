@@ -108,7 +108,7 @@ exports.handler = async (event, context) => {
 
     console.log('✅ All environment variables present');
 
-    // Parse request body
+    // Parse request body with better error handling
     if (!event.body) {
       console.error('❌ No request body provided');
       return {
@@ -121,10 +121,25 @@ exports.handler = async (event, context) => {
       };
     }
 
-    const requestData = JSON.parse(event.body);
+    let requestData;
+    try {
+      requestData = JSON.parse(event.body);
+    } catch (parseError) {
+      console.error('❌ Failed to parse JSON:', parseError);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          message: 'Invalid JSON in request body',
+          error: parseError.message
+        })
+      };
+    }
+    
     console.log('📥 Raw request data:', requestData);
 
-    // Handle both direct and nested data structures
+    // Handle both direct and nested data structures  
     const phoneNumber = requestData.phoneNumber;
     const amount = requestData.amount;
     const orderId = requestData.orderId;
