@@ -130,7 +130,7 @@ export class MpesaService {
   static async initiatePayment(request: PaymentRequest): Promise<PaymentResponse> {
     try {
       // Call the Netlify function (works in both dev and production)
-      const response = await fetch('/.netlify/functions/test-payment', {
+      const response = await fetch('/.netlify/functions/init-payment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -182,7 +182,7 @@ export class MpesaService {
   static async checkPaymentStatus(checkoutRequestId: string): Promise<any> {
     try {
       // Call your Netlify function
-      const response = await fetch(`/.netlify/functions/mpesa-status/${checkoutRequestId}`);
+      const response = await fetch(`/.netlify/functions/mpesa-status-simple/${checkoutRequestId}`);
       
       if (!response.ok) {
         throw new Error(`Status check failed: ${response.statusText}`);
