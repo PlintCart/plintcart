@@ -13,7 +13,27 @@ exports.handler = async (event, context) => {
 
   try {
     // Parse request
-    const { phoneNumber, amount } = JSON.parse(event.body || '{}');
+    let { phoneNumber, amount } = JSON.parse(event.body || '{}');
+    
+    // FIX: Ensure phone number is in correct format for M-Pesa
+    if (phoneNumber.startsWith('0')) {
+      phoneNumber = '254' + phoneNumber.substring(1);
+    }
+    if (!phoneNumber.startsWith('254')) {
+      phoneNumber = '254' + phoneNumber;
+    }
+    
+    // Ensure phone number is exactly 12 digits starting with 254
+    if (!/^254\d{9}$/.test(phoneNumber)) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          error: `Invalid phone number format. Got: ${phoneNumber}. Expected: 254XXXXXXXXX (12 digits)`
+        })
+      };
+    }
     
     // Get access token
     const credentials = Buffer.from(
