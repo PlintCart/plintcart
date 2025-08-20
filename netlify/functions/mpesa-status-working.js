@@ -1,4 +1,84 @@
 // M-Pesa Payment Status Checker - WORKING VERSION
+const https = require('https');
+
+// Get M-Pesa access token
+async function getAccessToken() {
+  const credentials = Buffer.from(
+    `${process.env.MPESA_CONSUMER_KEY}:${process.env.MPESA_CONSUMER_SECRET}`
+  ).toString('base64');
+  
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: 'sandbox.safaricom.co.ke',
+      path: '/oauth/v1/generate?grant_type=client_credentials',
+      method: 'GET',
+      headers: {
+        'Authorization': `Basic ${credentials}`,
+        'Content-Type': 'application/json'
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => data += chunk);
+      res.on('end', () => {
+        try {
+          const response = JSON.parse(data);
+          resolve(response.access_token);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+
+    req.on('error', reject);
+    req.end();
+  });
+}
+
+// Query payment status
+async function queryPaymentStatus(accessToken, checkoutRequestId) {
+  const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, -3);
+  const password = Buffer.from(`${process.env.MPESA_BUSINESS_SHORT_CODE}${process.env.MPESA_PASSKEY}${timestamp}`).toString('base64');
+
+  const statusData = {
+    BusinessShortCode: process.env.MPESA_BUSINESS_SHORT_CODE,
+    Password: password,
+    Timestamp: timestamp,
+    CheckoutRequestID: checkoutRequestId
+  };
+
+  return new Promise((resolve, reject) => {
+    const postData = JSON.stringify(statusData);
+    const options = {
+      hostname: 'sandbox.safaricom.co.ke',
+      path: '/mpesa/stkpushquery/v1/query',
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(postData)
+      }
+    };
+
+    const req = https.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => data += chunk);
+      res.on('end', () => {
+        try {
+          const response = JSON.parse(data);
+          resolve(response);
+        } catch (error) {
+          reject(error);
+        }
+      });
+    });
+
+    req.on('error', reject);
+    req.write(postData);
+    req.end();
+  });
+}
 exports.handler = async (event, context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -18,46 +98,12 @@ exports.handler = async (event, context) => {
     
     console.log('🔍 Checking payment status for:', checkoutRequestId);
 
-    // Get M-Pesa access token
-    const credentials = Buffer.from(
-      `${process.env.MPESA_CONSUMER_KEY}:${process.env.MPESA_CONSUMER_SECRET}`
-    ).toString('base64');
-    
-    const tokenResponse = await fetch('https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Basic ${credentials}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    const tokenData = await tokenResponse.json();
-    const accessToken = tokenData.access_token;
-
-    // Generate timestamp and password for status query
-    const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, -3);
-    const password = Buffer.from(`${process.env.MPESA_BUSINESS_SHORT_CODE}${process.env.MPESA_PASSKEY}${timestamp}`).toString('base64');
+    // Get access token
+    const accessToken = await getAccessToken();
+    console.log('✅ Access token obtained');
 
     // Query payment status
-    const statusData = {
-      BusinessShortCode: process.env.MPESA_BUSINESS_SHORT_CODE,
-      Password: password,
-      Timestamp: timestamp,
-      CheckoutRequestID: checkoutRequestId
-    };
-
-    console.log('📡 Querying M-Pesa status with:', statusData);
-
-    const statusResponse = await fetch('https://sandbox.safaricom.co.ke/mpesa/stkpushquery/v1/query', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(statusData)
-    });
-
-    const statusResult = await statusResponse.json();
+    const statusResult = await queryPaymentStatus(accessToken, checkoutRequestId);
     console.log('📊 M-Pesa status result:', statusResult);
 
     // Determine payment status
