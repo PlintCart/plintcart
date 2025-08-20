@@ -147,16 +147,45 @@ exports.handler = async (event, context) => {
 
     console.log('📱 Extracted payment data:', { phoneNumber, amount, orderId, description });
 
-    // Validate input
-    if (!phoneNumber || !amount || !orderId) {
-      console.error('❌ Missing required fields:', { phoneNumber, amount, orderId });
+    // Validate input with detailed error reporting
+    if (!phoneNumber) {
+      console.error('❌ Missing phoneNumber:', { phoneNumber, amount, orderId });
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({
           success: false,
-          message: 'Missing required fields: phoneNumber, amount, orderId',
-          received: { phoneNumber, amount, orderId, description }
+          message: 'Missing phoneNumber field',
+          received: { phoneNumber, amount, orderId, description },
+          rawData: requestData
+        })
+      };
+    }
+    
+    if (!amount) {
+      console.error('❌ Missing amount:', { phoneNumber, amount, orderId });
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          message: 'Missing amount field',
+          received: { phoneNumber, amount, orderId, description },
+          rawData: requestData
+        })
+      };
+    }
+    
+    if (!orderId) {
+      console.error('❌ Missing orderId:', { phoneNumber, amount, orderId });
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          message: 'Missing orderId field',
+          received: { phoneNumber, amount, orderId, description },
+          rawData: requestData
         })
       };
     }
