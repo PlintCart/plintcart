@@ -13,26 +13,37 @@ const MPESA_CONFIG = {
 };
 
 interface PaymentRequest {
-  phoneNumber: string;  // Changed from 'phone'
+  phoneNumber: string;
   amount: number;
-  orderId: string;      // Changed from 'reference'
+  orderId: string;
   description: string;
-  merchantSettings?: any; // Added this field
+  merchantSettings?: any;
 }
 
 // Get OAuth token from Daraja API
 async function getAccessToken(): Promise<string> {
-  const auth = Buffer.from(`${MPESA_CONFIG.consumer_key}:${MPESA_CONFIG.consumer_secret}`).toString('base64');
-  
-  const response = await fetch(`${MPESA_CONFIG.base_url}/oauth/v1/generate?grant_type=client_credentials`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Basic ${auth}`,
-    },
-  });
+  try {
+    const auth = Buffer.from(`${MPESA_CONFIG.consumer_key}:${MPESA_CONFIG.consumer_secret}`).toString('base64');
+    
+    console.log('🔑 Requesting access token...');
+    const response = await fetch(`${MPESA_CONFIG.base_url}/oauth/v1/generate?grant_type=client_credentials`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Basic ${auth}`,
+      },
+    });
 
-  const data = await response.json() as { access_token: string };
-  return data.access_token;
+    if (!response.ok) {
+      throw new Error(`OAuth failed: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json() as { access_token: string };
+    console.log('✅ Access token received');
+    return data.access_token;
+  } catch (error) {
+    console.error('❌ OAuth error:', error);
+    throw error;
+  }
 }
 
 // Generate timestamp for M-Pesa
@@ -74,18 +85,19 @@ function formatPhoneNumber(phone: string): string {
 // Initiate STK Push
 async function initiateSTKPush(paymentData: PaymentRequest): Promise<any> {
   try {
-    console.log('Getting access token...');
-    const accessToken = await getAccessToken();
-    console.log('Access token received');
+    console.log('📱 Starting STK Push process...');
     
+    const accessToken = await getAccessToken();
     const timestamp = generateTimestamp();
     const password = generatePassword(timestamp);
+    const formattedPhone = formatPhoneNumber(paymentData.phoneNumber);
     
-    console.log('STK Push data prepared:', {
+    console.log('📊 STK Push data:', {
       BusinessShortCode: MPESA_CONFIG.business_short_code,
       Amount: paymentData.amount,
-      PartyA: formatPhoneNumber(paymentData.phoneNumber),
-      AccountReference: paymentData.orderId
+      PartyA: formattedPhone,
+      AccountReference: paymentData.orderId,
+      timestamp
     });
     
     const stkPushData = {
@@ -94,15 +106,15 @@ async function initiateSTKPush(paymentData: PaymentRequest): Promise<any> {
       Timestamp: timestamp,
       TransactionType: "CustomerPayBillOnline",
       Amount: paymentData.amount,
-      PartyA: formatPhoneNumber(paymentData.phoneNumber),
+      PartyA: formattedPhone,
       PartyB: MPESA_CONFIG.business_short_code,
-      PhoneNumber: formatPhoneNumber(paymentData.phoneNumber),
+      PhoneNumber: formattedPhone,
       CallBackURL: MPESA_CONFIG.callback_url,
       AccountReference: paymentData.orderId,
       TransactionDesc: paymentData.description
     };
 
-    console.log('Sending STK Push request...');
+    console.log('🚀 Sending STK Push request to Safaricom...');
     const response = await fetch(`${MPESA_CONFIG.base_url}/mpesa/stkpush/v1/processrequest`, {
       method: 'POST',
       headers: {
@@ -113,11 +125,15 @@ async function initiateSTKPush(paymentData: PaymentRequest): Promise<any> {
     });
 
     const result = await response.json();
-    console.log('STK Push response:', result);
+    console.log('📲 STK Push response:', result);
+    
+    if (!response.ok) {
+      throw new Error(`STK Push failed: ${response.status} ${JSON.stringify(result)}`);
+    }
     
     return result;
   } catch (error) {
-    console.error('STK Push error:', error);
+    console.error('❌ STK Push error:', error);
     throw error;
   }
 }
@@ -148,36 +164,45 @@ export const handler: Handler = async (event, context) => {
   }
 
   try {
-    // Log incoming request for debugging
-    console.log('Init payment request received:', {
-      method: event.httpMethod,
-      body: event.body,
-      headers: event.headers
-    });
+    console.log('🎯 Init payment request received');
+    console.log('📥 Raw body:', event.body);
+    console.log('📋 Headers:', event.headers);
 
     // Check if environment variables are loaded
     if (!MPESA_CONFIG.consumer_key || !MPESA_CONFIG.consumer_secret) {
-      console.error('M-Pesa credentials not configured');
+      console.error('❌ M-Pesa credentials not configured');
       return {
         statusCode: 500,
         headers: corsHeaders,
         body: JSON.stringify({ 
-          error: 'Payment service not configured properly' 
+          error: 'Payment service not configured properly',
+          config: {
+            consumer_key: !!MPESA_CONFIG.consumer_key,
+            consumer_secret: !!MPESA_CONFIG.consumer_secret,
+            business_short_code: !!MPESA_CONFIG.business_short_code,
+            passkey: !!MPESA_CONFIG.passkey,
+            callback_url: !!MPESA_CONFIG.callback_url
+          }
         }),
       };
     }
 
     const paymentData: PaymentRequest = JSON.parse(event.body || '{}');
-    
-    console.log('Parsed payment data:', paymentData);
+    console.log('📦 Parsed payment data:', paymentData);
     
     // Validate required fields
     if (!paymentData.phoneNumber || !paymentData.amount || !paymentData.orderId) {
+      console.error('❌ Missing required fields');
       return {
         statusCode: 400,
         headers: corsHeaders,
         body: JSON.stringify({ 
-          error: 'Missing required fields: phoneNumber, amount, orderId' 
+          error: 'Missing required fields: phoneNumber, amount, orderId',
+          received: {
+            phoneNumber: !!paymentData.phoneNumber,
+            amount: !!paymentData.amount,
+            orderId: !!paymentData.orderId
+          }
         }),
       };
     }
@@ -185,22 +210,27 @@ export const handler: Handler = async (event, context) => {
     // Validate phone number format
     const formattedPhone = formatPhoneNumber(paymentData.phoneNumber);
     if (!formattedPhone.match(/^254[17]\d{8}$/)) {
+      console.error('❌ Invalid phone format:', formattedPhone);
       return {
         statusCode: 400,
         headers: corsHeaders,
         body: JSON.stringify({ 
-          error: 'Invalid phone number format. Use 254XXXXXXXXX or 07XXXXXXXX' 
+          error: 'Invalid phone number format. Use 254XXXXXXXXX or 07XXXXXXXX',
+          provided: paymentData.phoneNumber,
+          formatted: formattedPhone
         }),
       };
     }
 
     // Validate amount
     if (paymentData.amount < 1 || paymentData.amount > 300000) {
+      console.error('❌ Invalid amount:', paymentData.amount);
       return {
         statusCode: 400,
         headers: corsHeaders,
         body: JSON.stringify({ 
-          error: 'Amount must be between 1 and 300,000 KES' 
+          error: 'Amount must be between 1 and 300,000 KES',
+          provided: paymentData.amount
         }),
       };
     }
@@ -208,8 +238,11 @@ export const handler: Handler = async (event, context) => {
     // Initiate STK Push
     const result = await initiateSTKPush(paymentData);
     
+    console.log('✅ STK Push completed with result:', result);
+    
     // Check if STK push was successful
     if (result.ResponseCode === '0') {
+      console.log('🎉 STK Push sent successfully!');
       return {
         statusCode: 200,
         headers: corsHeaders,
@@ -224,25 +257,28 @@ export const handler: Handler = async (event, context) => {
         }),
       };
     } else {
+      console.error('❌ STK Push failed with response:', result);
       return {
         statusCode: 400,
         headers: corsHeaders,
         body: JSON.stringify({
           success: false,
           error: result.ResponseDescription || 'STK Push failed',
-          responseCode: result.ResponseCode
+          responseCode: result.ResponseCode,
+          fullResponse: result
         }),
       };
     }
 
   } catch (error) {
-    console.error('Payment initiation error:', error);
+    console.error('💥 Payment initiation error:', error);
     return {
       statusCode: 500,
       headers: corsHeaders,
       body: JSON.stringify({ 
         error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
       }),
     };
   }
