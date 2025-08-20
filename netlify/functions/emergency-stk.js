@@ -13,7 +13,34 @@ exports.handler = async (event, context) => {
 
   try {
     // Parse request
-    let { phoneNumber, amount } = JSON.parse(event.body || '{}');
+    const requestBody = JSON.parse(event.body || '{}');
+    let { phoneNumber, amount } = requestBody;
+    
+    console.log('🔍 RECEIVED RAW DATA:');
+    console.log('  Full request body:', JSON.stringify(requestBody, null, 2));
+    console.log('  phoneNumber value:', phoneNumber);
+    console.log('  phoneNumber type:', typeof phoneNumber);
+    console.log('  amount:', amount);
+    
+    // Check if phoneNumber exists
+    if (!phoneNumber) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          success: false,
+          error: 'Phone number is required',
+          debug: {
+            receivedData: requestBody,
+            phoneNumber: phoneNumber,
+            phoneNumberType: typeof phoneNumber
+          }
+        })
+      };
+    }
+    
+    // Convert to string if it's not already
+    phoneNumber = String(phoneNumber);
     
     console.log('🔍 RECEIVED DATA:');
     console.log('  Original phoneNumber:', phoneNumber);
