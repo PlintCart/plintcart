@@ -129,6 +129,18 @@ export class MpesaService {
    */
   static async initiatePayment(request: PaymentRequest): Promise<PaymentResponse> {
     try {
+      // Debug: Call debug function first to see exact data
+      const debugResponse = await fetch('/.netlify/functions/debug-request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request)
+      });
+      
+      const debugData = await debugResponse.json();
+      console.log('Debug response:', debugData);
+      
       // Call the Netlify function (works in both dev and production)
       const response = await fetch('/.netlify/functions/init-payment', {
         method: 'POST',
