@@ -129,6 +129,8 @@ export class MpesaService {
    */
   static async initiatePayment(request: PaymentRequest): Promise<PaymentResponse> {
     try {
+      console.log('🚀 MpesaService.initiatePayment called with:', request);
+      
       // EMERGENCY: Use simplified function with correct data format
       const response = await fetch('/.netlify/functions/emergency-stk', {
         method: 'POST',
@@ -141,25 +143,28 @@ export class MpesaService {
         })
       });
 
+      console.log('📡 Emergency STK response status:', response.status);
+      
       if (!response.ok) {
-        // If function doesn't exist in dev, provide mock response for testing
-        if (import.meta.env.DEV && response.status === 404) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          
-          return {
-            success: true,
-            orderId: request.orderId,
-            message: 'M-Pesa STK push sent to your phone (Development Mode)',
-            transactionId: `DEV_${Date.now()}`,
-            instructions: `Development Mode: Please check your phone ${request.phoneNumber} for the M-Pesa payment prompt to pay KSh ${request.amount}.`
-          };
-        }
-        
-        throw new Error(`Payment initiation failed: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('❌ Emergency STK failed:', errorText);
+        throw new Error(`Emergency STK failed: ${response.status} - ${errorText}`);
       }
 
-      const data = await response.json();
-      return data;
+      const stkData = await response.json();
+      console.log('✅ Emergency STK success:', stkData);
+
+      if (!stkData.success) {
+        throw new Error(stkData.error || 'STK push failed');
+      }
+
+      return {
+        success: true,
+        orderId: request.orderId,
+        message: stkData.message || 'STK push sent successfully',
+        transactionId: stkData.data?.CheckoutRequestID || `STK_${Date.now()}`,
+        instructions: `Please check your phone ${request.phoneNumber} for the M-Pesa payment prompt to pay KSh ${request.amount}.`
+      };
     } catch (error) {
       console.error('Error initiating payment:', error);
       
