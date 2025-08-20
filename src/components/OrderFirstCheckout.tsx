@@ -265,9 +265,9 @@ export function OrderFirstCheckout({
       if (method === 'mpesa' && mpesaSettings.enableMpesa) {
         // Process M-Pesa payment using enhanced MpesaService
         try {
-          // Validate phone number first
+          // Validate M-Pesa number first
           if (!MpesaService.validatePhoneNumber(customerInfo.phone)) {
-            throw new Error('Invalid phone number format. Please use format: 0712345678 or 254712345678');
+            throw new Error('Invalid M-Pesa number format. Please use format: 0712345678 or 254712345678');
           }
 
           const formattedPhone = MpesaService.formatPhoneNumber(customerInfo.phone);
@@ -372,7 +372,7 @@ export function OrderFirstCheckout({
         // Create stock transaction for sales analytics
         await createStockTransaction(orderStatus.orderId);
 
-        toast.success('Order confirmed! You will pay cash on delivery.');
+        toast.success('Order confirmed! We\'re sending you the order details.');
         
         // Send confirmation (you can add WhatsApp/Email service here)
         sendOrderConfirmation(orderStatus.orderId, 'cod');
@@ -436,7 +436,9 @@ export function OrderFirstCheckout({
           // Create stock transaction
           await createStockTransaction(orderStatus.orderId);
           
-          toast.success('Payment received! Your order is confirmed.');
+          // Create notification data for automatic payment confirmation
+          toast.success('Payment received! We\'re sending you the order confirmation.');
+          
           sendOrderConfirmation(orderStatus.orderId, 'mpesa');
           onOrderComplete?.(orderStatus.orderId);
         }
@@ -471,9 +473,16 @@ export function OrderFirstCheckout({
       paymentError: 'Payment timeout - no payment received within 5 minutes',
       updatedAt: new Date()
     });
+
+    // Generate payment instructions for retry
+    const paymentInstructions = MpesaService.generatePaymentInstructions(
+      mpesaSettings, 
+      total, 
+      orderStatus.accountNumber
+    );
     
     setShowRetryOptions(true);
-    toast.error('Payment timeout. No payment detected within 5 minutes.');
+    toast.error('Payment timeout. We\'ve sent you alternative payment instructions.');
   };
 
   // Retry STK Push
@@ -495,6 +504,52 @@ export function OrderFirstCheckout({
     
     // Retry payment
     await processPayment('mpesa');
+  };
+
+  // Handle payment cancellation with notification
+  const handleCancelPayment = async () => {
+    if (!orderStatus.orderId) {
+      setShowPaymentConfirmation(false);
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      // Update order status to cancelled
+      await updateDoc(doc(db, 'orders', orderStatus.orderId), {
+        paymentStatus: 'cancelled',
+        orderStatus: 'cancelled',
+        cancelledAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      // Generate payment instructions for future reference
+      const paymentInstructions = MpesaService.generatePaymentInstructions(
+        mpesaSettings, 
+        total, 
+        orderStatus.accountNumber
+      );
+
+      // Create notification data
+      // Send notifications
+      toast.success('Order cancelled. We\'ve sent you the order details for future reference!');
+
+      // Reset UI
+      setShowPaymentConfirmation(false);
+      setOrderStatus({
+        status: 'creating',
+        orderId: '',
+        accountNumber: '',
+        paymentMethod: null
+      });
+
+    } catch (error) {
+      console.error('Error cancelling payment:', error);
+      toast.error('Error cancelling payment. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   // Send order confirmation (placeholder - integrate with WhatsApp/Email service)
@@ -534,14 +589,26 @@ ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Paid via M-Pesa'}`;
         // Create stock transaction for sales analytics
         await createStockTransaction(orderStatus.orderId);
 
+        // Send success notifications
+        toast.success('Payment confirmed! We\'re sending you the order confirmation.');
+
         setOrderStatus(prev => ({ ...prev, status: 'payment_completed' }));
-        toast.success('Payment confirmed! Your order is being processed.');
         onOrderComplete?.(orderStatus.orderId);
       } else {
         await updateDoc(doc(db, 'orders', orderStatus.orderId), {
           paymentStatus: 'pending_confirmation',
           updatedAt: new Date()
         });
+
+        // Generate payment instructions for pending payment
+        const paymentInstructions = MpesaService.generatePaymentInstructions(
+          mpesaSettings, 
+          total, 
+          orderStatus.accountNumber
+        );
+
+        // Send pending payment notifications
+        toast.success('Order saved! We\'ve sent you payment instructions.');
 
         // Show centered dialog instead of just toast
         setShowPaymentPendingDialog(true);
@@ -558,7 +625,7 @@ ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Paid via M-Pesa'}`;
       return false;
     }
     if (!customerInfo.phone.trim()) {
-      toast.error('Please enter your phone number');
+      toast.error('Please enter your M-Pesa number');
       return false;
     }
     if (!customerInfo.address.trim()) {
@@ -645,17 +712,20 @@ ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Paid via M-Pesa'}`;
               
               <div className="space-y-2">
                 <Label htmlFor="phone" className="flex items-center gap-2">
-                  <Phone className="w-4 h-4" />
-                  Phone Number *
+                  <Smartphone className="w-4 h-4" />
+                  M-Pesa Number *
                 </Label>
                 <Input
                   id="phone"
                   type="tel"
                   value={customerInfo.phone}
                   onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
-                  placeholder="+254712345678"
+                  placeholder="0712345678 or 254712345678"
                   disabled={isProcessing}
                 />
+                <p className="text-xs text-muted-foreground">
+                  This number will receive the M-Pesa payment prompt
+                </p>
               </div>
             </div>
 
@@ -732,15 +802,15 @@ ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Paid via M-Pesa'}`;
   // Payment method selection
   if (orderStatus.status === 'pending_payment') {
     return (
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6 px-4 sm:px-0">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-600" />
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
               Order Created Successfully!
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 sm:space-y-4">
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
@@ -758,18 +828,24 @@ ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Paid via M-Pesa'}`;
                   <Button
                     onClick={() => processPayment('mpesa')}
                     disabled={isProcessing}
-                    className="w-full justify-start h-auto p-4 text-left"
+                    className="w-full justify-start h-auto p-3 sm:p-4 text-left"
                     variant="outline"
                   >
                     <div className="flex items-center w-full">
-                      <Smartphone className="w-5 h-5 mr-3 text-green-600 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium">M-Pesa Payment</p>
-                        <p className="text-sm text-muted-foreground">
+                      <Smartphone className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 text-green-600 flex-shrink-0" />
+                      <div className="flex-1 min-w-0 mr-2">
+                        <p className="font-medium text-sm sm:text-base">M-Pesa Payment</p>
+                        <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
                           Pay instantly via M-Pesa STK Push
                         </p>
+                        <p className="text-xs text-muted-foreground sm:hidden">
+                          STK Push
+                        </p>
                       </div>
-                      <Badge variant="secondary" className="ml-2 flex-shrink-0">Recommended</Badge>
+                      <Badge variant="secondary" className="text-xs px-1.5 py-0.5 sm:px-2.5 sm:py-0.5 flex-shrink-0">
+                        <span className="hidden sm:inline">Recommended</span>
+                        <span className="sm:hidden">★</span>
+                      </Badge>
                     </div>
                   </Button>
                 )}
@@ -777,15 +853,18 @@ ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Paid via M-Pesa'}`;
                 <Button
                   onClick={() => processPayment('cash')}
                   disabled={isProcessing}
-                  className="w-full justify-start h-auto p-4 text-left"
+                  className="w-full justify-start h-auto p-3 sm:p-4 text-left"
                   variant="outline"
                 >
                   <div className="flex items-center w-full">
-                    <CreditCard className="w-5 h-5 mr-3 flex-shrink-0" />
+                    <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium">Cash on Delivery</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="font-medium text-sm sm:text-base">Cash on Delivery</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
                         Pay when your order is delivered
+                      </p>
+                      <p className="text-xs text-muted-foreground sm:hidden">
+                        Pay on delivery
                       </p>
                     </div>
                   </div>
@@ -804,20 +883,20 @@ ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Paid via M-Pesa'}`;
     const seconds = paymentTimer % 60;
     
     return (
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6 px-4 sm:px-0">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 justify-between">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
               <div className="flex items-center gap-2">
-                <Smartphone className="w-5 h-5 text-green-600" />
-                STK Push Sent
+                <Smartphone className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                <span className="text-base sm:text-lg">STK Push Sent</span>
               </div>
-              <Badge variant="secondary">
-                Order: {orderStatus.accountNumber}
+              <Badge variant="secondary" className="self-start sm:self-auto text-xs">
+                <span className="hidden sm:inline">Order: </span>{orderStatus.accountNumber}
               </Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 sm:space-y-4">
             <Alert>
               <Clock className="h-4 w-4" />
               <AlertDescription>
@@ -827,29 +906,29 @@ ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Paid via M-Pesa'}`;
             </Alert>
 
             {/* Payment Timer */}
-            <div className="text-center p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h4 className="font-medium mb-2">Payment Timer</h4>
-              <div className="text-2xl font-mono font-bold text-blue-600">
+            <div className="text-center p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <h4 className="font-medium mb-2 text-sm sm:text-base">Payment Timer</h4>
+              <div className="text-xl sm:text-2xl font-mono font-bold text-blue-600">
                 {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                Please complete payment within this time
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                Complete payment within this time
               </p>
             </div>
 
             {/* Payment Status */}
             <div className="space-y-3">
-              <div className="flex items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <Clock className="w-4 h-4 text-yellow-600" />
-                <span className="text-sm">
+              <div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <Clock className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                <span className="text-xs sm:text-sm">
                   Waiting for payment confirmation... This will update automatically once payment is received.
                 </span>
               </div>
               
               {orderStatus.paymentResult?.instructions && (
-                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                  <h4 className="font-medium mb-2">Manual Payment Instructions (if STK fails):</h4>
-                  <pre className="text-sm whitespace-pre-wrap text-gray-700">
+                <div className="p-3 sm:p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                  <h4 className="font-medium mb-2 text-sm sm:text-base">Manual Payment Instructions (if STK fails):</h4>
+                  <pre className="text-xs sm:text-sm whitespace-pre-wrap text-gray-700 break-words">
                     {orderStatus.paymentResult.instructions}
                   </pre>
                 </div>
@@ -858,29 +937,30 @@ ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Paid via M-Pesa'}`;
 
             {/* Action Buttons */}
             <div className="space-y-3">
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button
                   onClick={() => confirmPayment(true)}
-                  className="flex-1"
+                  className="flex-1 w-full"
                   disabled={isProcessing}
                   variant="outline"
                 >
                   <CheckCircle className="w-4 h-4 mr-2" />
-                  I've Paid Manually
+                  <span className="hidden sm:inline">I've Paid Manually</span>
+                  <span className="sm:hidden">Paid Manually</span>
                 </Button>
                 
                 <Button
-                  onClick={() => setShowPaymentConfirmation(false)}
+                  onClick={handleCancelPayment}
                   variant="outline"
-                  className="flex-1"
+                  className="flex-1 w-full"
                   disabled={isProcessing}
                 >
                   Cancel Payment
                 </Button>
               </div>
               
-              <p className="text-xs text-muted-foreground text-center">
-                💡 Payment will be verified automatically. Only click "I've Paid Manually" if you completed payment outside the STK push.
+              <p className="text-xs text-muted-foreground text-center px-2">
+                💡 Payment will be verified automatically. Only click "Paid Manually" if you completed payment outside the STK push.
               </p>
             </div>
           </CardContent>
@@ -892,11 +972,11 @@ ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Paid via M-Pesa'}`;
   // Retry Options Screen
   if (showRetryOptions) {
     return (
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6 px-4 sm:px-0">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-orange-600">
-              <AlertCircle className="w-5 h-5" />
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-orange-600 text-base sm:text-lg">
+              <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5" />
               Payment Issue Detected
             </CardTitle>
           </CardHeader>
