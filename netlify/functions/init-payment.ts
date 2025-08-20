@@ -13,10 +13,11 @@ const MPESA_CONFIG = {
 };
 
 interface PaymentRequest {
-  phone: string;
+  phoneNumber: string;  // Changed from 'phone'
   amount: number;
-  reference: string;
+  orderId: string;      // Changed from 'reference'
   description: string;
+  merchantSettings?: any; // Added this field
 }
 
 // Get OAuth token from Daraja API
@@ -83,8 +84,8 @@ async function initiateSTKPush(paymentData: PaymentRequest): Promise<any> {
     console.log('STK Push data prepared:', {
       BusinessShortCode: MPESA_CONFIG.business_short_code,
       Amount: paymentData.amount,
-      PartyA: formatPhoneNumber(paymentData.phone),
-      AccountReference: paymentData.reference
+      PartyA: formatPhoneNumber(paymentData.phoneNumber),
+      AccountReference: paymentData.orderId
     });
     
     const stkPushData = {
@@ -93,11 +94,11 @@ async function initiateSTKPush(paymentData: PaymentRequest): Promise<any> {
       Timestamp: timestamp,
       TransactionType: "CustomerPayBillOnline",
       Amount: paymentData.amount,
-      PartyA: formatPhoneNumber(paymentData.phone),
+      PartyA: formatPhoneNumber(paymentData.phoneNumber),
       PartyB: MPESA_CONFIG.business_short_code,
-      PhoneNumber: formatPhoneNumber(paymentData.phone),
+      PhoneNumber: formatPhoneNumber(paymentData.phoneNumber),
       CallBackURL: MPESA_CONFIG.callback_url,
-      AccountReference: paymentData.reference,
+      AccountReference: paymentData.orderId,
       TransactionDesc: paymentData.description
     };
 
@@ -171,18 +172,18 @@ export const handler: Handler = async (event, context) => {
     console.log('Parsed payment data:', paymentData);
     
     // Validate required fields
-    if (!paymentData.phone || !paymentData.amount || !paymentData.reference) {
+    if (!paymentData.phoneNumber || !paymentData.amount || !paymentData.orderId) {
       return {
         statusCode: 400,
         headers: corsHeaders,
         body: JSON.stringify({ 
-          error: 'Missing required fields: phone, amount, reference' 
+          error: 'Missing required fields: phoneNumber, amount, orderId' 
         }),
       };
     }
 
     // Validate phone number format
-    const formattedPhone = formatPhoneNumber(paymentData.phone);
+    const formattedPhone = formatPhoneNumber(paymentData.phoneNumber);
     if (!formattedPhone.match(/^254[17]\d{8}$/)) {
       return {
         statusCode: 400,
