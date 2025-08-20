@@ -189,14 +189,20 @@ export class MpesaService {
    */
   static async checkPaymentStatus(checkoutRequestId: string): Promise<any> {
     try {
-      // Call your Netlify function
-      const response = await fetch(`/.netlify/functions/mpesa-status-simple/${checkoutRequestId}`);
+      console.log('🔍 Checking payment status for:', checkoutRequestId);
+      
+      // Call the working status function
+      const response = await fetch(`/.netlify/functions/mpesa-status-working/${checkoutRequestId}`);
       
       if (!response.ok) {
+        console.error('❌ Status check failed:', response.status, response.statusText);
         throw new Error(`Status check failed: ${response.statusText}`);
       }
 
-      return await response.json();
+      const result = await response.json();
+      console.log('📊 Payment status result:', result);
+      
+      return result;
     } catch (error) {
       console.error('Error checking payment status:', error);
       return { success: false, message: 'Unable to check payment status' };
