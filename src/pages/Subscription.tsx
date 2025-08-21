@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { 
   Crown, 
   Check, 
@@ -10,11 +12,15 @@ import {
   Palette, 
   Globe, 
   MessageCircle,
-  Zap
+  Zap,
+  Phone,
+  CreditCard
 } from 'lucide-react';
 import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { SubscriptionService, SubscriptionStatus } from '@/services/SubscriptionService';
 
 interface SubscriptionPlan {
   id: string;
@@ -62,36 +68,97 @@ const plans: SubscriptionPlan[] = [
 
 export default function SubscriptionPage() {
   const [user] = useAuthState(auth);
-  const [currentPlan, setCurrentPlan] = useState<string>('free');
+  const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [isUpgrading, setIsUpgrading] = useState(false);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
+  // Load user subscription status
   useEffect(() => {
-    const fetchUserSubscription = async () => {
-      if (user) {
-        try {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            setCurrentPlan(userData.subscriptionTier || 'free');
-          }
-        } catch (error) {
-          console.error('Error fetching subscription:', error);
-        }
-      }
+    if (user?.uid) {
+      loadSubscription();
+    } else {
       setLoading(false);
-    };
-
-    fetchUserSubscription();
+    }
   }, [user]);
 
-  const handleUpgrade = async (planId: string) => {
-    if (planId === 'premium') {
-      // Initiate M-Pesa payment for subscription
-      // This will integrate with your existing M-Pesa system
-      console.log('Initiating premium subscription payment...');
-      
-      // TODO: Integrate with MpesaService for subscription payment
-      // Amount: KES 2,000 for premium plan
+  const loadSubscription = async () => {
+    try {
+      if (user?.uid) {
+        const userSub = await SubscriptionService.getUserSubscription(user.uid);
+        setSubscription(userSub);
+      }
+    } catch (error) {
+      console.error('Error loading subscription:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpgrade = async () => {
+    if (!user?.uid) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to upgrade your subscription",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!phoneNumber.trim()) {
+      toast({
+        title: "Phone Number Required",
+        description: "Please enter your M-Pesa phone number",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Basic phone validation
+    const cleanPhone = phoneNumber.replace(/\s+/g, '').replace(/\+/g, '');
+    if (!/^(07|01|254)/.test(cleanPhone)) {
+      toast({
+        title: "Invalid Phone Number",
+        description: "Please enter a valid Kenyan phone number (07xxxxxxxx or 01xxxxxxxx)",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsUpgrading(true);
+
+    try {
+      const result = await SubscriptionService.subscribeToPremium(
+        user.uid,
+        phoneNumber,
+        user.email || ''
+      );
+
+      if (result.success) {
+        toast({
+          title: "STK Push Sent! 📱",
+          description: "Complete the payment on your phone to activate premium subscription",
+          duration: 10000
+        });
+
+        setShowPaymentForm(false);
+        
+        // Refresh subscription after a delay
+        setTimeout(() => {
+          loadSubscription();
+        }, 5000);
+      }
+    } catch (error: any) {
+      console.error('Upgrade error:', error);
+      toast({
+        title: "Upgrade Failed",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpgrading(false);
     }
   };
 
@@ -105,9 +172,29 @@ export default function SubscriptionPage() {
     );
   }
 
+  const currentPlan = subscription?.tier || 'free';
+  const isPremium = currentPlan === 'premium' && subscription?.status === 'active';
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4">
       <div className="max-w-4xl mx-auto">
+        {/* Current Status */}
+        {subscription && (
+          <div className="mb-8 text-center">
+            <Badge 
+              variant={isPremium ? "default" : "secondary"} 
+              className="mb-4"
+            >
+              {isPremium ? "Premium Active" : "Free Plan"}
+            </Badge>
+            {subscription.endDate && (
+              <p className="text-sm text-gray-600">
+                {isPremium ? `Expires: ${subscription.endDate.toLocaleDateString()}` : ''}
+              </p>
+            )}
+          </div>
+        )}
+
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Choose Your Plan
@@ -173,7 +260,11 @@ export default function SubscriptionPage() {
                 </ul>
 
                 <Button
-                  onClick={() => handleUpgrade(plan.id)}
+                  onClick={() => {
+                    if (plan.id === 'premium' && currentPlan !== 'premium') {
+                      setShowPaymentForm(true);
+                    }
+                  }}
                   disabled={currentPlan === plan.id}
                   className={`w-full ${
                     plan.popular
@@ -196,6 +287,64 @@ export default function SubscriptionPage() {
             </Card>
           ))}
         </div>
+
+        {/* Payment Form Modal */}
+        {showPaymentForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="w-5 h-5" />
+                  Upgrade to Premium
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="phone">M-Pesa Phone Number</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="07XXXXXXXX or 01XXXXXXXX"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    className="mt-1"
+                  />
+                  <p className="text-sm text-gray-600 mt-1">
+                    Enter your Safaricom number for M-Pesa payment
+                  </p>
+                </div>
+
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <div className="flex items-center gap-2 text-blue-800 mb-1">
+                    <Phone className="w-4 h-4" />
+                    <span className="font-medium">Payment: KES 2,000/month</span>
+                  </div>
+                  <p className="text-sm text-blue-700">
+                    You'll receive an STK push to complete payment
+                  </p>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowPaymentForm(false)}
+                    className="flex-1"
+                    disabled={isUpgrading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleUpgrade}
+                    disabled={isUpgrading || !phoneNumber.trim()}
+                    className="flex-1"
+                  >
+                    {isUpgrading ? 'Processing...' : 'Pay Now'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         <div className="mt-16 text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-8">

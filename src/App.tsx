@@ -45,11 +45,20 @@ const StockManagement = lazy(() =>
 const Orders = lazy(() => 
   import("./pages/Orders").then(module => ({ default: module.default }))
 );
+const Analytics = lazy(() => import("./pages/Analytics"));
 const Design = lazy(() => 
   import("./pages/Design").then(module => ({ default: module.default }))
 );
 const AdminSettings = lazy(() => 
-  import("./pages/AdminSettings").then(module => ({ default: module.default }))
+  import("./pages/AdminSettings")
+);
+const Subscription = lazy(() => 
+  import("./pages/Subscription")
+);
+
+// Super Admin Dashboard
+const SuperAdminDashboard = lazy(() => 
+  import("./pages/SuperAdminDashboard").then(module => ({ default: module.default }))
 );
 
 // Enhanced loading components for better UX
@@ -171,6 +180,11 @@ const App = () => (
                     <ProtectedRoute><Orders /></ProtectedRoute>
                   </Suspense>
                 } />
+                <Route path="/admin/analytics" element={
+                  <Suspense fallback={<AdminLoadingSpinner />}>
+                    <ProtectedRoute><Analytics /></ProtectedRoute>
+                  </Suspense>
+                } />
                 <Route path="/admin/design" element={
                   <Suspense fallback={<AdminLoadingSpinner />}>
                     <ProtectedRoute><Design /></ProtectedRoute>
@@ -181,7 +195,19 @@ const App = () => (
                     <ProtectedRoute><AdminSettings /></ProtectedRoute>
                   </Suspense>
                 } />
+                <Route path="/subscription" element={
+                  <Suspense fallback={<AdminLoadingSpinner />}>
+                    <ProtectedRoute><Subscription /></ProtectedRoute>
+                  </Suspense>
+                } />
+                <Route path="/super-admin" element={
+                  <Suspense fallback={<AdminLoadingSpinner />}>
+                    <ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>
+                  </Suspense>
+                } />
                 
+                {/* Redirect /storefront to home to prevent 404 */}
+                <Route path="/storefront" element={<Index />} />
                 {/* Catch-all 404 route */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
