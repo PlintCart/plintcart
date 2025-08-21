@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { db } from "@/lib/firebase";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,10 +41,25 @@ export function AuthModal({ mode, onModeChange, onSuccess }: AuthModalProps) {
   const onSubmit = async (data: SignInFormData) => {
     try {
       setLoading(true);
+      let userCredential;
       if (mode === 'signin') {
         await signIn(data.email, data.password);
       } else {
-        await signUp(data.email, data.password);
+        userCredential = await signUp(data.email, data.password);
+        // After signup, create Firestore user document if not exists
+        const user = userCredential?.user;
+        if (user) {
+          const userDocRef = doc(db, "users", user.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          if (!userDocSnap.exists()) {
+            await setDoc(userDocRef, {
+              email: user.email,
+              createdAt: new Date(),
+              subscriptionTier: "free",
+              subscriptionStatus: "active"
+            });
+          }
+        }
       }
       onSuccess();
     } catch (error) {

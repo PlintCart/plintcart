@@ -14,6 +14,11 @@ const Index = () => {
       <Header />
       <main>
         <Hero />
+        <div className="flex justify-center mt-8">
+          <Button size="lg" onClick={() => navigate('/auth?mode=signup')}>
+            Get Started
+          </Button>
+        </div>
         <Features />
         <Pricing />
         

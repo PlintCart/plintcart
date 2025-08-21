@@ -25,6 +25,7 @@ interface ProductCardProps {
   showShareButton?: boolean;
   showOrderButton?: boolean;
   showPaymentButton?: boolean;
+  isRestricted?: boolean;
 }
 
 const ProductCard = ({ 
@@ -34,7 +35,8 @@ const ProductCard = ({
   onOrder,
   showShareButton = false,
   showOrderButton = true,
-  showPaymentButton = true
+  showPaymentButton = true,
+  isRestricted = false
 }: ProductCardProps) => {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [paymentSettings, setPaymentSettings] = useState<any>(null);
@@ -102,14 +104,14 @@ const ProductCard = ({
           </div>
           <div className="flex gap-2 mt-4">
             {showPaymentButton && (
-              <Button onClick={handlePayNow} variant="default" className="flex-1">
-                <CreditCard className="h-4 w-4 mr-2" />
+              <Button onClick={handlePayNow} variant="default" className="flex-1" disabled={isRestricted}>
+                {isRestricted ? <span className="mr-1"><svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 17v1m-6-4v-3a6 6 0 0 1 12 0v3"/><rect x="6" y="14" width="12" height="6" rx="2"/><path d="M9 17h6"/></svg></span> : <CreditCard className="h-4 w-4 mr-2" />}
                 Pay Now
               </Button>
             )}
             {showOrderButton && (
-              <Button onClick={handleOrder} variant="outline" className="flex-1">
-                <ShoppingCart className="h-4 w-4 mr-2" />
+              <Button onClick={handleOrder} variant="outline" className="flex-1" disabled={isRestricted}>
+                {isRestricted ? <span className="mr-1"><svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 17v1m-6-4v-3a6 6 0 0 1 12 0v3"/><rect x="6" y="14" width="12" height="6" rx="2"/><path d="M9 17h6"/></svg></span> : <ShoppingCart className="h-4 w-4 mr-2" />}
                 Order
               </Button>
             )}
@@ -182,7 +184,8 @@ const ProductCard = ({
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={onShare}>
                 <Share2 className="h-4 w-4 mr-2" />
-                Share with Friends
+                Share wi
+              h Friends
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

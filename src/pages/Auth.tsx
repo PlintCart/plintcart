@@ -18,11 +18,7 @@ const Auth = () => {
     }
   }, [searchParams]);
 
-  useEffect(() => {
-    if (user && !loading) {
-      navigate('/admin');
-    }
-  }, [user, loading, navigate]);
+  // Removed auto-redirect for logged-in users so AuthModal always shows
 
   const handleAuthSuccess = () => {
     navigate('/admin');

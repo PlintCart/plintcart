@@ -3,6 +3,7 @@ import { collection, getDocs, query, where, doc, getDoc } from "firebase/firesto
 import { db } from "@/lib/firebase";
 import { Product } from "@/types/product";
 import ProductCard from "@/components/ProductCard";
+import { SubscriptionService } from "@/services/SubscriptionService";
 import { Button } from "@/components/ui/button";
 import { Grid, List, Share2, Search, ShoppingBag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -36,6 +37,8 @@ const Storefront = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [categories, setCategories] = useState<string[]>([]);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string>("active");
+  const [subscriptionTier, setSubscriptionTier] = useState<string>("free");
   const { toast } = useToast();
   const { merchantId } = useParams();
 
@@ -47,6 +50,11 @@ const Storefront = () => {
       fetchProducts();
       fetchStoreInfo();
       fetchMerchantSettings();
+      // Fetch merchant subscription status
+      SubscriptionService.getUserSubscription(targetMerchantId).then(sub => {
+        setSubscriptionStatus(sub.status);
+        setSubscriptionTier(sub.tier);
+      });
     } else {
       // Redirect to index page if no merchant ID provided
       window.location.href = '/';
@@ -394,6 +402,7 @@ const Storefront = () => {
                   showShareButton
                   showPaymentButton
                   showOrderButton
+                  isRestricted={subscriptionStatus === "deactivated" || subscriptionTier === "free"}
                 />
               ))}
             </div>

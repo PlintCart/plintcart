@@ -67,14 +67,32 @@ exports.handler = async (event, context) => {
         transactionDate
       });
 
-      // Here you would typically:
-      // 1. Update your database with payment success
-      // 2. Update order status to "paid"
-      // 3. Send confirmation email/SMS to customer
-      // 4. Trigger order fulfillment process
-
-      // For now, we'll just log the success
-      // TODO: Implement database update logic
+      // Update Firestore with subscription info
+      try {
+        const admin = require('./firebase-admin');
+        const db = admin.firestore();
+        // Find user by phone number
+        const usersRef = db.collection('users');
+        const snapshot = await usersRef.where('phone', '==', phoneNumber).get();
+        if (!snapshot.empty) {
+          const userDoc = snapshot.docs[0];
+          await userDoc.ref.update({
+            subscription: 'professional',
+            subscriptionExpires: admin.firestore.Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
+            lastPayment: {
+              amount,
+              mpesaReceiptNumber,
+              transactionDate,
+              timestamp: new Date().toISOString()
+            }
+          });
+          console.log('User subscription updated:', userDoc.id);
+        } else {
+          console.warn('No user found for phone:', phoneNumber);
+        }
+      } catch (err) {
+        console.error('Firestore update error:', err);
+      }
 
     } else {
       // Payment failed or cancelled
