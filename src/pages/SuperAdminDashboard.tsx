@@ -1,6 +1,8 @@
+
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
+import { AdminSidebar } from "@/components/AdminSidebar";
 
 const SuperAdminDashboard = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -114,11 +116,13 @@ const SuperAdminDashboard = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <h1 className="text-3xl font-bold mb-4">Super Admin Dashboard</h1>
-      <p className="text-lg text-muted-foreground mb-8">Full management, supervision, and analytics for your business.</p>
-      {/* Analytics Widgets */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div className="flex min-h-screen bg-background">
+      <AdminSidebar />
+      <main className="flex-1 p-8">
+        <h1 className="text-3xl font-bold mb-4">Super Admin Dashboard</h1>
+        <p className="text-lg text-muted-foreground mb-8">Full management, supervision, and analytics for your business.</p>
+        {/* Analytics Widgets */}
+  <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="bg-white rounded-lg shadow p-4 flex flex-col items-center">
           <div className="text-2xl font-bold">{stats.totalUsers}</div>
           <div className="text-sm text-muted-foreground">Total Users</div>
@@ -136,7 +140,7 @@ const SuperAdminDashboard = () => {
           <div className="text-sm text-muted-foreground">Expiring Soon</div>
         </div>
       </div>
-      <div className="bg-white rounded-lg shadow p-6">
+  <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-semibold mb-4">Subscriptions</h2>
         {loading ? (
           <div>Loading users...</div>
@@ -200,8 +204,8 @@ const SuperAdminDashboard = () => {
           </div>
         )}
       </div>
-      {/* Confirmation Modal OUTSIDE table */}
-      {modal && modal.action === "view" ? (
+  {/* Confirmation Modal OUTSIDE table */}
+  {modal && modal.action === "view" ? (
         (() => {
           const user = users.find(u => u.id === modal.userId);
           if (!user) return null;
@@ -238,7 +242,8 @@ const SuperAdminDashboard = () => {
             </div>
           </div>
         </div>
-      ) : null}
+        ) : null}
+      </main>
     </div>
   );
 }
