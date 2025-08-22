@@ -42,7 +42,7 @@ const SuperAdminDashboard = () => {
         });
         setUsers(prev => prev.map(u =>
           u.id === modal.userId
-            ? { ...u, subscriptionTier: "premium", subscriptionStatus: "upgraded" }
+            ? { ...u, subscriptionTier: "premium", subscriptionStatus: "upgrailded" }
             : u
         ));
       } catch (err) {
@@ -116,13 +116,17 @@ const SuperAdminDashboard = () => {
   }, []);
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <AdminSidebar />
-      <main className="flex-1 p-8">
-        <h1 className="text-3xl font-bold mb-4">Super Admin Dashboard</h1>
-        <p className="text-lg text-muted-foreground mb-8">Full management, supervision, and analytics for your business.</p>
+    <div className="bg-background min-h-screen">
+      <div className="flex min-h-screen">
+  {/* Sidebar: always rendered, handles its own mobile logic */}
+  <AdminSidebar />
+        {/* Mobile sidebar overlay (handled by AdminSidebar itself) */}
+        <div className="flex-1 lg:ml-64 w-full">
+          <main className="p-4 sm:p-6 md:p-8 max-w-full">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-4">Super Admin Dashboard</h1>
+            <p className="text-base sm:text-lg text-muted-foreground mb-8">Full management, supervision, and analytics for your business.</p>
         {/* Analytics Widgets */}
-  <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
         <div className="bg-white rounded-lg shadow p-4 flex flex-col items-center">
           <div className="text-2xl font-bold">{stats.totalUsers}</div>
           <div className="text-sm text-muted-foreground">Total Users</div>
@@ -140,14 +144,14 @@ const SuperAdminDashboard = () => {
           <div className="text-sm text-muted-foreground">Expiring Soon</div>
         </div>
       </div>
-  <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-4 sm:p-6 overflow-x-auto">
         <h2 className="text-xl font-semibold mb-4">Subscriptions</h2>
         {loading ? (
           <div>Loading users...</div>
         ) : (
           <div className="overflow-x-auto">
             <div className="mb-2 text-xs text-gray-500">Debug: Fetched {users.length} users: {users.map(u => u.id).join(", ")}</div>
-            <table className="min-w-full text-sm">
+            <table className="min-w-full text-xs sm:text-sm">
               <thead>
                 <tr className="bg-gray-100">
                   <th className="px-4 py-2 text-left">User</th>
@@ -204,7 +208,7 @@ const SuperAdminDashboard = () => {
           </div>
         )}
       </div>
-  {/* Confirmation Modal OUTSIDE table */}
+        {/* Confirmation Modal OUTSIDE table */}
   {modal && modal.action === "view" ? (
         (() => {
           const user = users.find(u => u.id === modal.userId);
@@ -243,7 +247,9 @@ const SuperAdminDashboard = () => {
           </div>
         </div>
         ) : null}
-      </main>
+          </main>
+        </div>
+      </div>
     </div>
   );
 }
