@@ -1,6 +1,10 @@
 import { Button } from "@/components/ui/button";
-import { Check, Star, ArrowRight } from "lucide-react";
+import { Check, Star, ArrowRight, Crown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { User } from '@supabase/supabase-js';
+import { useSubscription } from '@/hooks/useSubscription';
+import { SubscriptionUpgradeDialog } from './SubscriptionUpgradeDialog';
+import { PremiumBadge } from './PremiumWrapper';
 
 const Pricing = () => {
   const navigate = useNavigate();
