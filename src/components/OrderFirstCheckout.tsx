@@ -23,6 +23,7 @@ import {
   MapPin
 } from 'lucide-react';
 import { addDoc, updateDoc, doc, collection } from 'firebase/firestore';
+import { onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Product } from '@/types/product';
 import { MpesaService } from '@/services/MpesaService';
@@ -47,7 +48,7 @@ interface CustomerInfo {
 interface OrderStatus {
   orderId: string | null;
   status: 'creating' | 'created' | 'pending_payment' | 'payment_initiated' | 'payment_completed' | 'payment_failed' | 'confirmed' | 'cancelled';
-  paymentMethod: 'mpesa' | 'cash' | null;
+  paymentMethod: 'mpesa' | 'cod' | null;
   paymentResult?: any;
   accountNumber?: string;
   transactionId?: string;
@@ -61,6 +62,7 @@ export function OrderFirstCheckout({
   onOrderComplete,
   onCancel
 }: OrderFirstCheckoutProps) {
+  // State declarations at the top
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     name: '',
     phone: '',
@@ -75,12 +77,83 @@ export function OrderFirstCheckout({
     retryCount: 0
   });
 
+  // Poll for payment confirmation using mpesa-status and store-payment-status
+  useEffect(() => {
+    if (!orderStatus.orderId || !orderStatus.transactionId) return;
+    const interval = setInterval(async () => {
+      try {
+        // Query payment status from Netlify function
+        const res = await fetch(`/.netlify/functions/mpesa-status/${orderStatus.transactionId}`);
+        const data = await res.json();
+
+        if (data.success && (data.status === 'completed' || data.status === 'confirmed')) {
+          // Store status in payment_status collection
+          await fetch('/.netlify/functions/store-payment-status', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              checkoutRequestId: orderStatus.transactionId,
+              status: data.status,
+              resultCode: data.resultCode,
+              resultDesc: data.resultDescription
+            })
+          });
+
+          // Update Firestore payments collection
+          const { getDocs, query, where, collection, updateDoc } = await import("firebase/firestore");
+          const snapshot = await getDocs(query(collection(db, "payments"), where("checkoutRequestId", "==", orderStatus.transactionId)));
+          if (!snapshot.empty) {
+            await updateDoc(snapshot.docs[0].ref, {
+              status: "confirmed",
+              confirmedAt: new Date().toISOString(),
+              mpesaReceipt: data.mpesaReceiptNumber || null
+            });
+          }
+        }
+      } catch (err) {
+        // Silent fail, can add logging if needed
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [orderStatus.orderId, orderStatus.transactionId]);
+  // ...existing code...
+
   const [isProcessing, setIsProcessing] = useState(false);
   const [showPaymentConfirmation, setShowPaymentConfirmation] = useState(false);
   const [paymentTimer, setPaymentTimer] = useState(0);
   const [showRetryOptions, setShowRetryOptions] = useState(false);
+  // Timer effect for STK Push payment confirmation
+  useEffect(() => {
+    if (!showPaymentConfirmation || paymentTimer <= 0) return;
+    const interval = setInterval(() => {
+      setPaymentTimer(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          handlePaymentTimeout();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [showPaymentConfirmation, paymentTimer]);
 
   // Generate unique account number for order
+    // Timer effect for STK Push payment confirmation
+    useEffect(() => {
+      if (!showPaymentConfirmation || paymentTimer <= 0) return;
+      const interval = setInterval(() => {
+        setPaymentTimer(prev => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            handlePaymentTimeout();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }, [showPaymentConfirmation, paymentTimer]);
   const generateAccountNumber = (orderId: string): string => {
     // Use merchant's preferred format or default to MM + random
     const prefix = businessSettings?.accountPrefix || 'MM';
@@ -243,8 +316,99 @@ export function OrderFirstCheckout({
     }
   };
 
+  // ...existing code...
+
+  // Instead, use Firestore listeners for payment status updates
+  useEffect(() => {
+    if (!orderStatus.orderId) return;
+    // Listen for payment status changes in Firestore (modular API)
+    const orderDocRef = doc(db, 'orders', orderStatus.orderId);
+    const unsubscribe = onSnapshot(orderDocRef, (docSnap) => {
+      const data = docSnap.data();
+      if (!data) return;
+      if (data.paymentStatus === 'completed' || data.status === 'confirmed') {
+        setOrderStatus(prev => ({
+          ...prev,
+          status: 'payment_completed'
+        }));
+        toast.success('Payment received! We\'re sending you the order confirmation.');
+        sendOrderConfirmation(orderStatus.orderId!, orderStatus.paymentMethod || 'mpesa');
+        onOrderComplete?.(orderStatus.orderId!);
+      }
+    });
+    return () => unsubscribe();
+  }, [orderStatus.orderId]);
+
+  // Payment verification with timer
+  // REMOVE: Old polling code for payment status via Netlify endpoint
+  // const startPaymentVerification = () => {
+  //   const checkInterval = setInterval(async () => {
+  //     if (!orderStatus.orderId) {
+  //       clearInterval(checkInterval);
+  //       return;
+  //     }
+  //     try {
+  //       // Check payment status from backend
+  //       const statusResult = await MpesaService.checkPaymentStatus(orderStatus.orderId);
+  //       if (statusResult.success && statusResult.status === 'completed') {
+  //         // Payment verified successfully
+  //         clearInterval(checkInterval);
+  //         setOrderStatus(prev => ({ 
+  //           ...prev, 
+  //           status: 'payment_completed'
+  //         }));
+  //         await updateDoc(doc(db, 'orders', orderStatus.orderId), {
+  //           paymentStatus: 'completed',
+  //           status: 'confirmed',
+  //           paymentCompletedAt: new Date(),
+  //           updatedAt: new Date()
+  //         });
+  //         // Create stock transaction
+  //         await createStockTransaction(orderStatus.orderId);
+  //         // Create notification data for automatic payment confirmation
+  //         toast.success('Payment received! We\'re sending you the order confirmation.');
+  //         sendOrderConfirmation(orderStatus.orderId, 'mpesa');
+  //         onOrderComplete?.(orderStatus.orderId);
+  //       }
+  //     } catch (error) {
+  //       console.error('Payment verification error:', error);
+  //     }
+  //     // Decrease timer
+  //     setPaymentTimer(prev => {
+  //       if (prev <= 1) {
+  //         clearInterval(checkInterval);
+  //         // Payment timeout
+  //         handlePaymentTimeout();
+  //         return 0;
+  //       }
+  //       return prev - 1;
+  //     });
+  //   }, 1000); // Check every second
+  // };
+
+  // Instead, use Firestore listeners for payment status updates
+  useEffect(() => {
+    if (!orderStatus.orderId) return;
+    // Listen for payment status changes in Firestore (modular API)
+    const orderDocRef = doc(db, 'orders', orderStatus.orderId);
+    const unsubscribe = onSnapshot(orderDocRef, (docSnap) => {
+      const data = docSnap.data();
+      if (!data) return;
+      if (data.paymentStatus === 'completed' || data.status === 'confirmed') {
+        setOrderStatus(prev => ({
+          ...prev,
+          status: 'payment_completed'
+        }));
+        toast.success('Payment received! We\'re sending you the order confirmation.');
+        sendOrderConfirmation(orderStatus.orderId!, orderStatus.paymentMethod || 'mpesa');
+        onOrderComplete?.(orderStatus.orderId!);
+      }
+    });
+    return () => unsubscribe();
+  }, [orderStatus.orderId]);
+
   // Step 2: Process payment based on method chosen - Enhanced with STK Push
-  const processPayment = async (method: 'mpesa' | 'cash') => {
+  const processPayment = async (method: 'mpesa' | 'cod') => {
     if (!orderStatus.orderId) return;
 
     setIsProcessing(true);
@@ -315,10 +479,7 @@ export function OrderFirstCheckout({
             // Show payment confirmation with timer
             setShowPaymentConfirmation(true);
             setPaymentTimer(300); // 5 minutes timeout
-            
-            // Start payment verification timer
-            startPaymentVerification();
-            
+
             toast.success('STK Push sent to your phone! Check your M-Pesa menu.');
           } else {
             throw new Error(paymentResult.message || 'STK Push failed');
@@ -405,61 +566,7 @@ export function OrderFirstCheckout({
     }
   };
 
-  // Payment verification with timer
-  const startPaymentVerification = () => {
-    const checkInterval = setInterval(async () => {
-      if (!orderStatus.orderId) {
-        clearInterval(checkInterval);
-        return;
-      }
-
-      try {
-        // Check payment status from backend
-        const statusResult = await MpesaService.checkPaymentStatus(orderStatus.orderId);
-        
-        if (statusResult.success && statusResult.status === 'completed') {
-          // Payment verified successfully
-          clearInterval(checkInterval);
-          
-          setOrderStatus(prev => ({ 
-            ...prev, 
-            status: 'payment_completed'
-          }));
-          
-          await updateDoc(doc(db, 'orders', orderStatus.orderId), {
-            paymentStatus: 'completed',
-            status: 'confirmed',
-            paymentCompletedAt: new Date(),
-            updatedAt: new Date()
-          });
-          
-          // Create stock transaction
-          await createStockTransaction(orderStatus.orderId);
-          
-          // Create notification data for automatic payment confirmation
-          toast.success('Payment received! We\'re sending you the order confirmation.');
-          
-          sendOrderConfirmation(orderStatus.orderId, 'mpesa');
-          onOrderComplete?.(orderStatus.orderId);
-        }
-      } catch (error) {
-        console.error('Payment verification error:', error);
-      }
-      
-      // Decrease timer
-      setPaymentTimer(prev => {
-        if (prev <= 1) {
-          clearInterval(checkInterval);
-          // Payment timeout
-          handlePaymentTimeout();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000); // Check every second
-  };
-
-  // Handle payment timeout
+  // Payment timeout handler - removed polling, handled by Firestore listener
   const handlePaymentTimeout = async () => {
     if (!orderStatus.orderId) return;
     
@@ -502,8 +609,8 @@ export function OrderFirstCheckout({
       retryCount: (prev.retryCount || 0) + 1
     }));
     
-    // Retry payment
-    await processPayment('mpesa');
+  // Retry payment
+  await processPayment('mpesa');
   };
 
   // Handle payment cancellation with notification
@@ -851,7 +958,7 @@ ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Paid via M-Pesa'}`;
                 )}
 
                 <Button
-                  onClick={() => processPayment('cash')}
+                  onClick={() => processPayment('cod')}
                   disabled={isProcessing}
                   className="w-full justify-start h-auto p-3 sm:p-4 text-left"
                   variant="outline"
@@ -881,7 +988,51 @@ ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Paid via M-Pesa'}`;
   if (showPaymentConfirmation && orderStatus.paymentMethod === 'mpesa') {
     const minutes = Math.floor(paymentTimer / 60);
     const seconds = paymentTimer % 60;
-    
+
+    // Helper to generate manual payment instructions based on merchant settings
+    const getManualInstructions = () => {
+      if (!mpesaSettings || !orderStatus.accountNumber) return '';
+      if (mpesaSettings.mpesaMethod === 'paybill' && mpesaSettings.paybillNumber) {
+        return `1. Go to M-Pesa on your phone\n2. Select "Lipa na M-Pesa"\n3. Select "Pay Bill"\n4. Enter Business Number: ${mpesaSettings.paybillNumber}\n5. Enter Account Number: ${orderStatus.accountNumber}\n6. Enter Amount: KSh ${total}\n7. Enter your M-Pesa PIN and confirm.`;
+      }
+      if (mpesaSettings.mpesaMethod === 'till' && mpesaSettings.tillNumber) {
+        return `1. Go to M-Pesa on your phone\n2. Select "Lipa na M-Pesa"\n3. Select "Buy Goods and Services"\n4. Enter Till Number: ${mpesaSettings.tillNumber}\n5. Enter Amount: KSh ${total}\n6. Enter your M-Pesa PIN and confirm.`;
+      }
+      if (mpesaSettings.mpesaMethod === 'send_money' && mpesaSettings.mpesaPhoneNumber) {
+        return `1. Go to M-Pesa on your phone\n2. Select "Send Money"\n3. Enter Phone Number: ${mpesaSettings.mpesaPhoneNumber}\n4. Enter Amount: KSh ${total}\n5. Enter your M-Pesa PIN and confirm.`;
+      }
+      return 'Please contact the merchant for payment instructions.';
+    };
+
+    // Retry payment handler
+    const handleRetryPayment = async () => {
+      if (!orderStatus.orderId || !customerInfo.phone) return;
+      setIsProcessing(true);
+      try {
+        // Re-initiate STK Push
+        const formattedPhone = MpesaService.formatPhoneNumber(customerInfo.phone);
+        const paymentResponse = await MpesaService.initiatePayment({
+          phoneNumber: formattedPhone,
+          amount: total,
+          orderId: orderStatus.orderId,
+          description: `Payment for ${product.name} - Order ${orderStatus.accountNumber}`,
+          merchantSettings: mpesaSettings
+        });
+        setOrderStatus(prev => ({
+          ...prev,
+          status: 'payment_initiated',
+          transactionId: paymentResponse.transactionId
+        }));
+        setShowPaymentConfirmation(true);
+        setPaymentTimer(120); // Reset timer to 2 minutes
+        toast.success('STK Push resent. Please check your phone for the prompt.');
+      } catch (error) {
+        toast.error('Failed to retry payment. Please try again or use manual instructions.');
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+
     return (
       <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6 px-4 sm:px-0">
         <Card>
@@ -905,7 +1056,7 @@ ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Paid via M-Pesa'}`;
               </AlertDescription>
             </Alert>
 
-            {/* Payment Timer */}
+            {/* Payment Timer and Retry UI */}
             <div className="text-center p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <h4 className="font-medium mb-2 text-sm sm:text-base">Payment Timer</h4>
               <div className="text-xl sm:text-2xl font-mono font-bold text-blue-600">
@@ -914,6 +1065,11 @@ ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Paid via M-Pesa'}`;
               <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                 Complete payment within this time
               </p>
+              {paymentTimer === 0 && (
+                <Button onClick={handleRetryPayment} disabled={isProcessing} variant="outline" className="mt-3">
+                  Retry Payment
+                </Button>
+              )}
             </div>
 
             {/* Payment Status */}
@@ -924,15 +1080,36 @@ ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Paid via M-Pesa'}`;
                   Waiting for payment confirmation... This will update automatically once payment is received.
                 </span>
               </div>
-              
-              {orderStatus.paymentResult?.instructions && (
-                <div className="p-3 sm:p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                  <h4 className="font-medium mb-2 text-sm sm:text-base">Manual Payment Instructions (if STK fails):</h4>
-                  <pre className="text-xs sm:text-sm whitespace-pre-wrap text-gray-700 break-words">
-                    {orderStatus.paymentResult.instructions}
-                  </pre>
-                </div>
-              )}
+            </div>
+
+            {/* Manual Payment Instructions + WhatsApp */}
+            <div className="p-3 sm:p-4 bg-gray-50 border border-gray-200 rounded-lg mt-4">
+              <h4 className="font-medium mb-2 text-sm sm:text-base">Manual Payment Instructions (if STK fails):</h4>
+              <pre className="text-xs sm:text-sm whitespace-pre-wrap text-gray-700 break-words">{getManualInstructions()}</pre>
+              <div className="flex flex-col sm:flex-row gap-2 mt-3">
+                {businessSettings?.whatsappNumber && (
+                  <a
+                    href={`https://wa.me/${businessSettings.whatsappNumber.replace('+', '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold transition-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border-2 border-border bg-background hover:bg-accent hover:text-accent-foreground hover:border-primary h-11 px-6 py-3 flex-1 w-full"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-circle w-4 h-4 mr-2"><circle cx="12" cy="12" r="10"/><path d="m8 12 2 2 4-4"/></svg>
+                    <span className="hidden sm:inline">WhatsApp</span>
+                    <span className="sm:hidden">WhatsApp</span>
+                  </a>
+                )}
+                {businessSettings?.businessPhone && (
+                  <a
+                    href={`tel:${businessSettings.businessPhone}`}
+                    className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold transition-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border-2 border-border bg-background hover:bg-accent hover:text-accent-foreground hover:border-primary h-11 px-6 py-3 flex-1 w-full"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-phone w-4 h-4 mr-2"><path d="M22 16.92V19a2 2 0 0 1-2.18 2A19.86 19.86 0 0 1 3 5.18 2 2 0 0 1 5 3h2.09a2 2 0 0 1 2 1.72c.13.81.36 1.6.7 2.34a2 2 0 0 1-.45 2.11l-.27.27a16 16 0 0 0 6.29 6.29l.27-.27a2 2 0 0 1 2.11-.45c.74.34 1.53.57 2.34.7A2 2 0 0 1 21 16.92Z"/></svg>
+                    <span className="hidden sm:inline">Call</span>
+                    <span className="sm:hidden">Call</span>
+                  </a>
+                )}
+              </div>
             </div>
 
             {/* Action Buttons */}
@@ -948,7 +1125,7 @@ ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Paid via M-Pesa'}`;
                   <span className="hidden sm:inline">I've Paid Manually</span>
                   <span className="sm:hidden">Paid Manually</span>
                 </Button>
-                
+
                 <Button
                   onClick={handleCancelPayment}
                   variant="outline"
@@ -958,7 +1135,7 @@ ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Paid via M-Pesa'}`;
                   Cancel Payment
                 </Button>
               </div>
-              
+
               <p className="text-xs text-muted-foreground text-center px-2">
                 💡 Payment will be verified automatically. Only click "Paid Manually" if you completed payment outside the STK push.
               </p>
@@ -1007,7 +1184,7 @@ ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Paid via M-Pesa'}`;
                 )}
                 
                 <Button
-                  onClick={() => processPayment('cash')}
+                  onClick={() => processPayment('cod')}
                   variant="outline"
                   className="w-full"
                   disabled={isProcessing}
@@ -1059,7 +1236,7 @@ ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Paid via M-Pesa'}`;
               <CheckCircle className="h-4 w-4" />
               <AlertDescription>
                 <strong>Order ID:</strong> {orderStatus.orderId}<br/>
-                <strong>Status:</strong> {orderStatus.paymentMethod === 'cash' ? 'Confirmed - Cash on Delivery' : 'Payment Confirmed'}<br/>
+                <strong>Status:</strong> {orderStatus.paymentMethod === 'cod' ? 'Confirmed - Cash on Delivery' : 'Payment Confirmed'}<br/>
                 <strong>Total:</strong> {getCurrencySymbol(businessSettings?.currency || 'KES')} {total.toFixed(2)}
               </AlertDescription>
             </Alert>
@@ -1070,7 +1247,7 @@ ${paymentMethod === 'cod' ? 'Cash on Delivery' : 'Paid via M-Pesa'}`;
                 <li>• Your order is being processed</li>
                 <li>• You'll receive updates via phone/SMS</li>
                 <li>• Estimated delivery: 1-3 business days</li>
-                {orderStatus.paymentMethod === 'cash' && (
+                {orderStatus.paymentMethod === 'cod' && (
                   <li>• Please have exact change ready for delivery</li>
                 )}
               </ul>

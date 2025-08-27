@@ -57,8 +57,34 @@ const Features = () => {
       </div>
 
       <div className="container mx-auto px-6 relative">
-        {/* Section Header */}
+        {/* Section Header & Value Proposition */}
         <div className="text-center mb-20 animate-fade-in">
+          <h2 className="text-5xl md:text-6xl font-bold mb-6 text-foreground">
+            Why Plint?
+          </h2>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed mb-8">
+            Reach, grow, and retain more customers with smarter tools.<br />
+            <span className="block mt-4 text-lg text-primary font-semibold">Most small businesses struggle with:</span>
+          </p>
+          <div className="flex flex-col md:flex-row gap-8 justify-center mb-8">
+            <div className="bg-background rounded-xl shadow-soft border p-6 flex-1 min-w-[260px]">
+              <h3 className="text-lg font-semibold mb-4 text-primary">Challenges for MSMEs & SMEs</h3>
+              <ul className="list-disc ml-6 text-muted-foreground text-left space-y-2">
+                <li>Manual order tracking that slows them down.</li>
+                <li>Guessing what to restock.</li>
+                <li>Losing loyal customers.</li>
+              </ul>
+            </div>
+            <div className="bg-background rounded-xl shadow-soft border p-6 flex-1 min-w-[260px]">
+              <h3 className="text-lg font-semibold mb-4 text-primary">Plint Fixes This With</h3>
+              <ul className="list-disc ml-6 text-muted-foreground text-left space-y-2">
+                <li>Auto Order Tracking — log every sale in real time.</li>
+                <li>Product Insights — know your bestsellers instantly.</li>
+                <li>Customer Loyalty — track and reward your top buyers.</li>
+                <li>Payment Links — get paid faster, anywhere.</li>
+              </ul>
+            </div>
+          </div>
           <h2 className="text-5xl md:text-6xl font-bold mb-6 text-foreground">
             Everything you need to <br />
             <span className="bg-gradient-to-r from-brand-green to-brand-blue bg-clip-text text-transparent">

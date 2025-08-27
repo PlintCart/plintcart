@@ -68,7 +68,7 @@ const Footer = () => {
         {/* Main Footer Content */}
         <div className="container mx-auto px-6 py-16">
           <div className="grid lg:grid-cols-6 gap-12">
-            {/* Company Info */}
+            {/* Company Info (unchanged) */}
             <div className="lg:col-span-2">
               <div className="mb-6">
                 <h2 className="text-3xl font-bold mb-4">
@@ -78,7 +78,6 @@ const Footer = () => {
                   The easiest way to create a beautiful online storefront that connects directly to WhatsApp for any business.
                 </p>
               </div>
-              
               <div className="space-y-3">
                 <div className="flex items-center gap-3 text-white/80">
                   <Mail className="w-5 h-5" />
@@ -95,24 +94,33 @@ const Footer = () => {
               </div>
             </div>
 
-            {/* Footer Links */}
-            {Object.entries(footerLinks).map(([category, links]) => (
-              <div key={category}>
-                <h3 className="text-lg font-semibold mb-4">{category}</h3>
+            {/* Minimal Footer Links */}
+            <div className="lg:col-span-4 flex flex-col md:flex-row gap-8 justify-end items-start">
+              <div>
+                <h3 className="text-lg font-semibold mb-4">About</h3>
                 <ul className="space-y-3">
-                  {links.map((link) => (
-                    <li key={link.label}>
-                      <a
-                        href={link.href}
-                        className="text-white/80 hover:text-white transition-smooth"
-                      >
-                        {link.label}
-                      </a>
-                    </li>
-                  ))}
+                  <li><a href="#about" className="text-white/80 hover:text-white transition-smooth">About</a></li>
                 </ul>
               </div>
-            ))}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Pricing</h3>
+                <ul className="space-y-3">
+                  <li><a href="#pricing" className="text-white/80 hover:text-white transition-smooth">Pricing</a></li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Terms & Conditions</h3>
+                <ul className="space-y-3">
+                  <li><a href="#terms" className="text-white/80 hover:text-white transition-smooth">Terms & Conditions</a></li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Privacy Policy</h3>
+                <ul className="space-y-3">
+                  <li><a href="#privacy" className="text-white/80 hover:text-white transition-smooth">Privacy Policy</a></li>
+                </ul>
+              </div>
+            </div>
           </div>
 
           {/* Bottom Bar */}

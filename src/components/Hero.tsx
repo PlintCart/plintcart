@@ -39,20 +39,14 @@ const Hero = () => {
           {/* Main Headline */}
           <div className="mb-8 animate-slide-in-left" style={{ animationDelay: "0.2s" }}>
             <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6">
-              Your Business, <br />
-              <span className="bg-gradient-to-r from-brand-green-light to-white bg-clip-text text-transparent">
-                One Click Away
-              </span>
+              Bridging the gap between sales tracking and smarter growth.
             </h2>
           </div>
 
           {/* Subtitle */}
           <div className="mb-8 animate-slide-in-right" style={{ animationDelay: "0.4s" }}>
             <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto leading-relaxed">
-              Create a beautiful, minimal ordering system that connects directly to WhatsApp.
-            </p>
-            <p className="text-lg md:text-xl text-white/80 mt-4 max-w-2xl mx-auto">
-              Perfect for any business - retail, services, food, digital products & more.
+              The Virtual POS for MSMEs & SMEs.<br />Track every order. Know what sells. Keep customers coming back.
             </p>
           </div>
 
@@ -62,9 +56,14 @@ const Hero = () => {
               Start Free Trial
               <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
             </Button>
-            <Button variant="outline" size="xl" className="group min-w-[180px] border-white/30 text-white hover:bg-white hover:text-primary" onClick={handleLearnMore}>
+            <Button
+              variant="success"
+              size="xl"
+              className="group min-w-[180px] border-brand-green bg-brand-green text-white hover:bg-brand-green-dark hover:text-white shadow-soft h-16 rounded-xl px-10 text-lg"
+              onClick={() => window.open('https://wa.me/254794832922?text=Hi%20Plint%20Team%2C%20I%20would%20like%20to%20book%20a%20demo%20for%20the%20Virtual%20POS%20platform.', '_blank')}
+            >
               <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-              Learn More
+              Book Demo
             </Button>
           </div>
 
@@ -82,13 +81,20 @@ const Hero = () => {
           </div>
 
           {/* Trust Indicators */}
-          <div className="animate-fade-in" style={{ animationDelay: "0.8s" }}>
-            <p className="text-white/70 text-sm mb-4">Trusted by thousands of businesses worldwide</p>
-            <div className="flex justify-center items-center space-x-8 opacity-60">
-              <div className="text-white/60 text-sm font-medium">� Universal Platform</div>
-              <div className="text-white/60 text-sm font-medium">⚡ Instant Setup</div>
-              <div className="text-white/60 text-sm font-medium">📱 WhatsApp Ready</div>
-            </div>
+          <div className="gradient-cta rounded-3xl p-12 shadow-large max-w-4xl mx-auto text-white mt-12 animate-fade-in">
+            <h3 className="text-4xl font-bold mb-4">How Plint Works</h3>
+            <p className="text-xl mb-8 opacity-90">Set up in minutes – Your virtual POS, ready instantly.</p>
+            <ul className="text-lg mb-8 opacity-90 list-disc list-inside text-left max-w-2xl mx-auto">
+              <li className="mb-2"><span className="font-semibold text-white">Instant Setup:</span> Get your online ordering system up and running in minutes, no technical knowledge required.</li>
+              <li className="mb-2"><span className="font-semibold text-white">Sell & track:</span> Orders and payments auto-logged.</li>
+              <li className="mb-2"><span className="font-semibold text-white">See insights:</span> Bestsellers, slow movers, and customer loyalty at a glance.</li>
+              <li className="mb-2"><span className="font-semibold text-white">Grow smarter:</span> Turn data into profits and better decisions.</li>
+            </ul>
+            <Button variant="success" size="xl" className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold transition-smooth h-16 rounded-xl px-10 text-lg bg-white text-primary hover:bg-white/90 shadow-medium" onClick={handleStartTrial}>
+              Start Your Free Trial
+              <ArrowRight className="w-5 h-5" />
+            </Button>
+            <p className="text-sm mt-4 opacity-75">No credit card required • 14-day free trial • Cancel anytime</p>
           </div>
         </div>
       </div>

@@ -1,11 +1,13 @@
 import React from 'react';
-import { User } from '@supabase/supabase-js';
+import { User as FirebaseUser } from 'firebase/auth';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Lock, Crown, Zap } from 'lucide-react';
 import { SubscriptionUpgradeDialog } from './SubscriptionUpgradeDialog';
+
+import { User } from 'firebase/auth';
 
 interface PremiumWrapperProps {
   children: React.ReactNode;
@@ -22,7 +24,7 @@ export function PremiumWrapper({
   fallbackContent, 
   showUpgrade = true 
 }: PremiumWrapperProps) {
-  const { subscription, isPremium, loading } = useSubscription(user);
+  const { isPremium, loading } = useSubscription(user);
 
   if (loading) {
     return (
@@ -64,10 +66,10 @@ export function PremiumWrapper({
           Premium Feature
         </CardTitle>
         <CardDescription className="text-amber-700">
-          Upgrade to Professional to access {feature}
+          {user && <SubscriptionUpgradeDialog user={user} />}
         </CardDescription>
       </CardHeader>
-      {showUpgrade && (
+      {showUpgrade && user && (
         <CardContent className="text-center space-y-4">
           <div className="flex items-center justify-center gap-2 text-sm text-amber-600">
             <Zap className="h-4 w-4" />

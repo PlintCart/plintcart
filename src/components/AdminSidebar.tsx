@@ -38,6 +38,8 @@ export function AdminSidebar() {
   const [user] = useAuthState(auth);
 
   // Check if user is super admin
+  // Superadmin login: must log in with the special email or UID (e.g., admin@plint.com or super_admin)
+  // You can set this in Firebase Auth or your user management system
   const isSuperAdmin = user?.email === 'admin@plint.com' || user?.uid === 'super_admin';
 
   const handleLogout = async () => {
@@ -51,11 +53,10 @@ export function AdminSidebar() {
 
   return (
     <>
-      {/* Mobile Menu Button: always visible on mobile */}
+      {/* Mobile Menu Button */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="fixed top-4 left-4 z-[100] lg:hidden p-2 bg-background border rounded-lg shadow-md"
-        aria-label="Open sidebar menu"
+        className="fixed top-4 left-4 z-50 lg:hidden p-2 bg-background border rounded-lg shadow-md"
       >
         <Menu className="h-5 w-5" />
       </button>
@@ -67,11 +68,12 @@ export function AdminSidebar() {
           onClick={() => setMobileOpen(false)} 
         />
       )}
-
+      
       {/* Sidebar */}
       <div className={cn(
         "fixed top-0 left-0 z-50 h-full bg-background border-r border-border transition-transform duration-300 ease-in-out",
         "w-64 lg:w-64",
+        // Mobile: slide in from left when open, hide when closed
         mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       )}>
         {/* Header */}

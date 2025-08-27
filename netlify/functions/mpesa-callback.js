@@ -1,7 +1,12 @@
 // Netlify Function for M-Pesa Callback Handling
 // File: netlify/functions/mpesa-callback.js
 
-exports.handler = async (event, context) => {
+const { initializeApp, applicationDefault } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
+initializeApp({ credential: applicationDefault() });
+const db = getFirestore();
+
+exports.handler = async (event) => {
   // Enable CORS
   const headers = {
     'Access-Control-Allow-Origin': '*',
@@ -51,64 +56,45 @@ exports.handler = async (event, context) => {
 
     console.log(`Payment callback for ${CheckoutRequestID}: ${ResultDesc}`);
 
+    // Find payment doc by checkoutRequestId
+    const paymentsRef = db.collection("payments");
+    const snapshot = await paymentsRef.where("checkoutRequestId", "==", CheckoutRequestID).get();
+
+    if (snapshot.empty) {
+      return {
+        statusCode: 404,
+        body: JSON.stringify({ error: "Payment not found for CheckoutRequestID" }),
+      };
+    }
+
+    const paymentDoc = snapshot.docs[0];
+    await paymentDoc.ref.update({
+      status: ResultCode === 0 ? "success" : "failed",
+      mpesaResponse: callbackData,
+      updatedAt: new Date().toISOString(),
+    });
+
+    // Optionally, update subscription if payment is successful
     if (ResultCode === 0) {
-      // Payment successful
-      const metadata = CallbackMetadata?.Item || [];
-      const amount = metadata.find(item => item.Name === 'Amount')?.Value;
-      const mpesaReceiptNumber = metadata.find(item => item.Name === 'MpesaReceiptNumber')?.Value;
-      const phoneNumber = metadata.find(item => item.Name === 'PhoneNumber')?.Value;
-      const transactionDate = metadata.find(item => item.Name === 'TransactionDate')?.Value;
-
-      console.log('Payment successful:', {
-        checkoutRequestId: CheckoutRequestID,
-        amount,
-        mpesaReceiptNumber,
-        phoneNumber,
-        transactionDate
-      });
-
-      // Update Firestore with subscription info
-      try {
-        const admin = require('./firebase-admin');
-        const db = admin.firestore();
-        // Find user by phone number
-        const usersRef = db.collection('users');
-        const snapshot = await usersRef.where('phone', '==', phoneNumber).get();
-        if (!snapshot.empty) {
-          const userDoc = snapshot.docs[0];
-          await userDoc.ref.update({
-            subscription: 'professional',
-            subscriptionExpires: admin.firestore.Timestamp.fromDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)),
-            lastPayment: {
-              amount,
-              mpesaReceiptNumber,
-              transactionDate,
-              timestamp: new Date().toISOString()
-            }
-          });
-          console.log('User subscription updated:', userDoc.id);
-        } else {
-          console.warn('No user found for phone:', phoneNumber);
-        }
-      } catch (err) {
-        console.error('Firestore update error:', err);
+      // Update related order document for payment confirmation
+      const orderId = paymentDoc.data().orderId;
+      if (orderId) {
+        await db.collection("orders").doc(orderId).update({
+          paymentStatus: "completed",
+          status: "confirmed",
+          paymentCompletedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
       }
-
-    } else {
-      // Payment failed or cancelled
-      console.log('Payment failed:', {
-        checkoutRequestId: CheckoutRequestID,
-        resultCode: ResultCode,
-        resultDesc: ResultDesc
-      });
-
-      // Here you would typically:
-      // 1. Update database with payment failure
-      // 2. Update order status to "failed"
-      // 3. Notify customer of payment failure
-      // 4. Optionally retry payment or provide alternative options
-
-      // TODO: Implement failure handling logic
+      // Optionally, update subscription if payment is successful
+      const userId = paymentDoc.data().userId;
+      if (userId) {
+        await db.collection("subscriptions").doc(userId).set({
+          isPremium: true,
+          plan: "premium",
+          upgradedAt: new Date().toISOString(),
+        }, { merge: true });
+      }
     }
 
     // Always respond with success to Safaricom
@@ -124,14 +110,9 @@ exports.handler = async (event, context) => {
   } catch (error) {
     console.error('Callback processing error:', error);
     
-    // Still respond with success to avoid retries
     return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        ResultCode: 0,
-        ResultDesc: 'Accepted'
-      })
+      statusCode: 500,
+      body: JSON.stringify({ error: error.message }),
     };
   }
 };

@@ -49,7 +49,7 @@ interface Order {
   items: OrderItem[];
   total: number;
   status: 'pending' | 'completed' | 'confirmed' | 'cancelled';
-  paymentStatus?: 'unpaid' | 'paid' | 'cod_pending' | 'pending_confirmation' | 'failed';
+  paymentStatus?: 'unpaid' | 'paid' | 'cod_pending' | 'pending_confirmation' | 'failed' | 'pending_payment';
   paymentMethod?: 'mpesa' | 'cash' | 'swypt';
   paymentReference?: string;
   paymentInstructions?: string;
@@ -74,7 +74,16 @@ export default function Orders() {
 
   // Computed order statistics
   const totalOrders = orders.length;
-  const pendingOrders = orders.filter(order => order.status === 'pending');
+  const pendingOrders = orders.filter(order =>
+    order.status === 'pending' ||
+    [
+      'unpaid',
+      'pending_confirmation',
+      'pending_payment',
+      'Unknown',
+    ].includes(order.paymentStatus) ||
+    (order.paymentMethod === 'mpesa' && order.paymentStatus !== 'paid')
+  );
   const completedOrders = orders.filter(order => 
     order.status === 'completed' || order.status === 'confirmed'
   );
@@ -262,10 +271,22 @@ export default function Orders() {
       case 'paid': return 'Paid';
       case 'cod_pending': return 'Cash on Delivery';
       case 'pending_confirmation': return 'Pending Confirmation';
+      case 'pending_payment': return 'Pending Payment';
       case 'failed': return 'Payment Failed';
       case 'unpaid': return 'Unpaid';
       default: return 'Unknown';
     }
+  const getPaymentStatusColor = (paymentStatus?: string) => {
+    switch (paymentStatus) {
+      case 'paid': return 'success';
+      case 'cod_pending': return 'secondary';
+      case 'pending_confirmation': return 'secondary';
+      case 'pending_payment': return 'secondary';
+      case 'failed': return 'destructive';
+      case 'unpaid': return 'secondary';
+      default: return 'outline';
+    }
+  };
   };
 
   // Order Card Component
@@ -276,7 +297,7 @@ export default function Orders() {
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <h3 className="font-semibold text-sm sm:text-base truncate">{order.id}</h3>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Badge variant={getStatusColor(order.status)} className="flex items-center gap-1 w-fit">
                 {getStatusIcon(order.status)}
                 <span className="text-xs">{order.status.charAt(0).toUpperCase() + order.status.slice(1)}</span>
@@ -328,13 +349,22 @@ export default function Orders() {
           </div>
 
           {/* Actions */}
-          <div className="flex flex-col sm:flex-row gap-2">
-            {order.status === 'pending' && (
+          <div className="flex flex-col sm:flex-row gap-2 mt-2">
+            {(
+              order.status === 'pending' ||
+              [
+                'unpaid',
+                'pending_confirmation',
+                'pending_payment',
+                'Unknown',
+              ].includes(order.paymentStatus) ||
+              (order.paymentMethod === 'mpesa' && order.paymentStatus !== 'paid')
+            ) && (
               <>
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  className="text-xs"
+                  className="text-xs w-full sm:w-auto"
                   onClick={() => markOrderComplete(order.id)}
                 >
                   <CheckCircle className="w-3 h-3 mr-1" />
@@ -343,20 +373,29 @@ export default function Orders() {
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  className="text-xs"
+                  className="text-xs w-full sm:w-auto"
                   onClick={() => contactCustomer(order.customerPhone)}
                 >
                   <Phone className="w-3 h-3 mr-1" />
-                  Contact Customer
+                  Call
                 </Button>
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  className="text-xs"
+                  className="text-xs w-full sm:w-auto"
+                  onClick={() => window.open(`https://wa.me/${order.customerPhone.replace(/^0/, '254')}`, '_blank')}
+                >
+                  <MessageCircle className="w-3 h-3 mr-1" />
+                  WhatsApp
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="destructive" 
+                  className="text-xs w-full sm:w-auto"
                   onClick={() => cancelOrder(order.id)}
                 >
                   <XCircle className="w-3 h-3 mr-1" />
-                  Cancel
+                  Cancel Payment
                 </Button>
               </>
             )}

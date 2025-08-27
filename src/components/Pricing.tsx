@@ -1,13 +1,15 @@
 import { Button } from "@/components/ui/button";
-import { Check, Star, ArrowRight, Crown } from "lucide-react";
+import { Check, Star, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { User } from '@supabase/supabase-js';
+import { User } from "firebase/auth"; // <-- Use Firebase User type
 import { useSubscription } from '@/hooks/useSubscription';
 import { SubscriptionUpgradeDialog } from './SubscriptionUpgradeDialog';
 import { PremiumBadge } from './PremiumWrapper';
 
-const Pricing = () => {
+const Pricing = ({ user }: { user: User | null }) => {
   const navigate = useNavigate();
+  const { isPremium, loading } = useSubscription(user);
+
 
   const handleGetStarted = () => {
     // Navigate to auth page for sign up
@@ -51,6 +53,8 @@ const Pricing = () => {
       popular: true
     }
   ];
+
+  if (loading) return <div>Loading...</div>;
 
   return (
     <section id="pricing" className="py-24 bg-gradient-to-br from-background via-accent/20 to-background relative">

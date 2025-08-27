@@ -4,6 +4,9 @@
  * Backend handles Daraja API integration
  */
 
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "../lib/firebase";
+
 export interface MpesaSettings {
   enableMpesa: boolean;
   mpesaMethod: 'paybill' | 'till' | 'send_money';
@@ -132,7 +135,7 @@ export class MpesaService {
       console.log('🚀 MpesaService.initiatePayment called with:', request);
       
       // EMERGENCY: Use simplified function with correct data format
-      const response = await fetch('/.netlify/functions/emergency-stk', {
+      const response = await fetch("http://localhost:8888/.netlify/functions/emergency-stk", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -157,6 +160,18 @@ export class MpesaService {
       if (!stkData.success) {
         throw new Error(stkData.error || 'STK push failed');
       }
+
+      // Create payment document in Firestore with orderId
+      const { addDoc, collection, serverTimestamp } = await import("firebase/firestore");
+      await addDoc(collection(db, "payments"), {
+        orderId: request.orderId,
+        phoneNumber: request.phoneNumber,
+        amount: request.amount,
+        status: "pending",
+        transactionId: stkData.data?.CheckoutRequestID || `STK_${Date.now()}`,
+        checkoutRequestId: stkData.data?.CheckoutRequestID || null,
+        createdAt: serverTimestamp(),
+      });
 
       return {
         success: true,
@@ -242,4 +257,17 @@ export class MpesaService {
     
     return cleaned;
   }
+}
+
+/**
+ * Listen for payment status changes in Firestore
+ */
+export function listenForPaymentStatus(userId: string, checkoutRequestId: string, callback: (status: string) => void) {
+  const paymentDocRef = doc(db, "payments", userId);
+  return onSnapshot(paymentDocRef, (snap) => {
+    const data = snap.data();
+    if (data && data.checkoutRequestId === checkoutRequestId) {
+      callback(data.status);
+    }
+  });
 }
