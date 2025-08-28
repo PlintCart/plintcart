@@ -18,7 +18,7 @@ const Pricing = ({ user }: { user: User | null }) => {
   const plans = [
     {
       name: "Starter",
-      price: "KSh 0",
+      price: "KSh 500",
       period: "/month",
       description: "Perfect for getting started",
       features: [
@@ -75,7 +75,7 @@ const Pricing = ({ user }: { user: User | null }) => {
             for your business
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Start free and scale as you grow. All plans include our core features with no hidden fees.
+            Start and scale as you grow. All plans include our core features with no hidden fees.
           </p>
         </div>
 
@@ -161,27 +161,22 @@ const Pricing = ({ user }: { user: User | null }) => {
           ))}
         </div>
 
-        {/* Bottom Section */}
-        <div className="text-center mt-20 animate-fade-in">
-          <div className="gradient-cta rounded-3xl p-12 shadow-large max-w-4xl mx-auto text-white">
-            <h3 className="text-4xl font-bold mb-4">Ready to start selling?</h3>
-            <p className="text-xl mb-8 opacity-90">
-              Join thousands of businesses already using Plint to boost their sales
-            </p>
-            <Button 
-              variant="success" 
-              size="xl" 
-              className="bg-white text-primary hover:bg-white/90 shadow-medium"
-              onClick={handleGetStarted}
-            >
-              Start Your Free Trial
-              <ArrowRight className="w-5 h-5" />
-            </Button>
-            <p className="text-sm mt-4 opacity-75">
-              No credit card required • 14-day free trial • Cancel anytime
-            </p>
+        {/* Testimonials Section */}
+        <div className="mt-20 animate-fade-in">
+          <h3 className="text-3xl font-bold mb-8 text-center text-foreground">What Our Merchants Say</h3>
+          <div className="overflow-x-auto pb-4">
+            <div className="flex gap-6 min-w-[320px] max-w-4xl mx-auto px-2">
+              {/* Testimonial Card Example - Add more as needed */}
+              <div className="bg-background rounded-2xl shadow-soft border p-6 min-w-[300px] max-w-xs flex-shrink-0">
+                <p className="text-lg text-muted-foreground mb-4">
+                  “Before Plint, we were guessing what products to stock. Now, we see exactly what sells, track customers who keep coming back, and spend less time worrying about sales.”
+                </p>
+                <div className="text-sm text-foreground font-semibold">— Early Merchant Partner</div>
+              </div>
+              {/* Future testimonials can be added here */}
+            </div>
           </div>
-        </div>
+  </div>
       </div>
     </section>
   );

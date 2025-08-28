@@ -43,23 +43,27 @@ const Footer = () => {
         {/* Newsletter Section */}
         <div className="border-b border-white/20">
           <div className="container mx-auto px-6 py-16">
-            <div className="max-w-4xl mx-auto text-center">
-              <h3 className="text-3xl font-bold mb-4">
-                Stay updated with Plint
+            <div className="max-w-4xl mx-auto text-center py-12">
+              <h3 className="text-3xl md:text-4xl font-bold mb-6 text-white">
+                Step into the future of selling smarter & Digital Commerce with Plint.
               </h3>
-              <p className="text-white/80 mb-8 text-lg">
-                Get the latest updates, tips, and insights delivered to your inbox.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="flex-1 px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
-                />
-                <Button variant="success" className="bg-white text-primary hover:bg-white/90">
-                  Subscribe
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold transition-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 bg-brand-green text-primary-foreground hover:bg-brand-green-dark shadow-soft hover:shadow-medium h-16 rounded-xl px-10 text-lg group min-w-[200px]"
+                  onClick={() => window.location.href = '/auth?mode=signup'}
+                >
+                  Start Free Trial
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-right w-5 h-5 transition-transform group-hover:translate-x-1"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold transition-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:shadow-medium group min-w-[180px] border-brand-green bg-brand-green text-white hover:bg-brand-green-dark hover:text-white shadow-soft h-16 rounded-xl px-10 text-lg"
+                  onClick={() => window.open('https://wa.me/254794832922?text=Hi%20Plint%20Team%2C%20I%20would%20like%20to%20book%20a%20demo%20for%20the%20Virtual%20POS%20platform.', '_blank')}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-arrow-right w-5 h-5 transition-transform group-hover:translate-x-1"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                  Book Demo
+                </button>
               </div>
             </div>
           </div>
@@ -68,31 +72,7 @@ const Footer = () => {
         {/* Main Footer Content */}
         <div className="container mx-auto px-6 py-16">
           <div className="grid lg:grid-cols-6 gap-12">
-            {/* Company Info (unchanged) */}
-            <div className="lg:col-span-2">
-              <div className="mb-6">
-                <h2 className="text-3xl font-bold mb-4">
-                  pl<span className="text-brand-green-light">int</span>
-                </h2>
-                <p className="text-white/80 text-lg leading-relaxed">
-                  The easiest way to create a beautiful online storefront that connects directly to WhatsApp for any business.
-                </p>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 text-white/80">
-                  <Mail className="w-5 h-5" />
-                  <span>hello@plint.co.ke</span>
-                </div>
-                <div className="flex items-center gap-3 text-white/80">
-                  <Phone className="w-5 h-5" />
-                  <span>+254 (0) 700 123456</span>
-                </div>
-                <div className="flex items-center gap-3 text-white/80">
-                  <MessageCircle className="w-5 h-5" />
-                  <span>WhatsApp Support</span>
-                </div>
-              </div>
-            </div>
+            {/* Minimal Footer - Company Info/Contact removed as requested */}
 
             {/* Minimal Footer Links */}
             <div className="lg:col-span-4 flex flex-col md:flex-row gap-8 justify-end items-start">
@@ -146,6 +126,6 @@ const Footer = () => {
       </div>
     </footer>
   );
-};
+}
 
 export default Footer;

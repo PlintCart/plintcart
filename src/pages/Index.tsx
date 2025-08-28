@@ -15,7 +15,7 @@ const Index = () => {
   return (
     <div className="min-h-screen">
       <Header />
-      <main>
+      <main className="mt-20">
         <Hero />
         <div className="flex justify-center mt-8">
           <Button size="lg" onClick={() => navigate('/auth?mode=signup')}>

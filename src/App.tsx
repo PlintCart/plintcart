@@ -214,6 +214,7 @@ const App = () => (
             </Suspense>
           </BrowserRouter>
           <NetworkStatus />
+          <Toaster />
         </TooltipProvider>
       </SettingsProvider>
       </AuthProvider>

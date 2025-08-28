@@ -1,4 +1,5 @@
 import { Store, MessageCircle, Palette, Zap, Shield, Globe } from "lucide-react";
+import PhoneSlideshow from "./PhoneSlideshow";
 
 const Features = () => {
   const features = [
@@ -48,6 +49,28 @@ const Features = () => {
 
   return (
     <section id="features" className="py-24 bg-background relative">
+      {/* App Screenshots Section */}
+      <div className="flex flex-col md:flex-row gap-8 justify-center items-center my-16">
+        {/* Laptop mockup */}
+        <div className="bg-gray-900 rounded-2xl shadow-2xl border-4 border-gray-300 p-4 max-w-xl w-full flex flex-col items-center">
+          <video
+            src="/landing-video.mp4"
+            className="rounded-lg w-full h-auto object-cover"
+            style={{ aspectRatio: '16/10' }}
+            autoPlay
+            loop
+            muted
+            playsInline
+          />
+          {/* Caption removed as requested */}
+        </div>
+        {/* Phone mockup */}
+        <div className="bg-black rounded-[2rem] shadow-xl border-4 border-gray-300 p-2 max-w-[300px] w-full flex flex-col items-center">
+          <PhoneSlideshow />
+          {/* Caption removed as requested */}
+        </div>
+      </div>
+
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{
@@ -57,8 +80,18 @@ const Features = () => {
       </div>
 
       <div className="container mx-auto px-6 relative">
+        {/* Decorative radial background for Why Plint section */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: "radial-gradient(circle at 25px 25px, hsl(var(--primary)) 2px, transparent 0)",
+            backgroundSize: "50px 50px",
+            opacity: 0.08,
+            zIndex: 0
+          }}
+        />
         {/* Section Header & Value Proposition */}
-        <div className="text-center mb-20 animate-fade-in">
+        <div className="text-center mb-20 animate-fade-in relative z-10">
           <h2 className="text-5xl md:text-6xl font-bold mb-6 text-foreground">
             Why Plint?
           </h2>
@@ -96,57 +129,31 @@ const Features = () => {
           </p>
         </div>
 
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-          {features.map((feature, index) => {
-            const IconComponent = feature.icon;
-            return (
-              <div
-                key={index}
-                className="group relative"
-                style={{ animationDelay: feature.delay }}
-              >
-                <div className="gradient-card rounded-2xl p-8 shadow-soft hover-lift border border-white/50 transition-smooth h-full">
-                  {/* Icon */}
-                  <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-6 bg-${feature.color}/10 group-hover:bg-${feature.color}/20 transition-smooth`}>
-                    <IconComponent className={`w-8 h-8 text-${feature.color} group-hover:scale-110 transition-smooth`} />
-                  </div>
+  {/* Features Grid removed as requested */}
 
-                  {/* Content */}
-                  <h3 className="text-2xl font-bold mb-4 text-foreground group-hover:text-primary transition-smooth">
-                    {feature.title}
-                  </h3>
-                  <p className="text-muted-foreground leading-relaxed group-hover:text-foreground/80 transition-smooth">
-                    {feature.description}
-                  </p>
-
-                  {/* Hover Effect */}
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-smooth pointer-events-none" />
+        {/* Numbers That Matter Section - Horizontal & Responsive */}
+        <div className="text-center mt-20 animate-fade-in">
+          <h3 className="text-3xl font-bold mb-6 text-foreground">Numbers That Matter</h3>
+          <div className="flex flex-col md:flex-row justify-center items-stretch gap-8 max-w-4xl mx-auto mb-8">
+            <div className="flex-1 bg-background rounded-xl shadow-soft border p-6 flex flex-col justify-center items-center min-w-[200px]">
+              <div className="text-lg text-muted-foreground mb-2">Businesses that track and analyze sales data are:</div>
+              <div className="flex flex-row md:flex-col gap-6 w-full justify-center items-center">
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl font-bold text-primary">2x</span>
+                  <span className="text-base text-muted-foreground">more likely to restock correctly.</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl font-bold text-primary">3x</span>
+                  <span className="text-base text-muted-foreground">more likely to keep loyal customers.</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-2xl font-bold text-primary">30%</span>
+                  <span className="text-base text-muted-foreground">more efficient when payments are digitized.</span>
                 </div>
               </div>
-            );
-          })}
-        </div>
-
-        {/* Bottom CTA */}
-        <div className="text-center mt-20 animate-fade-in">
-          <p className="text-lg text-muted-foreground mb-6">
-            Join thousands of businesses already using Plint
-          </p>
-          <div className="flex justify-center items-center space-x-12 opacity-60">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary">5K+</div>
-              <div className="text-sm text-muted-foreground">Active Businesses</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary">100K+</div>
-              <div className="text-sm text-muted-foreground">Products Shared</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary">99.9%</div>
-              <div className="text-sm text-muted-foreground">Uptime</div>
             </div>
           </div>
+          <p className="text-xl text-foreground font-semibold">Plint makes this possible for MSMEs & SMEs.</p>
         </div>
       </div>
     </section>

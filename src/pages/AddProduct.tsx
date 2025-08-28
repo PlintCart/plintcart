@@ -1,4 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 import { AdminLayout } from "@/components/AdminLayout";
 import { SteppedAddProductForm } from "@/components/SteppedAddProductForm";
 import { BackButton } from "@/components/ui/back-button";
@@ -9,7 +10,10 @@ export default function AddProduct() {
   const isEditing = !!id;
 
   const handleSuccess = () => {
-    navigate("/admin/products");
+    toast.success("Product updated successfully!");
+    setTimeout(() => {
+      navigate("/admin/products");
+    }, 1200);
   };
 
   const handleCancel = () => {

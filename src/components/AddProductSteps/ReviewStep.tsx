@@ -1,3 +1,12 @@
+// Utility to safely render any value
+function renderValue(val: any) {
+  if (val == null) return '';
+  if (typeof val === 'object') {
+    if (Array.isArray(val)) return val.join(', ');
+    return JSON.stringify(val);
+  }
+  return val;
+}
 import { UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -45,8 +54,8 @@ export function ReviewStep({
     return new Date(dateString).toLocaleDateString();
   };
 
-  return (
-    <div className="space-y-6">
+    return (
+      <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
       {/* Header */}
       <div className="text-center space-y-2">
         <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto">
@@ -70,13 +79,10 @@ export function ReviewStep({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div>
-              <span className="text-sm font-medium text-gray-600">Product Name:</span>
-              <p className="text-sm">{formData.name || 'Not provided'}</p>
-            </div>
+          {/* ...existing code... */}
             <div>
               <span className="text-sm font-medium text-gray-600">Category:</span>
-              <p className="text-sm">{formData.category || 'Not provided'}</p>
+              <p className="text-sm">{renderValue(formData.category) || 'Not provided'}</p>
             </div>
             <div className="flex gap-4">
               <div>
@@ -85,14 +91,14 @@ export function ReviewStep({
                   Price:
                 </span>
                 <p className="text-sm font-medium text-green-600">
-                  {formatPrice(formData.price || 0)}
+                  {renderValue(formatPrice(formData.price || 0))}
                 </p>
               </div>
               {formData.salePrice && formData.salePrice > 0 && (
                 <div>
                   <span className="text-sm font-medium text-gray-600">Sale Price:</span>
                   <p className="text-sm font-medium text-orange-600">
-                    {formatPrice(formData.salePrice)}
+                    {renderValue(formatPrice(formData.salePrice))}
                   </p>
                 </div>
               )}
@@ -103,7 +109,7 @@ export function ReviewStep({
                   <Tag className="w-3 h-3" />
                   Tags:
                 </span>
-                <p className="text-sm">{formData.tags}</p>
+                <p className="text-sm">{renderValue(formData.tags)}</p>
               </div>
             )}
           </CardContent>
@@ -153,14 +159,14 @@ export function ReviewStep({
             <div>
               <span className="text-sm font-medium text-gray-600">Description:</span>
               <p className="text-sm mt-1 p-3 bg-gray-50 rounded border max-h-24 overflow-y-auto">
-                {formData.description || 'No description provided'}
+                {renderValue(formData.description) || 'No description provided'}
               </p>
             </div>
             {formData.specifications && (
               <div>
                 <span className="text-sm font-medium text-gray-600">Specifications:</span>
                 <p className="text-sm mt-1 p-3 bg-gray-50 rounded border max-h-24 overflow-y-auto">
-                  {formData.specifications}
+                  {renderValue(formData.specifications)}
                 </p>
               </div>
             )}
@@ -191,14 +197,14 @@ export function ReviewStep({
                       <Package className="w-3 h-3" />
                       Current Stock:
                     </span>
-                    <p className="text-sm">{formData.stockQuantity || 0} units</p>
+                    <p className="text-sm">{renderValue(formData.stockQuantity) || 0} units</p>
                   </div>
                   <div>
                     <span className="text-sm font-medium text-gray-600 flex items-center gap-1">
                       <AlertTriangle className="w-3 h-3" />
                       Min Level:
                     </span>
-                    <p className="text-sm">{formData.minStockLevel || 0} units</p>
+                    <p className="text-sm">{renderValue(formData.minStockLevel) || 0} units</p>
                   </div>
                 </div>
                 
@@ -208,12 +214,12 @@ export function ReviewStep({
                       <BarChart3 className="w-3 h-3" />
                       Max Level:
                     </span>
-                    <p className="text-sm">{formData.maxStockLevel || 0} units</p>
+                    <p className="text-sm">{renderValue(formData.maxStockLevel) || 0} units</p>
                   </div>
                   <div>
                     <span className="text-sm font-medium text-gray-600">Backorders:</span>
                     <Badge variant={formData.allowBackorders ? "secondary" : "outline"} className="text-xs">
-                      {formData.allowBackorders ? "Allowed" : "Not Allowed"}
+                      {renderValue(formData.allowBackorders ? "Allowed" : "Not Allowed")}
                     </Badge>
                   </div>
                 </div>
@@ -224,7 +230,7 @@ export function ReviewStep({
                       <Calendar className="w-3 h-3" />
                       Restock Date:
                     </span>
-                    <p className="text-sm">{formatDate(formData.restockDate)}</p>
+                    <p className="text-sm">{renderValue(formatDate(formData.restockDate))}</p>
                   </div>
                 )}
               </>
@@ -243,11 +249,11 @@ export function ReviewStep({
           <CardContent className="space-y-3">
             <div>
               <span className="text-sm font-medium text-gray-600">SKU:</span>
-              <p className="text-sm">{formData.sku || 'Not provided'}</p>
+              <p className="text-sm">{renderValue(formData.sku) || 'Not provided'}</p>
             </div>
             <div>
               <span className="text-sm font-medium text-gray-600">Barcode:</span>
-              <p className="text-sm">{formData.barcode || 'Not provided'}</p>
+              <p className="text-sm">{renderValue(formData.barcode) || 'Not provided'}</p>
             </div>
           </CardContent>
         </Card>
@@ -279,6 +285,6 @@ export function ReviewStep({
           <div className="bg-green-600 h-2 rounded-full w-full"></div>
         </div>
       </div>
-    </div>
+    </form>
   );
 }
