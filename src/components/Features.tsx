@@ -92,29 +92,31 @@ const Features = () => {
         />
         {/* Section Header & Value Proposition */}
         <div className="text-center mb-20 animate-fade-in relative z-10">
-          <h2 className="text-5xl md:text-6xl font-bold mb-6 text-foreground">
-            Why Plint?
+          <h2 className="text-5xl md:text-6xl font-bold mb-8 text-foreground">
+            Why Plint
           </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed mb-8">
-            Reach, grow, and retain more customers with smarter tools.<br />
-            <span className="block mt-4 text-lg text-primary font-semibold">Most small businesses struggle with:</span>
-          </p>
           <div className="flex flex-col md:flex-row gap-8 justify-center mb-8">
-            <div className="bg-background rounded-xl shadow-soft border p-6 flex-1 min-w-[260px]">
-              <h3 className="text-lg font-semibold mb-4 text-primary">Challenges for MSMEs & SMEs</h3>
-              <ul className="list-disc ml-6 text-muted-foreground text-left space-y-2">
-                <li>Manual order tracking that slows them down.</li>
-                <li>Guessing what to restock.</li>
-                <li>Losing loyal customers.</li>
+            {/* Challenges */}
+            <div className="bg-background rounded-xl shadow-soft border p-8 flex-1 min-w-[260px] flex flex-col justify-center">
+              <h3 className="text-2xl font-bold mb-6 text-red-600 flex items-center gap-2">
+                ❌ Challenges MSMEs Face
+              </h3>
+              <ul className="space-y-4 text-lg text-muted-foreground">
+                <li className="flex gap-2 items-start"><span>⏳</span>Manual order tracking slows everything down</li>
+                <li className="flex gap-2 items-start"><span>🔄</span>Restocking is a guessing game</li>
+                <li className="flex gap-2 items-start"><span>💔</span>Loyal customers slip through the cracks</li>
               </ul>
             </div>
-            <div className="bg-background rounded-xl shadow-soft border p-6 flex-1 min-w-[260px]">
-              <h3 className="text-lg font-semibold mb-4 text-primary">Plint Fixes This With</h3>
-              <ul className="list-disc ml-6 text-muted-foreground text-left space-y-2">
-                <li>Auto Order Tracking — log every sale in real time.</li>
-                <li>Product Insights — know your bestsellers instantly.</li>
-                <li>Customer Loyalty — track and reward your top buyers.</li>
-                <li>Payment Links — get paid faster, anywhere.</li>
+            {/* Solutions */}
+            <div className="bg-background rounded-xl shadow-soft border p-8 flex-1 min-w-[260px] flex flex-col justify-center">
+              <h3 className="text-2xl font-bold mb-6 text-green-600 flex items-center gap-2">
+                ✅ Plint Solves It
+              </h3>
+              <ul className="space-y-4 text-lg text-foreground">
+                <li className="flex gap-2 items-start"><span>🔄</span><span className="font-semibold">Auto Order Tracking:</span> Log every sale in real time</li>
+                <li className="flex gap-2 items-start"><span>📦</span><span className="font-semibold">Product Insights:</span> Know your bestsellers instantly</li>
+                <li className="flex gap-2 items-start"><span>💖</span><span className="font-semibold">Customer Loyalty:</span> Track and reward your top buyers</li>
+                <li className="flex gap-2 items-start"><span>💸</span><span className="font-semibold">Payment Links:</span> Get paid faster, from anywhere</li>
               </ul>
             </div>
           </div>
