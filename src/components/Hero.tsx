@@ -32,9 +32,8 @@ const Hero = () => {
   <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start gap-16 py-12">
           {/* Left Column: Content */}
           <div className="flex-[1.3] min-w-0">
-            {/* Why Plint Heading */}
+            {/* Main Headline - enlarged and styled */}
             <div className="mb-8 animate-fade-in">
-              <h2 className="text-5xl md:text-6xl font-bold mb-8 text-foreground">Why Plint</h2>
               <h1 className="text-5xl md:text-7xl font-bold mb-2 tracking-tight text-black">
                 Track every order. Know what sells. Keep customers coming back.
               </h1>
@@ -90,16 +89,7 @@ const Hero = () => {
           </div>
           {/* Right Column: How Plint Works */}
           <div className="flex-1 min-w-0 flex items-start justify-end">
-            <div className="relative gradient-cta rounded-3xl p-12 shadow-large max-w-3xl text-white mt-0 animate-fade-in ml-auto">
-              <div
-                className="absolute inset-0 rounded-2xl pointer-events-none"
-                style={{
-                  backgroundImage:
-                    'radial-gradient(circle at 25px 25px, hsl(var(--primary)) 2px, transparent 0)',
-                  backgroundSize: '50px 50px',
-                  zIndex: 1,
-                }}
-              ></div>
+            <div className="gradient-cta rounded-3xl p-12 shadow-large max-w-3xl text-white mt-0 animate-fade-in ml-auto">
               <h3 className="text-4xl font-bold mb-4">How Plint Works</h3>
               <p className="text-xl mb-8 opacity-90">Set up in minutes – Your virtual POS, ready instantly.</p>
               <div className="text-lg mb-8 opacity-90 space-y-6 text-left max-w-2xl mx-auto">
