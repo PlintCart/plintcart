@@ -17,11 +17,7 @@ const Index = () => {
       <Header />
       <main className="mt-20">
         <Hero />
-        <div className="flex justify-center mt-8">
-          <Button size="lg" onClick={() => navigate('/auth?mode=signup')}>
-            Get Started
-          </Button>
-        </div>
+        {/* ...existing code... */}
         <Features />
         <Pricing user={user} /> {/* Pass user prop here */}
       </main>

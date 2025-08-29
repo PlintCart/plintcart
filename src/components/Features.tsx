@@ -1,7 +1,11 @@
-import { Store, MessageCircle, Palette, Zap, Shield, Globe } from "lucide-react";
+import { Store, MessageCircle, Palette, Zap, Shield, Globe, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import PhoneSlideshow from "./PhoneSlideshow";
 
 const Features = () => {
+  const handleStartTrial = () => {
+    window.location.href = '/auth?mode=signup';
+  };
   const features = [
     {
       icon: Store,
@@ -49,52 +53,57 @@ const Features = () => {
 
   return (
     <section id="features" className="py-24 bg-background relative">
-      {/* App Screenshots Section */}
-      <div className="flex flex-col md:flex-row gap-8 justify-center items-center my-16">
-        {/* Laptop mockup */}
-        <div className="bg-gray-900 rounded-2xl shadow-2xl border-4 border-gray-300 p-4 max-w-xl w-full flex flex-col items-center">
-          <video
-            src="/landing-video.mp4"
-            className="rounded-lg w-full h-auto object-cover"
-            style={{ aspectRatio: '16/10' }}
-            autoPlay
-            loop
-            muted
-            playsInline
-          />
-          {/* Caption removed as requested */}
-        </div>
-        {/* Phone mockup */}
-        <div className="bg-black rounded-[2rem] shadow-xl border-4 border-gray-300 p-2 max-w-[300px] w-full flex flex-col items-center">
-          <PhoneSlideshow />
-          {/* Caption removed as requested */}
+      {/* Why Plint Heading Above */}
+      <div className="container mx-auto px-6">
+        <div className="text-center mb-8 animate-fade-in">
+          <h2 className="text-5xl md:text-6xl font-bold text-foreground">Why Plint</h2>
         </div>
       </div>
-
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `radial-gradient(circle at 25px 25px, hsl(var(--primary)) 2px, transparent 0)`,
-          backgroundSize: '50px 50px'
-        }} />
+      {/* App Screenshots Section */}
+      <div className="flex flex-col md:flex-row gap-8 justify-center items-center my-4">
+        <div className="w-full flex flex-col md:flex-row items-center justify-center min-h-[600px] gap-8">
+          {/* How Plint Works Card */}
+          <div className="gradient-cta rounded-3xl p-12 shadow-large w-full max-w-2xl text-white animate-fade-in">
+            <h3 className="text-4xl font-bold mb-4">How Plint Works</h3>
+            <p className="text-xl mb-8 opacity-90">Set up in minutes – Your virtual POS, ready instantly.</p>
+            <div className="text-lg mb-8 opacity-90 space-y-6 text-left max-w-2xl mx-auto">
+              <div>
+                <span className="text-2xl mr-2">⚡</span>
+                <span className="font-semibold text-white">Instant Setup</span>
+                <div className="text-white/90 ml-8">Launch your online ordering system in minutes—no tech skills needed.</div>
+              </div>
+              <div>
+                <span className="text-2xl mr-2">📦</span>
+                <span className="font-semibold text-white">Sell & Track</span>
+                <div className="text-white/90 ml-8">Automatically log orders and payments. Stay organized effortlessly.</div>
+              </div>
+              <div>
+                <span className="text-2xl mr-2">📊</span>
+                <span className="font-semibold text-white">See Insights</span>
+                <div className="text-white/90 ml-8">Spot bestsellers, slow movers, and loyal customers at a glance.</div>
+              </div>
+              <div>
+                <span className="text-2xl mr-2">🚀</span>
+                <span className="font-semibold text-white">Grow Smarter</span>
+                <div className="text-white/90 ml-8">Turn data into profits with smarter decisions.</div>
+              </div>
+            </div>
+            <Button variant="success" size="xl" className="inline-flex items-center justify-center gap-2 whitespace-nowrap font-semibold transition-smooth h-16 rounded-xl px-10 text-lg bg-white text-primary hover:bg-white/90 shadow-medium" onClick={handleStartTrial}>
+              Start Your Free Trial
+              <ArrowRight className="w-5 h-5" />
+            </Button>
+            <p className="text-sm mt-4 opacity-75">No credit card required • 14-day free trial • Cancel anytime</p>
+          </div>
+          {/* Phone mockup - now directly adjacent to card */}
+          <div className="bg-black rounded-[2rem] shadow-xl border-4 border-gray-300 p-2 max-w-[300px] w-full flex flex-col items-center">
+            <PhoneSlideshow />
+          </div>
+        </div>
       </div>
 
       <div className="container mx-auto px-6 relative">
-        {/* Decorative radial background for Why Plint section */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            backgroundImage: "radial-gradient(circle at 25px 25px, hsl(var(--primary)) 2px, transparent 0)",
-            backgroundSize: "50px 50px",
-            opacity: 0.08,
-            zIndex: 0
-          }}
-        />
         {/* Section Header & Value Proposition */}
         <div className="text-center mb-20 animate-fade-in relative z-10">
-          <h2 className="text-5xl md:text-6xl font-bold mb-8 text-foreground">
-            Why Plint
-          </h2>
           <div className="flex flex-col md:flex-row gap-8 justify-center mb-8">
             {/* Challenges */}
             <div className="bg-background rounded-xl shadow-soft border p-8 flex-1 min-w-[260px] flex flex-col justify-center">
