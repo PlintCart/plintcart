@@ -16,7 +16,7 @@ const Hero = () => {
   };
 
   return (
-  <section className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
+  <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden py-6 md:py-12">
       {/* Background Gradient */}
       <div className="absolute inset-0 gradient-hero opacity-90" />
       {/* Animated Background Elements */}
@@ -27,13 +27,13 @@ const Hero = () => {
       </div>
 
       <div className="relative container mx-auto px-6 text-white">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start gap-16 py-6">
+  <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start gap-8 py-4 md:gap-16 md:py-8">
           {/* Left Column: Content */}
           <div className="flex-[1.3] min-w-0">
             {/* Main Headline - enlarged and styled */}
             <div className="mb-8 animate-fade-in">
-              <h1 className="text-5xl md:text-7xl font-bold mb-2 tracking-tight text-white">
-                Track every order. Know what sells. Keep customers coming back.
+              <h1 className="text-5xl md:text-7xl font-bold mb-2 tracking-tight text-black text-center md:text-left">
+                Track every order. <span className="text-white">Know what sells.</span> Keep customers coming back.
               </h1>
             </div>
             {/* CTA Buttons */}
@@ -53,7 +53,7 @@ const Hero = () => {
               </Button>
             </div>
             {/* Sign In Link for Existing Users */}
-            <div className="mb-8 animate-fade-in" style={{ animationDelay: "0.7s" }}>
+            <div className="mb-8 animate-fade-in text-center md:text-left" style={{ animationDelay: "0.7s" }}>
               <p className="text-white/70 text-sm">
                 Already have an account?{" "}
                 <button 
@@ -66,11 +66,11 @@ const Hero = () => {
             </div>
           </div>
           {/* Right Column: Laptop Mockup */}
-          <div className="flex-1 min-w-0 flex items-start justify-end">
-            <div className="bg-gray-900 rounded-2xl shadow-2xl border-4 border-gray-300 p-4 w-full max-w-[1200px] h-[220px] md:h-[340px] flex flex-col items-center justify-center">
+          <div className="flex-1 min-w-0 flex justify-center items-center w-full">
+            <div className="bg-gray-900 rounded-2xl shadow-2xl border-4 border-gray-300 p-2 w-full max-w-2xl h-[220px] md:h-[280px] flex flex-col items-center justify-center mx-auto">
               <video
                 src="/landing-video.mp4"
-                className="rounded-lg w-full h-[180px] md:h-[300px] object-cover"
+                className="rounded-lg w-full h-full object-contain"
                 style={{ aspectRatio: '16/10' }}
                 autoPlay
                 loop

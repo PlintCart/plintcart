@@ -145,23 +145,18 @@ const Features = () => {
         {/* Numbers That Matter Section - Horizontal & Responsive */}
         <div className="text-center mt-20 animate-fade-in">
           <h3 className="text-3xl font-bold mb-6 text-foreground">Numbers That Matter</h3>
-          <div className="flex flex-col md:flex-row justify-center items-stretch gap-8 max-w-4xl mx-auto mb-8">
-            <div className="flex-1 bg-background rounded-xl shadow-soft border p-6 flex flex-col justify-center items-center min-w-[200px]">
-              <div className="text-lg text-muted-foreground mb-2">Businesses that track and analyze sales data are:</div>
-              <div className="flex flex-row md:flex-col gap-6 w-full justify-center items-center">
-                <div className="flex flex-col items-center">
-                  <span className="text-2xl font-bold text-primary">2x</span>
-                  <span className="text-base text-muted-foreground">more likely to restock correctly.</span>
-                </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-2xl font-bold text-primary">3x</span>
-                  <span className="text-base text-muted-foreground">more likely to keep loyal customers.</span>
-                </div>
-                <div className="flex flex-col items-center">
-                  <span className="text-2xl font-bold text-primary">30%</span>
-                  <span className="text-base text-muted-foreground">more efficient when payments are digitized.</span>
-                </div>
-              </div>
+          <div className="flex flex-row flex-wrap justify-center items-stretch gap-8 max-w-4xl mx-auto mb-8">
+            <div className="flex-1 bg-background rounded-xl shadow-soft border p-6 flex flex-col justify-center items-center min-w-[200px] max-w-[250px]">
+              <span className="text-2xl font-bold text-primary">2x</span>
+              <span className="text-base text-muted-foreground text-center">more likely to restock correctly.</span>
+            </div>
+            <div className="flex-1 bg-background rounded-xl shadow-soft border p-6 flex flex-col justify-center items-center min-w-[200px] max-w-[250px]">
+              <span className="text-2xl font-bold text-primary">3x</span>
+              <span className="text-base text-muted-foreground text-center">more likely to keep loyal customers.</span>
+            </div>
+            <div className="flex-1 bg-background rounded-xl shadow-soft border p-6 flex flex-col justify-center items-center min-w-[200px] max-w-[250px]">
+              <span className="text-2xl font-bold text-primary">30%</span>
+              <span className="text-base text-muted-foreground text-center">more efficient when payments are digitized.</span>
             </div>
           </div>
           <p className="text-xl text-foreground font-semibold">Plint makes this possible for MSMEs & SMEs.</p>
