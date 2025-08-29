@@ -68,15 +68,7 @@ const Hero = () => {
             </div>
             {/* Desktop Frame UI with looping video and styled background */}
             <div className="relative w-full flex flex-col items-center justify-start min-h-[600px]">
-              <div
-                className="absolute inset-0 rounded-2xl"
-                style={{
-                  backgroundImage:
-                    'radial-gradient(circle at 25px 25px, hsl(var(--primary)) 2px, transparent 0)',
-                  backgroundSize: '50px 50px',
-                  zIndex: 1,
-                }}
-              ></div>
+          {/* Removed dotted radial gradient background */}
               <div className="relative z-10 w-full max-w-2xl aspect-video rounded-2xl overflow-hidden shadow-xl border border-white/10 bg-black flex items-center justify-center mt-0">
                 <img
                   src="/hero-desktop.png"
