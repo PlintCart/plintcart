@@ -67,10 +67,10 @@ const Hero = () => {
           </div>
           {/* Right Column: Laptop Mockup */}
           <div className="flex-1 min-w-0 flex items-start justify-end">
-            <div className="bg-gray-900 rounded-2xl shadow-2xl border-4 border-gray-300 p-4 w-[1200px] h-[340px] flex flex-col items-center justify-center">
+            <div className="bg-gray-900 rounded-2xl shadow-2xl border-4 border-gray-300 p-4 w-full max-w-[1200px] h-[220px] md:h-[340px] flex flex-col items-center justify-center">
               <video
                 src="/landing-video.mp4"
-                className="rounded-lg w-[1160px] h-[300px] object-cover"
+                className="rounded-lg w-full h-[180px] md:h-[300px] object-cover"
                 style={{ aspectRatio: '16/10' }}
                 autoPlay
                 loop
