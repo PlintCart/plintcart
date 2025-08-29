@@ -32,7 +32,7 @@ const Hero = () => {
           <div className="flex-[1.3] min-w-0">
             {/* Main Headline - enlarged and styled */}
             <div className="mb-8 animate-fade-in">
-              <h1 className="text-5xl md:text-7xl font-bold mb-2 tracking-tight text-black">
+              <h1 className="text-5xl md:text-7xl font-bold mb-2 tracking-tight text-white">
                 Track every order. Know what sells. Keep customers coming back.
               </h1>
             </div>
