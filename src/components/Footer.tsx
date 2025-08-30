@@ -77,28 +77,16 @@ const Footer = () => {
             {/* Minimal Footer Links */}
             <div className="lg:col-span-4 flex flex-col md:flex-row gap-8 justify-end items-start">
               <div>
-                <h3 className="text-lg font-semibold mb-4">About</h3>
-                <ul className="space-y-3">
-                  <li><a href="#about" className="text-white/80 hover:text-white transition-smooth">About</a></li>
-                </ul>
+                <a href="#about" className="text-lg font-semibold mb-4 block text-white/80 hover:text-white transition-smooth">About</a>
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-4">Pricing</h3>
-                <ul className="space-y-3">
-                  <li><a href="#pricing" className="text-white/80 hover:text-white transition-smooth">Pricing</a></li>
-                </ul>
+                <a href="#pricing" className="text-lg font-semibold mb-4 block text-white/80 hover:text-white transition-smooth">Pricing</a>
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-4">Terms & Conditions</h3>
-                <ul className="space-y-3">
-                  <li><a href="#terms" className="text-white/80 hover:text-white transition-smooth">Terms & Conditions</a></li>
-                </ul>
+                <a href="#terms" className="text-lg font-semibold mb-4 block text-white/80 hover:text-white transition-smooth">Terms & Conditions</a>
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-4">Privacy Policy</h3>
-                <ul className="space-y-3">
-                  <li><a href="#privacy" className="text-white/80 hover:text-white transition-smooth">Privacy Policy</a></li>
-                </ul>
+                <a href="#cookie" className="text-lg font-semibold mb-4 block text-white/80 hover:text-white transition-smooth">Cookie Policy</a>
               </div>
             </div>
           </div>
@@ -106,19 +94,8 @@ const Footer = () => {
           {/* Bottom Bar */}
           <div className="border-t border-white/20 mt-16 pt-8">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-              <div className="text-white/60 text-sm">
-                © 2024 Plint. All rights reserved.
-              </div>
-              <div className="flex items-center gap-6">
-                <a href="#" className="text-white/60 hover:text-white transition-smooth">
-                  Privacy Policy
-                </a>
-                <a href="#" className="text-white/60 hover:text-white transition-smooth">
-                  Terms of Service
-                </a>
-                <a href="#" className="text-white/60 hover:text-white transition-smooth">
-                  Cookie Policy
-                </a>
+              <div className="text-white/60 text-sm text-center w-full">
+                © 2025 Plint. All rights reserved.
               </div>
             </div>
           </div>

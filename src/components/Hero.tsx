@@ -32,8 +32,8 @@ const Hero = () => {
           <div className="flex-[1.3] min-w-0">
             {/* Main Headline - enlarged and styled */}
             <div className="mb-8 animate-fade-in">
-              <h1 className="text-5xl md:text-7xl font-bold mb-2 tracking-tight text-black text-center md:text-left">
-                Track every order. <span className="text-white">Know what sells.</span> Keep customers coming back.
+              <h1 className="text-5xl md:text-7xl font-bold mb-2 tracking-tight text-white text-center md:text-left">
+                Track every order. <span className="text-white">Know what sells.</span> <span className="bg-gradient-to-r from-white to-black bg-clip-text text-transparent">Keep customers coming back.</span>
               </h1>
             </div>
             {/* CTA Buttons */}
