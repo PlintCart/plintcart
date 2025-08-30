@@ -105,28 +105,52 @@ const Features = () => {
         {/* Section Header & Value Proposition */}
         <div className="text-center mb-20 animate-fade-in relative z-10">
           <div className="flex flex-col md:flex-row gap-8 justify-center mb-8">
-            {/* Challenges */}
-            <div className="bg-background rounded-xl shadow-soft border p-8 flex-1 min-w-[260px] flex flex-col justify-center">
-              <h3 className="text-2xl font-bold mb-6 text-red-600 flex items-center gap-2">
-                ❌ Challenges MSMEs Face
-              </h3>
-              <ul className="space-y-4 text-lg text-muted-foreground">
-                <li className="flex gap-2 items-start"><span>⏳</span>Manual order tracking slows everything down</li>
-                <li className="flex gap-2 items-start"><span>🔄</span>Restocking is a guessing game</li>
-                <li className="flex gap-2 items-start"><span>💔</span>Loyal customers slip through the cracks</li>
-              </ul>
-            </div>
-            {/* Solutions */}
-            <div className="bg-background rounded-xl shadow-soft border p-8 flex-1 min-w-[260px] flex flex-col justify-center">
-              <h3 className="text-2xl font-bold mb-6 text-green-600 flex items-center gap-2">
-                ✅ Plint Solves It
-              </h3>
-              <ul className="space-y-4 text-lg text-foreground">
-                <li className="flex gap-2 items-start"><span>🔄</span><span className="font-semibold">Auto Order Tracking:</span> Log every sale in real time</li>
-                <li className="flex gap-2 items-start"><span>📦</span><span className="font-semibold">Product Insights:</span> Know your bestsellers instantly</li>
-                <li className="flex gap-2 items-start"><span>💖</span><span className="font-semibold">Customer Loyalty:</span> Track and reward your top buyers</li>
-                <li className="flex gap-2 items-start"><span>💸</span><span className="font-semibold">Payment Links:</span> Get paid faster, from anywhere</li>
-              </ul>
+            {/* Challenges & Solutions as modular cards */}
+            <div className="flex flex-row flex-wrap gap-8 justify-center w-full animate-fade-in">
+              {/* Challenges Card */}
+              <div className="bg-background rounded-xl shadow-soft border p-8 flex-1 min-w-[260px] max-w-[350px] flex flex-col justify-between">
+                <h3 className="text-red-600 text-2xl font-bold text-center mb-6">Challenges MSMEs Face</h3>
+                <div className="flex flex-col gap-4">
+                  <div className="bg-white/10 rounded-lg shadow p-4">
+                    <span className="font-semibold block mb-1">Manual Tracking</span>
+                    <span className="text-muted-foreground text-sm">Slows operations and causes errors</span>
+                  </div>
+                  <div className="bg-white/10 rounded-lg shadow p-4">
+                    <span className="font-semibold block mb-1">Restocking Blindly</span>
+                    <span className="text-muted-foreground text-sm">Leads to waste or missed sales</span>
+                  </div>
+                  <div className="bg-white/10 rounded-lg shadow p-4">
+                    <span className="font-semibold block mb-1">Customer Loyalty Loss</span>
+                    <span className="text-muted-foreground text-sm">Hurts repeat revenue</span>
+                  </div>
+                  <div className="bg-white/10 rounded-lg shadow p-4">
+                    <span className="font-semibold block mb-1">No Centralized Order History</span>
+                    <span className="text-muted-foreground text-sm">Difficult to track past orders, resolve disputes, or analyze trends</span>
+                  </div>
+                </div>
+              </div>
+              {/* Solutions Card */}
+              <div className="bg-background rounded-xl shadow-soft border p-8 flex-1 min-w-[260px] max-w-[350px] flex flex-col justify-between">
+                <h3 className="text-green-600 text-2xl font-bold text-center mb-6">Plint Solves It</h3>
+                <div className="flex flex-col gap-4">
+                  <div className="bg-white/10 rounded-lg shadow p-4">
+                    <span className="font-semibold block mb-1">Auto Order Tracking</span>
+                    <span className="text-muted-foreground text-sm">Real-time logging of every sale—no manual input</span>
+                  </div>
+                  <div className="bg-white/10 rounded-lg shadow p-4">
+                    <span className="font-semibold block mb-1">Product Insights</span>
+                    <span className="text-muted-foreground text-sm">Instantly see what’s selling and what’s not</span>
+                  </div>
+                  <div className="bg-white/10 rounded-lg shadow p-4">
+                    <span className="font-semibold block mb-1">Customer Loyalty Tools</span>
+                    <span className="text-muted-foreground text-sm">Identify and reward your top buyers</span>
+                  </div>
+                  <div className="bg-white/10 rounded-lg shadow p-4">
+                    <span className="font-semibold block mb-1">Smart Payment Links</span>
+                    <span className="text-muted-foreground text-sm">Get paid faster, from anywhere</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
           <h2 className="text-5xl md:text-6xl font-bold mb-6 text-foreground">

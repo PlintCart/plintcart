@@ -33,7 +33,7 @@ const Hero = () => {
             {/* Main Headline - enlarged and styled */}
             <div className="mb-8 animate-fade-in">
               <h1 className="text-5xl md:text-7xl font-bold mb-2 tracking-tight text-white text-center md:text-left">
-                Track every order. <span className="text-white">Know what sells.</span> <span className="bg-gradient-to-r from-white to-black bg-clip-text text-transparent">Keep customers coming back.</span>
+                Track every order. <span className="text-white">Know what sells.</span> <span className="text-white">Keep customers coming back.</span>
               </h1>
             </div>
             {/* CTA Buttons */}
