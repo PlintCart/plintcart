@@ -72,99 +72,80 @@ export function ImageStep({
         </p>
       </div>
 
-      <Separator />
-
-      {/* Image Upload Area */}
-      <div className="space-y-4">
-        {!imagePreview ? (
-          <Card className="border-2 border-dashed border-gray-300 hover:border-purple-400 transition-colors">
-            <CardContent className="p-8">
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
-                  <Camera className="w-8 h-8 text-gray-400" />
-                </div>
-                
-                <div>
-                  <h4 className="font-medium text-gray-900">Upload Product Image</h4>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Choose a clear, high-quality image that shows your product best
-                  </p>
-                </div>
-
-                <Button
-                  type="button"
-                  onClick={handleUploadClick}
-                  disabled={isLoading}
-                  className="bg-purple-600 hover:bg-purple-700"
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Choose Image
-                </Button>
-
-                <div className="text-xs text-gray-400 space-y-1">
-                  <p>Supported formats: JPG, PNG, GIF</p>
-                  <p>Maximum file size: 2MB</p>
-                  <p>Recommended dimensions: 600x600px or larger</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardContent className="p-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium">Product Image Preview</h4>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleRemoveImage}
-                    disabled={isLoading}
-                  >
-                    <X className="w-4 h-4 mr-2" />
-                    Remove
-                  </Button>
-                </div>
-                
-                <div className="relative">
-                  <img
-                    src={imagePreview}
-                    alt="Product preview"
-                    className="w-full max-w-md mx-auto rounded-lg shadow-sm border"
-                    style={{ maxHeight: '300px', objectFit: 'contain' }}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between text-sm text-gray-500">
-                  <span>{imageFile?.name}</span>
-                  <span>{imageFile ? `${(imageFile.size / 1024 / 1024).toFixed(2)} MB` : ''}</span>
-                </div>
-
+      {/* Image Upload/Preview */}
+      {imagePreview ? (
+        <Card>
+          <CardContent className="p-4">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium">Product Image Preview</h4>
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={handleUploadClick}
+                  size="sm"
+                  onClick={handleRemoveImage}
                   disabled={isLoading}
-                  className="w-full"
                 >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Choose Different Image
+                  <X className="w-4 h-4 mr-2" />
+                  Remove
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        )}
+              <div className="relative">
+                <img
+                  src={imagePreview}
+                  alt="Product preview"
+                  className="w-full max-w-md mx-auto rounded-lg shadow-sm border"
+                  style={{ maxHeight: '300px', objectFit: 'contain' }}
+                />
+              </div>
+              <div className="flex items-center justify-between text-sm text-gray-500">
+                <span>{imageFile?.name}</span>
+                <span>{imageFile ? `${(imageFile.size / 1024 / 1024).toFixed(2)} MB` : ''}</span>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleUploadClick}
+                disabled={isLoading}
+                className="w-full"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Choose Different Image
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent>
+            <div className="space-y-4 text-center">
+              <Button
+                type="button"
+                onClick={handleUploadClick}
+                disabled={isLoading}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Choose Image
+              </Button>
+              <div className="text-xs text-gray-400 space-y-1">
+                <p>Supported formats: JPG, PNG, GIF</p>
+                <p>Maximum file size: 2MB</p>
+                <p>Recommended dimensions: 600x600px or larger</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-        {/* Hidden file input */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleImageSelect}
-          className="hidden"
-        />
-      </div>
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleImageSelect}
+        className="hidden"
+      />
 
       {/* Image Guidelines */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

@@ -13,8 +13,7 @@ interface DescriptionStepProps {
 
 export function DescriptionStep({ form, isLoading }: DescriptionStepProps) {
   return (
-    <Form {...form}>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto">
@@ -113,6 +112,5 @@ export function DescriptionStep({ form, isLoading }: DescriptionStepProps) {
           </div>
         </div>
       </div>
-    </Form>
   );
 }

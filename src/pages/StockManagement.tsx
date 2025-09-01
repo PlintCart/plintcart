@@ -347,19 +347,21 @@ export default function StockManagement() {
                     {mostFrequentProducts.map((product, index) => (
                       <div 
                         key={product.productId} 
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50"
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg hover:bg-muted/50 space-y-3 sm:space-y-0"
                       >
-                        <div className="flex items-center space-x-4">
-                          <div className="flex items-center justify-center w-8 h-8 bg-primary text-primary-foreground rounded-full text-sm font-bold">
+                        <div className="flex items-center space-x-3 sm:space-x-4">
+                          <div className="flex items-center justify-center w-8 h-8 bg-primary text-primary-foreground rounded-full text-sm font-bold flex-shrink-0">
                             {index + 1}
                           </div>
                           {index < 3 && (
-                            <Star className="w-5 h-5 text-yellow-500" />
+                            <Star className="w-5 h-5 text-yellow-500 flex-shrink-0" />
                           )}
-                          <div>
-                            <h3 className="font-medium">{product.productName}</h3>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-medium truncate">{product.productName}</h3>
                             <p className="text-sm text-muted-foreground">
-                              Category: {product.category} | Price: ${product.price.toFixed(2)}
+                              <span className="block sm:inline">Category: {product.category}</span>
+                              <span className="hidden sm:inline"> | </span>
+                              <span className="block sm:inline">Price: ${product.price.toFixed(2)}</span>
                             </p>
                             {product.lastSaleDate && (
                               <p className="text-xs text-muted-foreground">
@@ -369,19 +371,20 @@ export default function StockManagement() {
                           </div>
                         </div>
                         
-                        <div className="flex items-center space-x-6 text-right">
-                          <div>
+                        <div className="flex items-center justify-between sm:justify-end sm:space-x-6 space-x-4 text-right">
+                          <div className="flex-shrink-0">
                             <div className="flex items-center text-sm">
                               <ShoppingCart className="w-4 h-4 mr-1" />
                               <span className="font-semibold">{product.totalSales}</span>
-                              <span className="text-muted-foreground ml-1">orders</span>
+                              <span className="text-muted-foreground ml-1 hidden sm:inline">orders</span>
+                              <span className="text-muted-foreground ml-1 sm:hidden">ord</span>
                             </div>
                             <p className="text-xs text-muted-foreground">
-                              {product.totalQuantitySold} units sold
+                              {product.totalQuantitySold} units
                             </p>
                           </div>
                           
-                          <div>
+                          <div className="flex-shrink-0">
                             <div className="flex items-center text-sm">
                               <DollarSign className="w-4 h-4 mr-1" />
                               <span className="font-semibold text-green-600">
@@ -393,9 +396,12 @@ export default function StockManagement() {
                             </p>
                           </div>
                           
-                          <Badge variant={index < 3 ? "default" : "secondary"} className="flex items-center gap-1">
+                          <Badge 
+                            variant={index < 3 ? "default" : "secondary"} 
+                            className="flex items-center gap-1 flex-shrink-0 text-xs px-2 py-1"
+                          >
                             {index < 3 ? <TrendingUp className="w-3 h-3" /> : <BarChart3 className="w-3 h-3" />}
-                            Top {index + 1}
+                            <span className="hidden sm:inline">Top</span> {index + 1}
                           </Badge>
                         </div>
                       </div>
@@ -447,17 +453,19 @@ export default function StockManagement() {
                       .map((product, index) => (
                       <div 
                         key={product.productId} 
-                        className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50"
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border rounded-lg hover:bg-muted/50 space-y-3 sm:space-y-0"
                       >
-                        <div className="flex items-center space-x-4">
-                          <div className="flex items-center justify-center w-8 h-8 bg-orange-100 text-orange-600 rounded-full text-sm font-bold">
+                        <div className="flex items-center space-x-3 sm:space-x-4">
+                          <div className="flex items-center justify-center w-8 h-8 bg-orange-100 text-orange-600 rounded-full text-sm font-bold flex-shrink-0">
                             {index + 1}
                           </div>
-                          <TrendingDown className="w-5 h-5 text-orange-500" />
-                          <div>
-                            <h3 className="font-medium">{product.productName}</h3>
+                          <TrendingDown className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                          <div className="min-w-0 flex-1">
+                            <h3 className="font-medium truncate">{product.productName}</h3>
                             <p className="text-sm text-muted-foreground">
-                              Category: {product.category} | Price: ${product.price.toFixed(2)}
+                              <span className="block sm:inline">Category: {product.category}</span>
+                              <span className="hidden sm:inline"> | </span>
+                              <span className="block sm:inline">Price: ${product.price.toFixed(2)}</span>
                             </p>
                             {product.lastSaleDate && (
                               <p className="text-xs text-muted-foreground">
@@ -467,19 +475,20 @@ export default function StockManagement() {
                           </div>
                         </div>
                         
-                        <div className="flex items-center space-x-6 text-right">
-                          <div>
+                        <div className="flex items-center justify-between sm:justify-end sm:space-x-6 space-x-4 text-right">
+                          <div className="flex-shrink-0">
                             <div className="flex items-center text-sm">
                               <ShoppingCart className="w-4 h-4 mr-1" />
                               <span className="font-semibold">{product.totalSales}</span>
-                              <span className="text-muted-foreground ml-1">orders</span>
+                              <span className="text-muted-foreground ml-1 hidden sm:inline">orders</span>
+                              <span className="text-muted-foreground ml-1 sm:hidden">ord</span>
                             </div>
                             <p className="text-xs text-muted-foreground">
-                              {product.totalQuantitySold} units sold
+                              {product.totalQuantitySold} units
                             </p>
                           </div>
                           
-                          <div>
+                          <div className="flex-shrink-0">
                             <div className="flex items-center text-sm">
                               <DollarSign className="w-4 h-4 mr-1" />
                               <span className="font-semibold text-orange-600">
@@ -491,9 +500,9 @@ export default function StockManagement() {
                             </p>
                           </div>
                           
-                          <Badge variant="secondary" className="flex items-center gap-1">
+                          <Badge variant="secondary" className="flex items-center gap-1 flex-shrink-0 text-xs px-2 py-1">
                             <TrendingDown className="w-3 h-3" />
-                            Low Seller
+                            <span className="hidden sm:inline">Low</span> Seller
                           </Badge>
                         </div>
                       </div>

@@ -1,41 +1,129 @@
 import { Button } from "@/components/ui/button";
-import { Check, Star, ArrowRight } from "lucide-react";
+import { Check, Star, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { User } from "firebase/auth"; // <-- Use Firebase User type
+import { User } from "firebase/auth";
 import { useSubscription } from '@/hooks/useSubscription';
 import { SubscriptionUpgradeDialog } from './SubscriptionUpgradeDialog';
 import { PremiumBadge } from './PremiumWrapper';
+import { useState } from 'react';
+
+// Testimonials data
+const testimonials = [
+  {
+    quote: "Before Plint, we were guessing what products to stock. Now, we see exactly what sells, track customers who keep coming back, and spend less time worrying about sales.",
+    author: "Early Merchant Partner"
+  },
+  {
+    quote: "The analytics dashboard transformed how we understand our customers. We've increased repeat purchases by 40% just by knowing what they actually want.",
+    author: "Sarah K., Electronics Store Owner"
+  },
+  {
+    quote: "Stock management used to be a nightmare. Plint's system tells us exactly when to reorder and what's trending. Our shelves are never empty anymore.",
+    author: "Mike R., Fashion Boutique"
+  },
+  {
+    quote: "The payment processing is seamless. Our customers love the quick M-Pesa integration, and we get paid faster than ever before.",
+    author: "Grace M., Home Goods Store"
+  }
+];
+
+// Testimonials Slideshow Component
+const TestimonialsSlideshow = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const nextTestimonial = () => {
+    setCurrentIndex((prev) => (prev + 1) % testimonials.length);
+  };
+
+  const prevTestimonial = () => {
+    setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+  };
+
+  return (
+    <div className="relative">
+      {/* Main testimonial card */}
+      <div className="bg-background rounded-2xl shadow-soft border p-8 mx-auto max-w-2xl">
+        <div className="text-center">
+          <div className="flex justify-center mb-4">
+            <Star className="w-5 h-5 text-yellow-400 fill-current" />
+            <Star className="w-5 h-5 text-yellow-400 fill-current" />
+            <Star className="w-5 h-5 text-yellow-400 fill-current" />
+            <Star className="w-5 h-5 text-yellow-400 fill-current" />
+            <Star className="w-5 h-5 text-yellow-400 fill-current" />
+          </div>
+          <p className="text-xl text-muted-foreground mb-6 italic">
+            "{testimonials[currentIndex].quote}"
+          </p>
+          <div className="text-sm text-foreground font-semibold">
+            — {testimonials[currentIndex].author}
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation buttons */}
+      <button
+        onClick={prevTestimonial}
+        className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background border shadow-sm hover:shadow-md transition-all duration-200 hover:bg-accent"
+        aria-label="Previous testimonial"
+      >
+        <ChevronLeft className="w-5 h-5" />
+      </button>
+      
+      <button
+        onClick={nextTestimonial}
+        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background border shadow-sm hover:shadow-md transition-all duration-200 hover:bg-accent"
+        aria-label="Next testimonial"
+      >
+        <ChevronRight className="w-5 h-5" />
+      </button>
+
+      {/* Dots indicator */}
+      <div className="flex justify-center mt-6 space-x-2">
+        {testimonials.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentIndex(index)}
+            className={`w-2 h-2 rounded-full transition-all duration-200 ${
+              index === currentIndex 
+                ? 'bg-brand-green w-6' 
+                : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+            }`}
+            aria-label={`Go to testimonial ${index + 1}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
 
 const Pricing = ({ user }: { user: User | null }) => {
   const navigate = useNavigate();
   const { isPremium, loading } = useSubscription(user);
 
-
   const handleGetStarted = () => {
-    // Navigate to auth page for sign up
     navigate('/auth?mode=signup');
   };
+  
   const plans = [
     {
       name: "Starter",
-      price: "KSh 500",
+      price: "KSh 650",
       period: "/month",
       description: "Perfect for getting started",
       features: [
-        "Up to 50 products",
-        "WhatsApp integration", 
+        "Up to 100 products",
         "Basic analytics",
         "Mobile responsive",
         "Product sharing",
         "Email support"
       ],
       buttonText: "Get Started",
-      buttonVariant: "outline" as const,
+      buttonVariant: "success" as const,
       popular: false
     },
     {
       name: "Professional", 
-      price: "KSh 2,500",
+      price: "KSh 2,600",
       period: "/month",
       description: "Most popular choice for growing businesses",
       features: [
@@ -66,7 +154,7 @@ const Pricing = ({ user }: { user: User | null }) => {
 
       <div className="container mx-auto px-6 relative">
         {/* Section Header */}
-        <div className="text-center mb-20 animate-fade-in">
+        <div className="text-center mb-12">
           <h2 className="text-5xl md:text-6xl font-bold mb-6 text-foreground">
             Choose the plan that{" "}
             <span className="bg-gradient-to-r from-brand-green to-brand-blue bg-clip-text text-transparent">
@@ -84,10 +172,9 @@ const Pricing = ({ user }: { user: User | null }) => {
           {plans.map((plan, index) => (
             <div
               key={index}
-              className={`relative group animate-scale-in ${
+              className={`relative group ${
                 plan.popular ? "md:-mt-4 md:mb-4" : ""
               }`}
-              style={{ animationDelay: `${index * 0.1}s` }}
             >
               {/* Popular Badge */}
               {plan.popular && (
@@ -99,17 +186,9 @@ const Pricing = ({ user }: { user: User | null }) => {
                 </div>
               )}
 
-              <div
-                className={`gradient-card rounded-3xl p-8 shadow-soft hover-lift transition-smooth h-full border ${
-                  plan.popular
-                    ? "border-brand-green/30 shadow-glow"
-                    : "border-white/50"
-                } relative overflow-hidden`}
-              >
-                {/* Background Gradient for Popular Plan */}
-                {plan.popular && (
-                  <div className="absolute inset-0 bg-gradient-to-br from-brand-green/5 to-brand-blue/5 rounded-3xl" />
-                )}
+              <div className="gradient-card rounded-3xl p-8 shadow-soft hover-lift transition-smooth h-full border border-brand-green/30 shadow-glow relative overflow-hidden">
+                {/* Background Gradient for All Plans */}
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-green/5 to-brand-blue/5 rounded-3xl" />
 
                 <div className="relative z-10">
                   {/* Plan Header */}
@@ -162,21 +241,10 @@ const Pricing = ({ user }: { user: User | null }) => {
         </div>
 
         {/* Testimonials Section */}
-        <div className="mt-20 animate-fade-in">
+        <div className="mt-20">
           <h3 className="text-3xl font-bold mb-8 text-center text-foreground">What Our Merchants Say</h3>
-          <div className="overflow-x-auto pb-4">
-            <div className="flex gap-6 min-w-[320px] max-w-4xl mx-auto px-2">
-              {/* Testimonial Card Example - Add more as needed */}
-              <div className="bg-background rounded-2xl shadow-soft border p-6 min-w-[300px] max-w-xs flex-shrink-0">
-                <p className="text-lg text-muted-foreground mb-4">
-                  “Before Plint, we were guessing what products to stock. Now, we see exactly what sells, track customers who keep coming back, and spend less time worrying about sales.”
-                </p>
-                <div className="text-sm text-foreground font-semibold">— Early Merchant Partner</div>
-              </div>
-              {/* Future testimonials can be added here */}
-            </div>
-          </div>
-  </div>
+          <TestimonialsSlideshow />
+        </div>
       </div>
     </section>
   );

@@ -33,8 +33,7 @@ const categories = [
 
 export function BasicInfoStep({ form, isLoading }: BasicInfoStepProps) {
   return (
-    <Form {...form}>
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
@@ -201,6 +200,5 @@ export function BasicInfoStep({ form, isLoading }: BasicInfoStepProps) {
           </div>
         </div>
       </div>
-    </Form>
   );
 }

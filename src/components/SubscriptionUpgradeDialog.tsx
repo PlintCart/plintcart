@@ -61,7 +61,7 @@ export const SubscriptionUpgradeDialog: React.FC<SubscriptionUpgradeDialogProps>
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phoneNumber: user.phoneNumber || "", // fallback to empty string
-          amount: 100, // your premium price
+          amount: 2600, // your premium price
           userId: user.uid,
           email: user.email,
         }),
@@ -71,7 +71,7 @@ export const SubscriptionUpgradeDialog: React.FC<SubscriptionUpgradeDialogProps>
       await setDoc(doc(db, "payments", user.uid), {
         status: "pending",
         checkoutRequestId: data.CheckoutRequestID,
-        amount: 100,
+        amount: 2600,
         phoneNumber: user.phoneNumber || "",
         email: user.email,
         createdAt: new Date().toISOString(),

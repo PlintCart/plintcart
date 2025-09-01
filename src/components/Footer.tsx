@@ -77,10 +77,10 @@ const Footer = () => {
             {/* Minimal Footer Links */}
             <div className="lg:col-span-4 flex flex-col md:flex-row gap-8 justify-end items-start">
               <div className="flex flex-row gap-8 justify-end items-start w-full">
-                <a href="#about" className="text-lg font-semibold mb-4 block text-white/80 hover:text-white transition-smooth">About</a>
-                <a href="#pricing" className="text-lg font-semibold mb-4 block text-white/80 hover:text-white transition-smooth">Pricing</a>
-                <a href="#terms" className="text-lg font-semibold mb-4 block text-white/80 hover:text-white transition-smooth">Terms & Conditions</a>
-                <a href="#cookie" className="text-lg font-semibold mb-4 block text-white/80 hover:text-white transition-smooth">Cookie Policy</a>
+                <a href="#about" className="text-base font-semibold mb-4 block text-white/80 hover:text-white transition-smooth">About</a>
+                <a href="#pricing" className="text-base font-semibold mb-4 block text-white/80 hover:text-white transition-smooth">Pricing</a>
+                <a href="#terms" className="text-base font-semibold mb-4 block text-white/80 hover:text-white transition-smooth">Terms & Conditions</a>
+                <a href="#cookie" className="text-base font-semibold mb-4 block text-white/80 hover:text-white transition-smooth">Cookie Policy</a>
               </div>
             </div>
           </div>

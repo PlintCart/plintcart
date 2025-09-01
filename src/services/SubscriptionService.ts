@@ -23,7 +23,7 @@ export interface PaymentRecord {
 }
 
 export class SubscriptionService {
-  private static readonly PREMIUM_PRICE = 2000; // KES per month
+  private static readonly PREMIUM_PRICE = 2600; // KES per month
   
   /**
    * Get user's current subscription status

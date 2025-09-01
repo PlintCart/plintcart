@@ -33,9 +33,9 @@ interface SubscriptionPlan {
 
 const plans: SubscriptionPlan[] = [
   {
-    id: 'free',
-    name: 'Free',
-    price: 0,
+    id: 'basic',
+    name: 'Basic',
+    price: 650,
     currency: 'KES',
     features: [
       'Up to 10 products',
@@ -48,7 +48,7 @@ const plans: SubscriptionPlan[] = [
   {
     id: 'premium',
     name: 'Premium',
-    price: 2000,
+    price: 2600,
     currency: 'KES',
     popular: true,
     features: [
@@ -172,7 +172,7 @@ export default function SubscriptionPage() {
     );
   }
 
-  const currentPlan = subscription?.tier || 'free';
+  const currentPlan = subscription?.tier || 'basic';
   const isPremium = currentPlan === 'premium' && subscription?.status === 'active';
 
   return (
@@ -185,7 +185,7 @@ export default function SubscriptionPage() {
               variant={isPremium ? "default" : "secondary"} 
               className="mb-4"
             >
-              {isPremium ? "Premium Active" : "Free Plan"}
+              {isPremium ? "Premium Active" : "Basic Plan"}
             </Badge>
             {subscription.endDate && (
               <p className="text-sm text-gray-600">

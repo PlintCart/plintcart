@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { Form } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { collection, addDoc, doc, getDoc, updateDoc } from "firebase/firestore";
@@ -36,8 +37,12 @@ const productSchema = z.object({
   price: z.number().min(0.01, "Price must be greater than 0"),
   category: z.string().min(1, "Category is required"),
   isVisible: z.boolean().default(true),
-  tags: z.string().optional(),
-  specifications: z.string().optional(),
+  tags: z.union([z.string(), z.array(z.string())]).transform(val => 
+    Array.isArray(val) ? val.join(', ') : val || ""
+  ).optional(),
+  specifications: z.union([z.string(), z.object({})]).transform(val => 
+    typeof val === 'object' && val !== null ? JSON.stringify(val) : val || ""
+  ).optional(),
   salePrice: z.number().min(0).optional(),
   featured: z.boolean().default(false),
   
@@ -143,8 +148,10 @@ export function SteppedAddProductForm({ productId, onSuccess, onCancel }: Steppe
             price: productData.price || 0,
             category: productData.category || "",
             isVisible: productData.isVisible ?? true,
-            tags: productData.tags || "",
-            specifications: productData.specifications || "",
+            tags: Array.isArray(productData.tags) ? productData.tags.join(', ') : (productData.tags || ""),
+            specifications: typeof productData.specifications === 'object' && productData.specifications !== null 
+              ? JSON.stringify(productData.specifications) 
+              : (productData.specifications || ""),
             salePrice: productData.salePrice || 0,
             featured: productData.featured ?? false,
             stockQuantity: productData.stockQuantity || 0,
@@ -205,10 +212,13 @@ export function SteppedAddProductForm({ productId, onSuccess, onCancel }: Steppe
 
     const fieldsToValidate = stepValidation[currentStep as keyof typeof stepValidation];
     
-    if (fieldsToValidate.length === 0) return true;
-
-    const result = await form.trigger(fieldsToValidate as any);
-    return result;
+      if (fieldsToValidate.length === 0) return true;
+      const result = await form.trigger(fieldsToValidate as any);
+      if (!result) {
+        toast.error("Validation failed for required fields. Please check your input.");
+        console.log("Validation failed for fields:", fieldsToValidate);
+      }
+      return result;
   };
 
   const uploadImage = async (file: File): Promise<string> => {
@@ -271,19 +281,21 @@ export function SteppedAddProductForm({ productId, onSuccess, onCancel }: Steppe
   };
 
   const onSubmit = async (data: ProductFormData) => {
+  console.log("DEBUG: onSubmit handler triggered", { data, productId });
+  console.log("DEBUG: imageFile", imageFile);
+  console.log("DEBUG: imagePreview", imagePreview);
     setIsLoading(true);
-
     try {
       const user = auth.currentUser;
       if (!user) {
-        throw new Error("User not authenticated");
+        toast.error("User not authenticated");
+        console.log("User not authenticated");
+        return;
       }
-
       let imageUrl = imagePreview; // Keep existing image if no new file uploaded
       if (imageFile) {
         imageUrl = await uploadImage(imageFile);
       }
-
       const productData = {
         ...data,
         imageUrl,
@@ -291,44 +303,23 @@ export function SteppedAddProductForm({ productId, onSuccess, onCancel }: Steppe
         updatedAt: new Date(),
         currency: settings.currency || 'usd',
       };
-
       if (productId) {
+  console.log("[UPDATE] productId:", productId);
+  console.log("[UPDATE] productData:", productData);
         // Update existing product
         const productRef = doc(db, "products", productId);
         await updateDoc(productRef, productData);
-
-        // Handle stock updates if tracking stock
-        if (data.trackStock && data.stockQuantity !== undefined) {
-          const stockService = new StockManagementService();
-          // Note: You might want to implement a more sophisticated stock adjustment logic here
-          // This is a simple example that could be enhanced based on your needs
-        }
-
         toast.success("Product updated successfully!");
       } else {
+  console.log("[ADD] productData:", productData);
         // Create new product
         const newProductData = {
           ...productData,
           createdAt: new Date(),
         };
-
         const docRef = await addDoc(collection(db, "products"), newProductData);
-
-        // Create stock transaction if tracking stock
-        if (data.trackStock && data.stockQuantity && data.stockQuantity > 0) {
-          const stockService = new StockManagementService();
-          await stockService.addStock(
-            docRef.id,
-            data.stockQuantity,
-            'Initial stock',
-            'addition',
-            'Initial stock setup for new product'
-          );
-        }
-
         toast.success("Product added successfully!");
       }
-
       onSuccess?.();
     } catch (error) {
       console.error("Error saving product:", error);
@@ -408,67 +399,75 @@ export function SteppedAddProductForm({ productId, onSuccess, onCancel }: Steppe
             allowSkipping={true}
           />
         </CardHeader>
-        
         <CardContent className="space-y-6">
-          {/* Current Step Content */}
-          <div className="min-h-[400px]">
-            {renderCurrentStep()}
-          </div>
-
-          {/* Navigation Buttons */}
-          <div className="flex justify-between pt-6 border-t">
-            <div>
-              {!isFirstStep && (
-                <BackButton
-                  variant="outline"
-                  onClick={prevStep}
-                  disabled={isLoading}
-                >
-                  Previous
-                </BackButton>
-              )}
-              {isFirstStep && (
-                <BackButton
-                  variant="outline"
-                  onClick={onCancel}
-                  disabled={isLoading}
-                >
-                  Cancel
-                </BackButton>
-              )}
+          <Form {...form}>
+            {/* Current Step Content */}
+            <div className="min-h-[400px]">
+              {renderCurrentStep()}
             </div>
 
-            <div className="flex gap-2">
-              {!isLastStep && (
-                <Button
-                  type="button"
-                  onClick={nextStep}
-                  disabled={isLoading}
-                >
-                  Next
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              )}
-              
-              {isLastStep && (
-                <Button
-                  type="button"
-                  onClick={form.handleSubmit(onSubmit)}
-                  disabled={isLoading}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  {isLoading ? (
-                    `${productId ? 'Updating' : 'Creating'} Product...`
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-2" />
-                      {productId ? 'Update Product' : 'Create Product'}
-                    </>
-                  )}
-                </Button>
-              )}
+            {/* Navigation Buttons */}
+            <div className="flex justify-between pt-6 border-t">
+              <div>
+                {!isFirstStep && (
+                  <BackButton
+                    variant="outline"
+                    onClick={prevStep}
+                    disabled={isLoading}
+                  >
+                    Previous
+                  </BackButton>
+                )}
+                {isFirstStep && (
+                  <BackButton
+                    variant="outline"
+                    onClick={onCancel}
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </BackButton>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                {!isLastStep && (
+                  <Button
+                    type="button"
+                    onClick={nextStep}
+                    disabled={isLoading}
+                  >
+                    Next
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                )}
+                {isLastStep && (
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      console.log("Update/Create button clicked");
+                      console.log("Form state:", form.formState);
+                      console.log("Form errors details:", JSON.stringify(form.formState.errors, null, 2));
+                      console.log("Form values:", form.getValues());
+                      console.log("Form is valid:", form.formState.isValid);
+                      console.log("Calling form.handleSubmit...");
+                      form.handleSubmit(onSubmit)();
+                    }}
+                    disabled={isLoading}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {isLoading ? (
+                      `${productId ? 'Updating' : 'Creating'} Product...`
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4 mr-2" />
+                        {productId ? 'Update Product' : 'Create Product'}
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
+          </Form>
         </CardContent>
       </Card>
     </div>

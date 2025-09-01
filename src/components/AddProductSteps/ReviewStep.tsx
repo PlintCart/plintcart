@@ -55,7 +55,7 @@ export function ReviewStep({
   };
 
     return (
-      <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+      <div className="space-y-6">
       {/* Header */}
       <div className="text-center space-y-2">
         <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto">
@@ -285,6 +285,6 @@ export function ReviewStep({
           <div className="bg-green-600 h-2 rounded-full w-full"></div>
         </div>
       </div>
-    </form>
+  </div>
   );
 }
