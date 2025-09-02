@@ -31,13 +31,13 @@ const Hero = () => {
           {/* Left Column: Content */}
           <div className="flex-[1.3] min-w-0">
             {/* Main Headline - enlarged and styled */}
-            <div className="mb-8 animate-fade-in">
+            <div className="mb-8">
               <h1 className="text-5xl md:text-7xl font-bold mb-2 tracking-tight text-white text-center md:text-left">
                 Track every order. <span className="text-white">Know what sells.</span> <span className="text-white">Keep customers coming back.</span>
               </h1>
             </div>
             {/* CTA Buttons */}
-            <div className="flex flex-col sm:flex-row gap-6 justify-center sm:justify-start items-center sm:items-start mb-12 animate-scale-in" style={{ animationDelay: "0.6s" }}>
+            <div className="flex flex-col sm:flex-row gap-6 justify-center sm:justify-start items-center sm:items-start mb-12">
               <Button variant="success" size="xl" className="group min-w-[200px]" onClick={handleStartTrial}>
                 Start Free Trial
                 <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
@@ -53,7 +53,7 @@ const Hero = () => {
               </Button>
             </div>
             {/* Sign In Link for Existing Users */}
-            <div className="mb-8 animate-fade-in text-center md:text-left" style={{ animationDelay: "0.7s" }}>
+            <div className="mb-8 text-center md:text-left">
               <p className="text-white/70 text-sm">
                 Already have an account?{" "}
                 <button 

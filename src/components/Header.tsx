@@ -85,7 +85,7 @@ const Header = () => {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="md:hidden py-6 border-t border-white/10 animate-fade-in">
+          <div className="md:hidden py-6 border-t border-white/10">
             <nav className="flex flex-col space-y-4">
               {navItems.map((item) => (
                 <button
