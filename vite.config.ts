@@ -68,6 +68,10 @@ export default defineConfig(({ mode }) => ({
       },
     },
     rollupOptions: {
+      // Explicitly set the input to ensure proper entry point
+      input: {
+        main: path.resolve(__dirname, 'index.html')
+      },
       output: {
         // Much more granular code splitting for better caching and loading
         manualChunks: {
