@@ -1,5 +1,5 @@
 
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,7 +10,9 @@ import { SettingsProvider } from "@/contexts/SettingsContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { PerformanceMonitor } from "@/components/PerformanceMonitor";
+import { DebugCacheControls } from "@/components/DebugCacheControls";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { clearAllFirebaseCache } from "@/utils/clearCache";
 
 // Lazy load pages for better performance with route-based splitting
 const Index = lazy(() => import("./pages/Index"));
@@ -99,22 +101,34 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => (
-  <ErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <PerformanceMonitor />
-      <AuthProvider>
-        <SettingsProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter
-              future={{
-                v7_startTransition: true,
-                v7_relativeSplatPath: true,
-              }}
-            >
-            <Suspense fallback={<LoadingSpinner />}>
+const App = () => {
+  // Clear Firebase cache on app startup to ensure fresh data
+  useEffect(() => {
+    const shouldClearCache = sessionStorage.getItem('firebase-cache-cleared');
+    if (!shouldClearCache) {
+      clearAllFirebaseCache().then(() => {
+        sessionStorage.setItem('firebase-cache-cleared', 'true');
+        console.log('🔄 Firebase cache cleared for new project');
+      });
+    }
+  }, []);
+
+  return (
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <PerformanceMonitor />
+        <AuthProvider>
+          <SettingsProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter
+                future={{
+                  v7_startTransition: true,
+                  v7_relativeSplatPath: true,
+                }}
+              >
+              <Suspense fallback={<LoadingSpinner />}>
               <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<Index />} />
@@ -214,12 +228,14 @@ const App = () => (
             </Suspense>
           </BrowserRouter>
           <NetworkStatus />
+          <DebugCacheControls />
           <Toaster />
         </TooltipProvider>
       </SettingsProvider>
       </AuthProvider>
     </QueryClientProvider>
   </ErrorBoundary>
-);
+  );
+};
 
 export default App;
