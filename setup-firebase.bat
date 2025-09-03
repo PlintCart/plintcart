@@ -27,7 +27,7 @@ firebase deploy --only firestore:rules,storage:rules
 echo.
 echo Step 5 (Alternative): If CORS still persists, configure Storage CORS manually...
 echo Install Google Cloud SDK and run:
-echo gsutil cors set cors.json gs://takeapp-294ca.firebasestorage.app
+echo gsutil cors set cors.json gs://plintcart.firebasestorage.app
 
 echo.
 echo Setup complete! Try uploading an image again.

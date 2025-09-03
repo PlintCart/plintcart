@@ -7,23 +7,19 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Palette, Eye, Store, Brush, Settings, ExternalLink, Upload, Image } from "lucide-react";
 import { useSettings } from "@/contexts/SettingsContext";
-import { auth, storage } from "@/lib/firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { useAuth } from "@/contexts/AuthContext";
+import { ImageStorage } from "@/lib/imageStorage";
 import { toast } from "sonner";
 import { useState } from "react";
 
 export default function Design() {
   const { settings, updateSettings } = useSettings();
+  const { user } = useAuth();
   const [logoUploading, setLogoUploading] = useState(false);
   const [heroUploading, setHeroUploading] = useState(false);
 
-  const uploadImage = async (file: File, path: string): Promise<string> => {
-    const user = auth.currentUser;
-    if (!user) throw new Error("User not authenticated");
-
-    const fileRef = ref(storage, `${path}/${user.uid}/${Date.now()}_${file.name}`);
-    const snapshot = await uploadBytes(fileRef, file);
-    return await getDownloadURL(snapshot.ref);
+  const uploadImage = async (file: File, folder: string): Promise<string> => {
+    return await ImageStorage.smartUpload(file, folder);
   };
 
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,7 +85,6 @@ export default function Design() {
   };
 
   const handlePreviewStorefront = () => {
-    const user = auth.currentUser;
     if (user) {
       // Open storefront in new tab with correct customer view URL
       window.open(`/store/${user.uid}`, '_blank');
