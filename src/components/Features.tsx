@@ -84,7 +84,7 @@ const Features = () => {
       {/* Why Plint Heading Above */}
       <div className="container mx-auto px-6">
         <div className="text-center mb-8">
-                    <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground mb-4 drop-shadow-lg text-left">
+                    <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground mb-4 drop-shadow-lg text-center">
             We Are Integrating Smart Tools & AI Oncommerce To{" "}
             <span className="inline-block min-h-[1.5em] text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight bg-gradient-to-r from-[#00bf63] via-blue-600 to-purple-600 bg-clip-text text-transparent drop-shadow-xl animate-gradient-x pt-2">
               {typedText}
