@@ -202,4 +202,30 @@
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
   }
+
+  /* Typewriter cursor */
+  .typewriter::after {
+    content: '|';
+    animation: blink 1s infinite;
+  }
+
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  /* Gradient animation */
+  .animate-gradient-x {
+    background-size: 200% 200%;
+    animation: gradient-x 3s ease infinite;
+  }
+
+  @keyframes gradient-x {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
 }

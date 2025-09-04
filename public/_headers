@@ -1,68 +1,26 @@
-# Netlify headers configuration
 /*
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
 
-# JavaScript modules MIME types
-/*.js
+# Assets (built by Vite live under /assets)
+/assets/*.js
   Content-Type: application/javascript; charset=utf-8
   Cache-Control: public, max-age=31536000, immutable
 
-/*.mjs
+/assets/*.mjs
   Content-Type: application/javascript; charset=utf-8
   Cache-Control: public, max-age=31536000, immutable
 
-# CSS files
-/*.css
+/assets/*.css
   Content-Type: text/css; charset=utf-8
   Cache-Control: public, max-age=31536000, immutable
 
-# Font files
-/*.woff
-  Content-Type: font/woff
+/assets/*
   Cache-Control: public, max-age=31536000, immutable
 
-/*.woff2
-  Content-Type: font/woff2
-  Cache-Control: public, max-age=31536000, immutable
-
-/*.ttf
-  Content-Type: font/ttf
-  Cache-Control: public, max-age=31536000, immutable
-
-# Images
-/*.png
-  Content-Type: image/png
-  Cache-Control: public, max-age=31536000, immutable
-
-/*.jpg
-  Content-Type: image/jpeg
-  Cache-Control: public, max-age=31536000, immutable
-
-/*.jpeg
-  Content-Type: image/jpeg
-  Cache-Control: public, max-age=31536000, immutable
-
-/*.gif
-  Content-Type: image/gif
-  Cache-Control: public, max-age=31536000, immutable
-
-/*.svg
-  Content-Type: image/svg+xml
-  Cache-Control: public, max-age=31536000, immutable
-
-/*.webp
-  Content-Type: image/webp
-  Cache-Control: public, max-age=31536000, immutable
-
-# HTML files
-/*.html
-  Cache-Control: public, max-age=0, must-revalidate
+# HTML and index
+/*
   Content-Type: text/html; charset=utf-8
-
-# Main app
-/
   Cache-Control: public, max-age=0, must-revalidate
-  Content-Type: text/html; charset=utf-8

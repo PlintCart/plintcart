@@ -10,7 +10,6 @@ import { SettingsProvider } from "@/contexts/SettingsContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { NetworkStatus } from "@/components/NetworkStatus";
 import { PerformanceMonitor } from "@/components/PerformanceMonitor";
-import { DebugCacheControls } from "@/components/DebugCacheControls";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { clearAllFirebaseCache } from "@/utils/clearCache";
 
@@ -18,6 +17,7 @@ import { clearAllFirebaseCache } from "@/utils/clearCache";
 const Index = lazy(() => import("./pages/Index"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Auth = lazy(() => import("./pages/Auth"));
+const Support = lazy(() => import("./pages/Support"));
 
 // Public pages - load normally
 const Storefront = lazy(() => import("./pages/Storefront"));
@@ -133,6 +133,7 @@ const App = () => {
                 {/* Public Routes */}
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/support" element={<Support />} />
                 <Route path="/stores" element={
                   <Suspense fallback={<PublicLoadingSpinner />}>
                     <MerchantDirectory />
@@ -228,7 +229,6 @@ const App = () => {
             </Suspense>
           </BrowserRouter>
           <NetworkStatus />
-          <DebugCacheControls />
           <Toaster />
         </TooltipProvider>
       </SettingsProvider>

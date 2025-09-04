@@ -9,7 +9,13 @@ export function useSubscription(user: User | null) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      // No signed-in user; treat as non-premium and stop loading
+      setSubscription(null);
+      setIsPremium(false);
+      setLoading(false);
+      return;
+    }
     const subRef = doc(db, "subscriptions", user.uid);
     const unsub = onSnapshot(subRef, (snap) => {
       const data = snap.data();

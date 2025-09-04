@@ -1,11 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSignIn = () => {
     // Navigate to auth page for sign in
@@ -19,11 +20,19 @@ const Header = () => {
 
   const handleNavClick = (href: string) => {
     if (href.startsWith('#')) {
-      // Smooth scroll to section
-      const element = document.querySelector(href);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth' });
+      if (location.pathname === '/') {
+        // Smooth scroll to section on landing page
+        const element = document.querySelector(href);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      } else {
+        // Navigate to landing page with anchor
+        navigate('/' + href);
       }
+    } else if (href.startsWith('http')) {
+      // Open external link
+      window.open(href, '_blank');
     } else {
       navigate(href);
     }
@@ -33,8 +42,8 @@ const Header = () => {
   const navItems = [
     { label: "Features", href: "#features" },
     { label: "Pricing", href: "#pricing" },
-    { label: "Demo", href: "#demo" },
-    { label: "Support", href: "#support" },
+    { label: "Book Demo", href: "https://wa.me/254794832922?text=Hi%20Plint%20Team%2C%20I%20would%20like%20to%20book%20a%20demo%20for%20the%20Virtual%20POS%20platform." },
+    { label: "Support", href: "/support" },
   ];
 
   return (
@@ -47,7 +56,7 @@ const Header = () => {
               className="text-2xl font-bold text-foreground cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => navigate('/')}
             >
-              pl<span className="text-brand-green">int</span>
+              plint<span className="bg-gradient-to-r from-brand-green to-brand-blue bg-clip-text text-transparent">cart</span>
             </h1>
           </div>
 

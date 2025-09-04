@@ -1,8 +1,36 @@
 import { Store, MessageCircle, Palette, Zap, Shield, Globe, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PhoneSlideshow from "./PhoneSlideshow";
+import { useState, useEffect } from "react";
 
 const Features = () => {
+  const phrases = ["Grow your sales 10x", "Take smart business decisions", "Redefine what's possible..."];
+  const [typedText, setTypedText] = useState("");
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isErasing, setIsErasing] = useState(false);
+
+  useEffect(() => {
+    const currentPhrase = phrases[currentIndex];
+    const timeout = setTimeout(() => {
+      if (!isErasing) {
+        if (typedText.length < currentPhrase.length) {
+          setTypedText(currentPhrase.slice(0, typedText.length + 1));
+        } else {
+          setTimeout(() => setIsErasing(true), 2000); // Pause before erasing
+        }
+      } else {
+        if (typedText.length > 0) {
+          setTypedText(typedText.slice(0, -1));
+        } else {
+          setIsErasing(false);
+          setCurrentIndex((prev) => (prev + 1) % phrases.length);
+        }
+      }
+    }, isErasing ? 50 : 100); // Faster erasing
+
+    return () => clearTimeout(timeout);
+  }, [typedText, currentIndex, isErasing, phrases]);
+
   const handleStartTrial = () => {
     window.location.href = '/auth?mode=signup';
   };
@@ -56,7 +84,13 @@ const Features = () => {
       {/* Why Plint Heading Above */}
       <div className="container mx-auto px-6">
         <div className="text-center mb-8">
-          <h2 className="text-5xl md:text-6xl font-bold text-foreground">Why Plint</h2>
+                    <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground mb-4 drop-shadow-lg text-left">
+            We Are Integrating Smart Tools & AI Oncommerce To{" "}
+            <span className="inline-block min-h-[1.5em] text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight bg-gradient-to-r from-[#00bf63] via-blue-600 to-purple-600 bg-clip-text text-transparent drop-shadow-xl animate-gradient-x pt-2">
+              {typedText}
+              <span className="border-r-2 border-[#00bf63] ml-1 animate-pulse"></span>
+            </span>
+          </h2>
         </div>
       </div>
       {/* App Screenshots Section */}
