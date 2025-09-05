@@ -1,9 +1,5 @@
 # plint - Universal Business Ordering Platform
 
-## Project info
-
-**URL**: https://lovable.dev/projects/14430d10-56ee-4760-87aa-cdb0b8c80b8d
-
 ## About plint
 
 plint is a comprehensive business management platform that allows any business owner to create and manage their online ordering system with a beautiful, minimal WhatsApp-inspired interface.
@@ -27,17 +23,9 @@ Enable any business to create an online presence and manage orders efficiently t
 
 ## How can I edit this code?
 
-There are several ways of editing your application.
+You can edit this application using your preferred IDE.
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/14430d10-56ee-4760-87aa-cdb0b8c80b8d) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+If you want to work locally using your own IDE, you can clone this repo and push changes.
 
 The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
@@ -83,12 +71,21 @@ This project is built with:
 
 ## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/14430d10-56ee-4760-87aa-cdb0b8c80b8d) and click on Share -> Publish.
+This project is configured for deployment on Netlify. You can deploy it by connecting your GitHub repository to Netlify or using the Netlify CLI.
 
-## Can I connect a custom domain to my Lovable project?
+### Deploy with Netlify CLI
+```sh
+npm install -g netlify-cli
+netlify deploy --prod
+```
 
-Yes, you can!
+### Connect to Netlify Dashboard
+1. Push your code to GitHub
+2. Connect your repository to Netlify
+3. Configure build settings:
+   - Build command: `npm run build`
+   - Publish directory: `dist`
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Can I connect a custom domain?
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Yes, you can connect a custom domain through your Netlify dashboard under Site settings > Domain management.

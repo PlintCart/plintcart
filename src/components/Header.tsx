@@ -56,7 +56,7 @@ const Header = () => {
               className="text-2xl font-bold text-foreground cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => navigate('/')}
             >
-              plint<span className="bg-gradient-to-r from-brand-green to-brand-blue bg-clip-text text-transparent">cart</span>
+              <span className="bg-gradient-to-r from-brand-green to-brand-blue bg-clip-text text-transparent">PlintCart</span>
             </h1>
           </div>
 
