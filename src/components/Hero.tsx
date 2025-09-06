@@ -67,7 +67,7 @@ const Hero = () => {
           </div>
           {/* Right Column: Laptop Mockup */}
           <div className="flex-1 min-w-0 flex justify-center items-center w-full">
-            <div className="bg-gray-900 rounded-2xl shadow-2xl border-4 border-gray-300 p-2 w-full max-w-2xl h-[220px] md:h-[280px] flex flex-col items-center justify-center mx-auto">
+            <div className="bg-gray-900 rounded-2xl shadow-2xl border-4 border-gray-300 p-2 w-full max-w-2xl h-[220px] md:h-[280px] flex flex-col items-center justify-center mx-auto relative">
               <video
                 src="/landing-video.mp4"
                 className="rounded-lg w-full h-full object-contain"
@@ -76,7 +76,13 @@ const Hero = () => {
                 loop
                 muted
                 playsInline
+                preload="metadata"
+                poster="/landing-laptop.png"
               />
+              {/* Loading overlay */}
+              <div className="absolute inset-0 bg-gray-900 rounded-lg flex items-center justify-center opacity-0 transition-opacity duration-300">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+              </div>
             </div>
           </div>
         </div>
