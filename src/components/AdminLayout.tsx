@@ -18,6 +18,9 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     { name: 'Products', href: '/admin/products' },
     { name: 'Orders', href: '/admin/orders' },
     { name: 'Analytics', href: '/admin/analytics' },
+    { name: 'Stock', href: '/admin/stock' },
+    { name: 'Staff', href: '/staff' },
+    { name: 'Customize Store', href: '/admin/design' },
     { name: 'Settings', href: '/admin/settings' },
   ];
 

@@ -48,22 +48,29 @@ const Orders = lazy(() =>
   import("./pages/Orders").then(module => ({ default: module.default }))
 );
 const Analytics = lazy(() => import("./pages/Analytics"));
-const Design = lazy(() => 
+const Design = lazy(() =>
   import("./pages/Design").then(module => ({ default: module.default }))
 );
-const AdminSettings = lazy(() => 
+const AdminSettings = lazy(() =>
   import("./pages/AdminSettings")
 );
-const Subscription = lazy(() => 
+const Subscription = lazy(() =>
   import("./pages/Subscription")
+);
+const StaffDashboard = lazy(() =>
+  import("./pages/StaffDashboard")
+);
+const StaffManagement = lazy(() =>
+  import("./pages/StaffManagement")
+);
+const AcceptInvitation = lazy(() =>
+  import("./pages/AcceptInvitation")
 );
 
 // Super Admin Dashboard
-const SuperAdminDashboard = lazy(() => 
+const SuperAdminDashboard = lazy(() =>
   import("./pages/SuperAdminDashboard").then(module => ({ default: module.default }))
-);
-
-// Enhanced loading components for better UX
+);// Enhanced loading components for better UX
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center min-h-screen bg-background">
     <div className="flex flex-col items-center space-y-4">
@@ -208,6 +215,21 @@ const App = () => {
                 <Route path="/admin/settings" element={
                   <Suspense fallback={<AdminLoadingSpinner />}>
                     <ProtectedRoute><AdminSettings /></ProtectedRoute>
+                  </Suspense>
+                } />
+                <Route path="/staff" element={
+                  <Suspense fallback={<AdminLoadingSpinner />}>
+                    <ProtectedRoute><StaffDashboard /></ProtectedRoute>
+                  </Suspense>
+                } />
+                <Route path="/staff/manage" element={
+                  <Suspense fallback={<AdminLoadingSpinner />}>
+                    <ProtectedRoute><StaffManagement /></ProtectedRoute>
+                  </Suspense>
+                } />
+                <Route path="/invite/accept" element={
+                  <Suspense fallback={<LoadingSpinner />}>
+                    <AcceptInvitation />
                   </Suspense>
                 } />
                 <Route path="/subscription" element={

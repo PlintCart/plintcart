@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, useLocation, useNavigate, Link } from "react-router-dom";
 import { 
   Package, 
@@ -20,6 +20,7 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from '@/lib/firebase';
 import { signOut } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
+import { getTestRole } from '../utils/testRole'; // Import test role utility
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: BarChart3 },
@@ -27,6 +28,8 @@ const navigation = [
   { name: "Orders", href: "/admin/orders", icon: ShoppingBag },
   { name: "Analytics", href: "/admin/analytics", icon: TrendingUp },
   { name: "Stock", href: "/admin/stock", icon: PackageCheck },
+  { name: "My Dashboard", href: "/staff", icon: Users }, // For staff members
+  { name: "Manage Staff", href: "/staff/manage", icon: Users }, // For owners/managers
   { name: "Customize Store", href: "/admin/design", icon: Palette },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
@@ -41,6 +44,67 @@ export function AdminSidebar() {
   // Superadmin login: must log in with the special email or UID (e.g., admin@plint.com or super_admin)
   // You can set this in Firebase Auth or your user management system
   const isSuperAdmin = user?.email === 'admin@plint.com' || user?.uid === 'super_admin';
+
+  // Get user role for conditional navigation
+  const getUserRole = async (): Promise<string | null> => {
+    if (!user) return null;
+    
+    // First check localStorage for development
+    const localRole = getTestRole(user.uid);
+    if (localRole) {
+      return localRole;
+    }
+    
+    try {
+      // Fallback to Firebase custom claims for production
+      await user.getIdToken(true);
+      const idTokenResult = await user.getIdTokenResult();
+      return (idTokenResult.claims.role as string) || null;
+    } catch (error) {
+      console.error('Error getting user role:', error);
+      return null;
+    }
+  };
+
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchRole = async () => {
+      const role = await getUserRole();
+      setUserRole(role);
+    };
+    
+    fetchRole();
+    
+    // Listen for role changes
+    const handleRoleChange = (event: CustomEvent) => {
+      fetchRole();
+    };
+    
+    window.addEventListener('roleChanged', handleRoleChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('roleChanged', handleRoleChange as EventListener);
+    };
+  }, [user]);
+
+  // Filter navigation based on user role
+  const filteredNavigation = navigation.filter(item => {
+    if (item.href === '/staff') {
+      // Show "My Dashboard" for staff members
+      return userRole === 'staff' || userRole === 'cashier' || userRole === 'viewer' || userRole === 'manager';
+    }
+    if (item.href === '/staff/manage') {
+      // Show "Manage Staff" for owners and managers only
+      return userRole === 'owner' || userRole === 'manager';
+    }
+    return true;
+  });
+
+  // Debug logging
+  console.log('AdminSidebar - User:', user);
+  console.log('AdminSidebar - User Role:', userRole);
+  console.log('AdminSidebar - Filtered Navigation:', filteredNavigation);
 
   const handleLogout = async () => {
     try {
@@ -106,16 +170,57 @@ export function AdminSidebar() {
                   {user?.email}
                 </p>
                 <p className="text-xs text-gray-600">
-                  {isSuperAdmin ? 'Super Admin (plint)' : 'Admin'}
+                  {isSuperAdmin ? 'Super Admin (plint)' : `Admin (Role: ${userRole || 'No role'})`}
                 </p>
               </div>
+            </div>
+            {/* Debug/Test buttons for development */}
+            <div className="mt-2 space-y-1">
+              <div className="flex flex-wrap gap-1">
+                <button 
+                  onClick={() => (window as any).setTestRole?.('owner')}
+                  className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200"
+                >
+                  Owner
+                </button>
+                <button 
+                  onClick={() => (window as any).setTestRole?.('manager')}
+                  className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200"
+                >
+                  Manager
+                </button>
+                <button 
+                  onClick={() => (window as any).setTestRole?.('staff')}
+                  className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded hover:bg-yellow-200"
+                >
+                  Staff
+                </button>
+                <button 
+                  onClick={() => (window as any).setTestRole?.('cashier')}
+                  className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded hover:bg-purple-200"
+                >
+                  Cashier
+                </button>
+                <button 
+                  onClick={() => (window as any).setTestRole?.('viewer')}
+                  className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200"
+                >
+                  Viewer
+                </button>
+              </div>
+              <button 
+                onClick={() => (window as any).clearTestRoles?.()}
+                className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200"
+              >
+                Clear Role
+              </button>
             </div>
           </div>
         )}
 
         {/* Navigation */}
         <nav className="p-4 space-y-2 flex-1">
-          {navigation.map((item) => {
+          {filteredNavigation.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.href;
             
