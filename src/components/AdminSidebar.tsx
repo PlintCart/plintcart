@@ -16,9 +16,7 @@ import {
   TrendingUp
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '@/lib/firebase';
-import { signOut } from 'firebase/auth';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 
 const navigation = [
@@ -35,16 +33,16 @@ export function AdminSidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const [user] = useAuthState(auth);
+  const { user, logout } = useAuth();
 
   // Check if user is super admin
   // Superadmin login: must log in with the special email or UID (e.g., admin@plint.com or super_admin)
   // You can set this in Firebase Auth or your user management system
-  const isSuperAdmin = user?.email === 'admin@plint.com' || user?.uid === 'super_admin';
+  const isSuperAdmin = user?.email === 'admin@plint.com' || user?.id === 'super_admin';
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await logout();
       navigate('/');
     } catch (error) {
       console.error('Error signing out:', error);
@@ -98,7 +96,7 @@ export function AdminSidebar() {
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
                 <span className="text-white font-medium text-sm">
-                  {user?.email?.charAt(0).toUpperCase()}
+                  {user?.email?.charAt(0).toUpperCase() || user?.id?.charAt(0).toUpperCase() || 'U'}
                 </span>
               </div>
               <div className="flex-1 min-w-0">

@@ -40,9 +40,9 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-accent/20 to-background p-4">
-      <AuthModal 
-        mode={mode} 
-        onModeChange={handleModeChange} 
+      <AuthModal
+        mode={mode}
+        onModeChange={handleModeChange}
         onSuccess={handleAuthSuccess}
       />
     </div>

@@ -16,9 +16,7 @@ import {
   Phone,
   CreditCard
 } from 'lucide-react';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth, db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { SubscriptionService, SubscriptionStatus } from '@/services/SubscriptionService';
 
@@ -67,7 +65,7 @@ const plans: SubscriptionPlan[] = [
 ];
 
 export default function SubscriptionPage() {
-  const [user] = useAuthState(auth);
+  const { user } = useAuth();
   const [subscription, setSubscription] = useState<SubscriptionStatus | null>(null);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isUpgrading, setIsUpgrading] = useState(false);
@@ -77,7 +75,7 @@ export default function SubscriptionPage() {
 
   // Load user subscription status
   useEffect(() => {
-    if (user?.uid) {
+    if (user?.id) {
       loadSubscription();
     } else {
       setLoading(false);
@@ -86,8 +84,8 @@ export default function SubscriptionPage() {
 
   const loadSubscription = async () => {
     try {
-      if (user?.uid) {
-        const userSub = await SubscriptionService.getUserSubscription(user.uid);
+      if (user?.id) {
+        const userSub = await SubscriptionService.getUserSubscription(user.id);
         setSubscription(userSub);
       }
     } catch (error) {
@@ -98,7 +96,7 @@ export default function SubscriptionPage() {
   };
 
   const handleUpgrade = async () => {
-    if (!user?.uid) {
+    if (!user?.id) {
       toast({
         title: "Authentication Required",
         description: "Please sign in to upgrade your subscription",
@@ -131,7 +129,7 @@ export default function SubscriptionPage() {
 
     try {
       const result = await SubscriptionService.subscribeToPremium(
-        user.uid,
+        user.id,
         phoneNumber,
         user.email || ''
       );

@@ -3,9 +3,10 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { collection, addDoc } from "firebase/firestore";
-import { db, auth, handleNetworkError } from "@/lib/firebase";
+import { db, handleNetworkError } from "@/lib/firebase";
 import { NetworkTroubleshootingTips } from "@/components/NetworkStatus";
 import { useSettings } from "@/contexts/SettingsContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { getCurrencySymbol } from "@/lib/utils";
 import { StockManagementService } from "@/services/StockManagementService";
 import { Button } from "@/components/ui/button";
@@ -90,6 +91,7 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { settings } = useSettings();
+  const { user } = useAuth();
 
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -129,7 +131,6 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
   };
 
   const uploadImage = async (file: File): Promise<string> => {
-    const user = auth.currentUser;
     if (!user) throw new Error("User not authenticated");
 
     // Check file size first
@@ -232,7 +233,6 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
       setIsLoading(true);
       console.log('🚀 Starting product submission...');
       
-      const user = auth.currentUser;
       if (!user) {
         console.error('❌ User not authenticated');
         toast.error("Please log in to add products");
@@ -251,7 +251,7 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
       console.log('✅ Image upload completed successfully');
 
       // Generate unique shareable ID
-      const shareableId = `${user.uid}_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+      const shareableId = `${user.id}_${Date.now()}_${Math.random().toString(36).substring(2)}`;
 
       // Process tags and specifications
       const tagsArray = data.tags ? data.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [];
@@ -286,7 +286,7 @@ export function AddProductForm({ onSuccess }: AddProductFormProps) {
       const productData = {
         ...data,
         imageUrl,
-        userId: user.uid,
+        userId: user.id,
         shareableId,
         businessName: settings.businessName || 'Our Store',
         whatsappNumber: settings.whatsappNumber || '',

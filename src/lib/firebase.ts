@@ -1,5 +1,4 @@
 import type { FirebaseApp } from "firebase/app";
-import type { Auth } from "firebase/auth";
 import type { Firestore } from "firebase/firestore";
 import type { FirebaseStorage } from "firebase/storage";
 import type { Analytics } from "firebase/analytics";
@@ -16,7 +15,6 @@ const firebaseConfig = {
 
 // Firebase services instances
 let app: FirebaseApp | null = null;
-let authInstance: Auth | null = null;
 let dbInstance: Firestore | null = null;
 let storageInstance: FirebaseStorage | null = null;
 let analyticsInstance: Analytics | null = null;
@@ -36,28 +34,7 @@ const initializeFirebase = async (): Promise<FirebaseApp> => {
   }
 };
 
-// Initialize auth service
-const initializeAuth = async (): Promise<Auth> => {
-  if (authInstance) return authInstance;
-  
-  const firebaseApp = await initializeFirebase();
-  const { getAuth, connectAuthEmulator } = await import("firebase/auth");
-  authInstance = getAuth(firebaseApp);
-  
-  // Connect to emulators in development (only if explicitly enabled)
-  if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true') {
-    try {
-      connectAuthEmulator(authInstance, "http://localhost:9099");
-      console.log('🔧 Connected to Auth emulator');
-    } catch (error) {
-      console.log('Auth emulator connection failed:', error);
-    }
-  } else {
-    console.log('🔥 Using production Firebase Auth');
-  }
-  
-  return authInstance;
-};
+// Auth service removed - replaced with zklogin
 
 // Initialize Firestore service
 const initializeFirestore = async (): Promise<Firestore> => {
@@ -110,16 +87,8 @@ const initializeAnalytics = async (): Promise<Analytics | null> => {
 };
 
 // Synchronous lazy getters for backwards compatibility
-let authPromise: Promise<Auth> | null = null;
 let dbPromise: Promise<Firestore> | null = null;
 let storagePromise: Promise<FirebaseStorage> | null = null;
-
-export const getAuth = (): Promise<Auth> => {
-  if (!authPromise) {
-    authPromise = initializeAuth();
-  }
-  return authPromise;
-};
 
 export const getFirestore = (): Promise<Firestore> => {
   if (!dbPromise) {
@@ -140,20 +109,15 @@ export const getAnalytics = (): Promise<Analytics | null> => {
 };
 
 // Legacy synchronous exports (will be undefined initially, then populated)
-export let auth: Auth;
-export let db: Firestore; 
+export let db: Firestore;
 export let storage: FirebaseStorage;
 
 // Initialize synchronous exports on first import (but don't block)
-getAuth().then(instance => { 
-  auth = instance;
-});
-
-getFirestore().then(instance => { 
+getFirestore().then(instance => {
   db = instance;
 });
 
-getStorage().then(instance => { 
+getStorage().then(instance => {
   storage = instance;
 });
 

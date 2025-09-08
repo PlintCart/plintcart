@@ -3,7 +3,6 @@ import { Suspense, lazy, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
@@ -13,10 +12,12 @@ import { PerformanceMonitor } from "@/components/PerformanceMonitor";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { clearAllFirebaseCache } from "@/utils/clearCache";
 
+
 // Lazy load pages for better performance with route-based splitting
 const Index = lazy(() => import("./pages/Index"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Auth = lazy(() => import("./pages/Auth"));
+
 const Support = lazy(() => import("./pages/Support"));
 
 // Public pages - load normally
@@ -63,43 +64,9 @@ const SuperAdminDashboard = lazy(() =>
   import("./pages/SuperAdminDashboard").then(module => ({ default: module.default }))
 );
 
-// Enhanced loading components for better UX
-const LoadingSpinner = () => (
-  <div className="flex items-center justify-center min-h-screen bg-background">
-    <div className="flex flex-col items-center space-y-4">
-      <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary"></div>
-      <p className="text-sm text-muted-foreground animate-pulse">Loading...</p>
-    </div>
-  </div>
-);
 
-// Route-specific loading components for better perceived performance
-const AdminLoadingSpinner = () => (
-  <div className="flex items-center justify-center min-h-screen bg-background">
-    <div className="flex flex-col items-center space-y-4">
-      <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600/20 border-t-blue-600"></div>
-      <p className="text-sm text-muted-foreground animate-pulse">Loading admin panel...</p>
-    </div>
-  </div>
-);
 
-const PublicLoadingSpinner = () => (
-  <div className="flex items-center justify-center min-h-screen bg-background">
-    <div className="flex flex-col items-center space-y-4">
-      <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-600/20 border-t-green-600"></div>
-      <p className="text-sm text-muted-foreground animate-pulse">Loading storefront...</p>
-    </div>
-  </div>
-);
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
-    },
-  },
-});
 
 const App = () => {
   // Clear Firebase cache on app startup to ensure fresh data
@@ -115,49 +82,48 @@ const App = () => {
 
   return (
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <PerformanceMonitor />
+      <PerformanceMonitor />
+      <BrowserRouter
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <AuthProvider>
           <SettingsProvider>
             <TooltipProvider>
               <Toaster />
               <Sonner />
-              <BrowserRouter
-                future={{
-                  v7_startTransition: true,
-                  v7_relativeSplatPath: true,
-                }}
-              >
-              <Suspense fallback={<LoadingSpinner />}>
+              <Suspense fallback={null}>
               <Routes>
                 {/* Public Routes */}
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/support" element={<Support />} />
                 <Route path="/stores" element={
-                  <Suspense fallback={<PublicLoadingSpinner />}>
+                  <Suspense fallback={null}>
                     <MerchantDirectory />
                   </Suspense>
                 } />
                 <Route path="/storefront/:merchantId" element={
-                  <Suspense fallback={<PublicLoadingSpinner />}>
+                  <Suspense fallback={null}>
                     <Storefront />
                   </Suspense>
                 } />
                 <Route path="/store/:vendorId" element={
-                  <Suspense fallback={<PublicLoadingSpinner />}>
+                  <Suspense fallback={null}>
                     <VendorStorefront />
                   </Suspense>
                 } />
                 <Route path="/product/:id" element={
-                  <Suspense fallback={<PublicLoadingSpinner />}>
+                  <Suspense fallback={null}>
                     <PublicProductView />
                   </Suspense>
                 } />
                 <Route path="/checkout/:productId" element={<Checkout />} />
                 <Route path="/order-success/:orderId" element={<OrderSuccess />} />
                 <Route path="/pay/:productId" element={
-                  <Suspense fallback={<PublicLoadingSpinner />}>
+                  <Suspense fallback={null}>
                     <PaymentPage />
                   </Suspense>
                 } />
@@ -166,57 +132,57 @@ const App = () => {
                 
                 {/* Admin Routes with dedicated loading */}
                 <Route path="/admin" element={
-                  <Suspense fallback={<AdminLoadingSpinner />}>
+                  <Suspense fallback={null}>
                     <ProtectedRoute><AdminDashboard /></ProtectedRoute>
                   </Suspense>
                 } />
                 <Route path="/admin/products" element={
-                  <Suspense fallback={<AdminLoadingSpinner />}>
+                  <Suspense fallback={null}>
                     <ProtectedRoute><Products /></ProtectedRoute>
                   </Suspense>
                 } />
                 <Route path="/admin/products/add" element={
-                  <Suspense fallback={<AdminLoadingSpinner />}>
+                  <Suspense fallback={null}>
                     <ProtectedRoute><AddProduct /></ProtectedRoute>
                   </Suspense>
                 } />
                 <Route path="/admin/products/edit/:id" element={
-                  <Suspense fallback={<AdminLoadingSpinner />}>
+                  <Suspense fallback={null}>
                     <ProtectedRoute><AddProduct /></ProtectedRoute>
                   </Suspense>
                 } />
                 <Route path="/admin/stock" element={
-                  <Suspense fallback={<AdminLoadingSpinner />}>
+                  <Suspense fallback={null}>
                     <ProtectedRoute><StockManagement /></ProtectedRoute>
                   </Suspense>
                 } />
                 <Route path="/admin/orders" element={
-                  <Suspense fallback={<AdminLoadingSpinner />}>
+                  <Suspense fallback={null}>
                     <ProtectedRoute><Orders /></ProtectedRoute>
                   </Suspense>
                 } />
                 <Route path="/admin/analytics" element={
-                  <Suspense fallback={<AdminLoadingSpinner />}>
+                  <Suspense fallback={null}>
                     <ProtectedRoute><Analytics /></ProtectedRoute>
                   </Suspense>
                 } />
                 <Route path="/admin/design" element={
-                  <Suspense fallback={<AdminLoadingSpinner />}>
+                  <Suspense fallback={null}>
                     <ProtectedRoute><Design /></ProtectedRoute>
                   </Suspense>
                 } />
                 <Route path="/admin/settings" element={
-                  <Suspense fallback={<AdminLoadingSpinner />}>
+                  <Suspense fallback={null}>
                     <ProtectedRoute><AdminSettings /></ProtectedRoute>
                   </Suspense>
                 } />
                 <Route path="/subscription" element={
-                  <Suspense fallback={<AdminLoadingSpinner />}>
+                  <Suspense fallback={null}>
                     <ProtectedRoute><Subscription /></ProtectedRoute>
                   </Suspense>
                 } />
                 <Route path="/super-admin" element={
-                  <Suspense fallback={<AdminLoadingSpinner />}>
+                  <Suspense fallback={null}>
                     <ProtectedRoute><SuperAdminDashboard /></ProtectedRoute>
                   </Suspense>
                 } />
@@ -226,15 +192,13 @@ const App = () => {
                 {/* Catch-all 404 route */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </Suspense>
-          </BrowserRouter>
-          <NetworkStatus />
-          <Toaster />
-        </TooltipProvider>
-      </SettingsProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  </ErrorBoundary>
+              </Suspense>
+            </TooltipProvider>
+          </SettingsProvider>
+        </AuthProvider>
+      </BrowserRouter>
+      <NetworkStatus />
+    </ErrorBoundary>
   );
 };
 

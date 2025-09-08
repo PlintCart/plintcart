@@ -14,6 +14,7 @@ export default defineConfig(({ mode }) => ({
       'X-Content-Type-Options': 'nosniff',
       'Content-Security-Policy': "frame-ancestors 'self'",
       'X-Frame-Options': 'SAMEORIGIN',
+      'Cross-Origin-Opener-Policy': 'unsafe-none',
     },
     // Add MIME type handling for development
     middlewareMode: false,

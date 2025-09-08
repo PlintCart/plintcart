@@ -1,9 +1,16 @@
 import { useEffect, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
-import { User } from "firebase/auth";
 import { db } from "../lib/firebase";
 
-export function useSubscription(user: User | null) {
+// Enoki user type
+interface EnokiUser {
+  id: string;
+  address: string;
+  email?: string;
+  displayName?: string;
+}
+
+export function useSubscription(user: EnokiUser | null) {
   const [subscription, setSubscription] = useState<any>(null);
   const [isPremium, setIsPremium] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -16,7 +23,7 @@ export function useSubscription(user: User | null) {
       setLoading(false);
       return;
     }
-    const subRef = doc(db, "subscriptions", user.uid);
+    const subRef = doc(db, "subscriptions", user.id);
     const unsub = onSnapshot(subRef, (snap) => {
       const data = snap.data();
       setSubscription(data);

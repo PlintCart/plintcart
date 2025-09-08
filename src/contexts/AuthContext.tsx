@@ -1,22 +1,24 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { 
-  User, 
-  onAuthStateChanged, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword,
-  signOut,
-  GoogleAuthProvider,
-  signInWithPopup
-} from 'firebase/auth';
-import { getAuth } from '@/lib/firebase';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useConnectWallet, useCurrentAccount, useWallets, useDisconnectWallet } from '@mysten/dapp-kit';
+import { isEnokiWallet, type EnokiWallet, type AuthProvider } from '@mysten/enoki';
 import { toast } from 'sonner';
 
+// User type for Enoki/zkLogin
+interface EnokiUser {
+  id: string;
+  address: string;
+  email?: string;
+  displayName?: string;
+}
+
 interface AuthContextType {
-  user: User | null;
+  user: EnokiUser | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
+  signInWithFacebook: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -35,85 +37,110 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const currentAccount = useCurrentAccount();
+  const wallets = useWallets().filter(isEnokiWallet);
+  const { mutateAsync: connect } = useConnectWallet();
+  const { mutateAsync: disconnect } = useDisconnectWallet();
+  const [user, setUser] = useState<EnokiUser | null>(null);
+  const [loading, setLoading] = useState(false);
 
+  const walletsByProvider = wallets.reduce(
+    (map, wallet) => map.set(wallet.provider, wallet),
+    new Map<AuthProvider, EnokiWallet>(),
+  );
+
+  const googleWallet = walletsByProvider.get('google');
+  const facebookWallet = walletsByProvider.get('facebook');
+
+  // Update user state when account changes
   useEffect(() => {
-    let unsubscribe: (() => void) | undefined;
-    
-    const initAuth = async () => {
-      try {
-        const auth = await getAuth();
-        unsubscribe = onAuthStateChanged(auth, (user) => {
-          setUser(user);
-          setLoading(false);
-        });
-      } catch (error) {
-        console.error('Failed to initialize auth:', error);
-        setLoading(false);
-      }
-    };
-
-    initAuth();
-
-    return () => {
-      if (unsubscribe) {
-        unsubscribe();
-      }
-    };
-  }, []);
-
-  const signIn = async (email: string, password: string) => {
-    try {
-      const auth = await getAuth();
-      await signInWithEmailAndPassword(auth, email, password);
-      toast.success('Successfully signed in!');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to sign in');
-      throw error;
+    if (currentAccount) {
+      setUser({
+        id: currentAccount.address,
+        address: currentAccount.address,
+        email: undefined, // zkLogin doesn't expose email directly
+        displayName: `Wallet ${currentAccount.address.slice(0, 6)}...${currentAccount.address.slice(-4)}`,
+      });
+    } else {
+      setUser(null);
     }
+  }, [currentAccount]);
+
+  // Placeholder functions - Enoki handles auth through wallet connection
+  const signIn = async (email: string, password: string) => {
+    toast.error('Please use wallet connection for authentication.');
+    throw new Error('Use wallet connection instead');
   };
 
   const signUp = async (email: string, password: string) => {
-    try {
-      const auth = await getAuth();
-      await createUserWithEmailAndPassword(auth, email, password);
-      toast.success('Account created successfully!');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to create account');
-      throw error;
-    }
+    toast.error('Please use wallet connection for authentication.');
+    throw new Error('Use wallet connection instead');
   };
 
   const signInWithGoogle = async () => {
+    if (!googleWallet) {
+      toast.error('Google wallet not available. Please ensure Enoki is properly configured.');
+      throw new Error('Google wallet not available');
+    }
+
     try {
-      const auth = await getAuth();
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      toast.success('Successfully signed in with Google!');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to sign in with Google');
+      setLoading(true);
+      await connect({ wallet: googleWallet });
+      toast.success('Google Sign-In successful!');
+    } catch (error) {
+      console.error('Google Sign-In error:', error);
+      toast.error('Failed to sign in with Google.');
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
+
+  const signInWithFacebook = async () => {
+    if (!facebookWallet) {
+      toast.error('Facebook wallet not available. Please ensure Enoki is properly configured.');
+      throw new Error('Facebook wallet not available');
+    }
+
+    try {
+      setLoading(true);
+      await connect({ wallet: facebookWallet });
+      toast.success('Facebook Sign-In successful!');
+    } catch (error) {
+      console.error('Facebook Sign-In error:', error);
+      toast.error('Failed to sign in with Facebook.');
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Navigate to /admin when user is authenticated
+  React.useEffect(() => {
+    if (user) {
+      navigate('/admin');
+    }
+  }, [user, navigate]);
 
   const logout = async () => {
     try {
-      const auth = await getAuth();
-      await signOut(auth);
-      toast.success('Successfully signed out!');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to sign out');
-      throw error;
+      await disconnect();
+      setUser(null);
+      toast.success('Logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to logout');
     }
   };
 
-  const value = {
+  const value: AuthContextType = {
     user,
     loading,
     signIn,
     signUp,
     signInWithGoogle,
+    signInWithFacebook,
     logout,
   };
 

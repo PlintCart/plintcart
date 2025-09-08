@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { AdminLayout } from '@/components/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,15 +39,16 @@ export default function StockManagement() {
 
   // Firebase-friendly: Load products with simple query (avoid composite index requirement)
   const loadProducts = async () => {
-    if (!auth.currentUser) return;
-    
+    // TODO: Replace with zklogin user ID when implemented
+    const tempUserId = "temp-user-id";
+
     setLoading(true);
     try {
       const productsRef = collection(db, 'products');
       // Simplified query - only filter by userId to avoid composite index requirement
       const q = query(
         productsRef,
-        where('userId', '==', auth.currentUser.uid),
+        where('userId', '==', tempUserId),
         limit(50) // Free tier friendly - limit results
       );
       
@@ -80,11 +81,12 @@ export default function StockManagement() {
 
   // Load sales analytics
   const loadSalesAnalytics = async () => {
-    if (!auth.currentUser) return;
-    
+    // TODO: Replace with zklogin user ID when implemented
+    const tempUserId = "temp-user-id";
+
     try {
       const analytics = await SalesAnalyticsService.getMostFrequentlyBoughtProducts(
-        auth.currentUser.uid, 
+        tempUserId,
         10
       );
       setMostFrequentProducts(analytics);

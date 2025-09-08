@@ -126,12 +126,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   const loadSettings = async () => {
-    if (!user) return;
-    
+    if (!user || !user.id) return;
+
     try {
       setIsLoading(true);
-      const settingsDoc = await getDoc(doc(db, 'userSettings', user.uid));
-      
+      const settingsDoc = await getDoc(doc(db, 'userSettings', user.id));
+
       if (settingsDoc.exists()) {
         const data = settingsDoc.data() as BusinessSettings;
         setSettings({ ...defaultSettings, ...data });
@@ -147,11 +147,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   };
 
   const loadProfile = async () => {
-    if (!user) return;
-    
+    if (!user || !user.id) return;
+
     try {
-      const profileDoc = await getDoc(doc(db, 'userProfiles', user.uid));
-      
+      const profileDoc = await getDoc(doc(db, 'userProfiles', user.id));
+
       if (profileDoc.exists()) {
         const data = profileDoc.data() as UserProfile;
         setProfile({ ...defaultProfile, ...data });
@@ -169,18 +169,18 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateSettings = async (newSettings: Partial<BusinessSettings>) => {
-    if (!user) return;
-    
+    if (!user || !user.id) return;
+
     try {
       const updatedSettings = { ...settings, ...newSettings };
       setSettings(updatedSettings);
-      
+
       // Save to both collections for compatibility
       await Promise.all([
-        setDoc(doc(db, 'userSettings', user.uid), updatedSettings, { merge: true }),
-        setDoc(doc(db, 'settings', user.uid), updatedSettings, { merge: true }) // Legacy compatibility
+        setDoc(doc(db, 'userSettings', user.id), updatedSettings, { merge: true }),
+        setDoc(doc(db, 'settings', user.id), updatedSettings, { merge: true }) // Legacy compatibility
       ]);
-      
+
       toast.success('Settings updated successfully');
     } catch (error) {
       console.error('Error updating settings:', error);
@@ -191,13 +191,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateProfile = async (newProfile: Partial<UserProfile>) => {
-    if (!user) return;
-    
+    if (!user || !user.id) return;
+
     try {
       const updatedProfile = { ...profile, ...newProfile };
       setProfile(updatedProfile);
-      
-      await setDoc(doc(db, 'userProfiles', user.uid), updatedProfile, { merge: true });
+
+      await setDoc(doc(db, 'userProfiles', user.id), updatedProfile, { merge: true });
       toast.success('Profile updated successfully');
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -208,18 +208,18 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   };
 
   const saveAllSettings = async () => {
-    if (!user) return;
-    
+    if (!user || !user.id) return;
+
     try {
       setIsLoading(true);
-      
+
       // Save both settings and profile to both collections for compatibility
       await Promise.all([
-        setDoc(doc(db, 'userSettings', user.uid), settings),
-        setDoc(doc(db, 'userProfiles', user.uid), profile),
-        setDoc(doc(db, 'settings', user.uid), settings), // Legacy compatibility
+        setDoc(doc(db, 'userSettings', user.id), settings),
+        setDoc(doc(db, 'userProfiles', user.id), profile),
+        setDoc(doc(db, 'settings', user.id), settings), // Legacy compatibility
       ]);
-      
+
       toast.success('All settings saved successfully');
     } catch (error) {
       console.error('Error saving all settings:', error);

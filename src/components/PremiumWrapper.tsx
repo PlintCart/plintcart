@@ -1,5 +1,4 @@
 import React from 'react';
-import { User as FirebaseUser } from 'firebase/auth';
 import { useSubscription } from '@/hooks/useSubscription';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,11 +6,17 @@ import { Badge } from '@/components/ui/badge';
 import { Lock, Crown, Zap } from 'lucide-react';
 import { SubscriptionUpgradeDialog } from './SubscriptionUpgradeDialog';
 
-import { User } from 'firebase/auth';
+// Enoki user type
+interface EnokiUser {
+  id: string;
+  address: string;
+  email?: string;
+  displayName?: string;
+}
 
 interface PremiumWrapperProps {
   children: React.ReactNode;
-  user: User | null;
+  user: EnokiUser | null;
   feature: string;
   fallbackContent?: React.ReactNode;
   showUpgrade?: boolean;
@@ -83,7 +88,7 @@ export function PremiumWrapper({
 }
 
 interface PremiumBadgeProps {
-  user: User | null;
+  user: EnokiUser | null;
   className?: string;
 }
 

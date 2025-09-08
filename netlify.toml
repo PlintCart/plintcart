@@ -24,6 +24,13 @@
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Cross-Origin-Opener-Policy = "same-origin-allow-popups"
+
+# Specific headers for auth callback to allow popup communication
+[[headers]]
+  for = "/auth/callback"
+  [headers.values]
+    Cross-Origin-Opener-Policy = "unsafe-none"
 
 # Force proper MIME types and long caching for built assets
 [[headers]]

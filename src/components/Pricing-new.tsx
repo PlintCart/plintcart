@@ -1,11 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { Check, Star, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { User } from "firebase/auth";
 import { useSubscription } from '@/hooks/useSubscription';
 import { SubscriptionUpgradeDialog } from './SubscriptionUpgradeDialog';
 import { PremiumBadge } from './PremiumWrapper';
 import { useState } from 'react';
+
+// Enoki user type
+interface EnokiUser {
+  id: string;
+  address: string;
+  email?: string;
+  displayName?: string;
+}
 
 // Testimonials data
 const testimonials = [
@@ -96,7 +103,7 @@ const TestimonialsSlideshow = () => {
   );
 };
 
-const Pricing = ({ user }: { user: User | null }) => {
+const Pricing = ({ user }: { user: EnokiUser | null }) => {
   const navigate = useNavigate();
   const { isPremium, loading } = useSubscription(user);
 
