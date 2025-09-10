@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { User as FirebaseUser } from "firebase/auth";
 import { doc, setDoc, onSnapshot, updateDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { Button, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 
+// Enoki user type
+interface EnokiUser {
+  id: string;
+  address: string;
+  email?: string;
+  displayName?: string;
+}
+
 export interface SubscriptionUpgradeDialogProps {
-  user: FirebaseUser;
+  user: EnokiUser;
 }
 
 interface PaymentDoc {
@@ -32,7 +39,7 @@ export const SubscriptionUpgradeDialog: React.FC<SubscriptionUpgradeDialogProps>
   // Listen to subscription status in Firestore
   useEffect(() => {
     if (!user) return;
-    const subRef = doc(db, "subscriptions", user.uid);
+    const subRef = doc(db, "subscriptions", user.id);
     const unsub = onSnapshot(subRef, (snap) => {
       const data = snap.data() as SubscriptionDoc | undefined;
       setIsPremium(!!data?.isPremium);
@@ -44,7 +51,7 @@ export const SubscriptionUpgradeDialog: React.FC<SubscriptionUpgradeDialogProps>
   // Listen to payment status in Firestore
   useEffect(() => {
     if (!user) return;
-    const payRef = doc(db, "payments", user.uid);
+    const payRef = doc(db, "payments", user.id);
     const unsub = onSnapshot(payRef, (snap) => {
       const data = snap.data() as PaymentDoc | undefined;
       if (data?.status) setPaymentStatus(data.status);
@@ -60,19 +67,19 @@ export const SubscriptionUpgradeDialog: React.FC<SubscriptionUpgradeDialogProps>
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          phoneNumber: user.phoneNumber || "", // fallback to empty string
+          phoneNumber: "", // fallback to empty string, Enoki user has no phoneNumber
           amount: 2600, // your premium price
-          userId: user.uid,
+          userId: user.id,
           email: user.email,
         }),
       });
       const data = await res.json();
       // Save payment initiation to Firestore
-      await setDoc(doc(db, "payments", user.uid), {
+      await setDoc(doc(db, "payments", user.id), {
         status: "pending",
         checkoutRequestId: data.CheckoutRequestID,
         amount: 2600,
-        phoneNumber: user.phoneNumber || "",
+        phoneNumber: "",
         email: user.email,
         createdAt: new Date().toISOString(),
       });
@@ -83,7 +90,7 @@ export const SubscriptionUpgradeDialog: React.FC<SubscriptionUpgradeDialogProps>
   };
 
   const handlePaymentSuccess = async () => {
-    await setDoc(doc(db, "subscriptions", user.uid), {
+    await setDoc(doc(db, "subscriptions", user.id), {
       isPremium: true,
       plan: "premium",
       upgradedAt: new Date().toISOString(),
@@ -93,7 +100,7 @@ export const SubscriptionUpgradeDialog: React.FC<SubscriptionUpgradeDialogProps>
   // When payment is successful, update subscription in Firestore
   useEffect(() => {
     if (paymentStatus === "success" && user) {
-      const subRef = doc(db, "subscriptions", user.uid);
+      const subRef = doc(db, "subscriptions", user.id);
       updateDoc(subRef, {
         isPremium: true,
         plan: "premium",

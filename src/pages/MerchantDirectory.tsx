@@ -62,7 +62,7 @@ const MerchantDirectory = () => {
   };
 
   const visitStore = (merchantId: string) => {
-    navigate(`/storefront/${merchantId}`);
+    navigate(`/store/${merchantId}`);
   };
 
   if (loading) {

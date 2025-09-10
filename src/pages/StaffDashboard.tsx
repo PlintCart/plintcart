@@ -1,12 +1,12 @@
-import { can } from '../lib/roles';
-import type { Role } from '../lib/roles';
+import { can } from '../lib/zkRoles';
+import type { Role } from '../lib/zkRoles';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { AdminLayout } from '../components/AdminLayout';
 import { useState, useEffect } from 'react';
-import { getTestRole } from '../utils/testRole';
+import { getUserRole } from '../lib/zkRoles';
 import { 
   Package, 
   ShoppingBag, 
@@ -23,31 +23,16 @@ export default function StaffDashboard() {
   const navigate = useNavigate();
   const [role, setRole] = useState<string>('viewer');
 
-  // Get role from user object (same logic as AdminSidebar)
+  // Get role from user object using zkLogin system
   useEffect(() => {
-    const getUserRole = async () => {
-      if (!user) return 'viewer';
-      
-      // First check localStorage for development
-      const localRole = getTestRole(user.uid);
-      if (localRole) {
-        return localRole;
-      }
-      
-      try {
-        // Fallback to Firebase custom claims for production
-        await user.getIdToken(true);
-        const idTokenResult = await user.getIdTokenResult();
-        return (idTokenResult.claims.role as string) || 'viewer';
-      } catch (error) {
-        console.error('Error getting user role:', error);
-        return 'viewer';
-      }
-    };
-
     const fetchRole = async () => {
-      const userRole = await getUserRole();
-      setRole(userRole);
+      if (!user) {
+        setRole('viewer');
+        return;
+      }
+      
+      const userRole = await getUserRole(user.id);
+      setRole(userRole || 'viewer');
     };
     
     fetchRole();

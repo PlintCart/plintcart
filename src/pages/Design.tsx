@@ -85,11 +85,12 @@ export default function Design() {
   };
 
   const handlePreviewStorefront = () => {
-    if (user) {
+    if (user?.uid) {
       // Open storefront in new tab with correct customer view URL
       window.open(`/store/${user.uid}`, '_blank');
     } else {
-      toast.error("Please make sure you're logged in");
+      toast.error("Please make sure you're logged in and your account is properly set up");
+      console.warn('⚠️ User or user.uid is undefined, cannot generate storefront URL');
     }
   };
 

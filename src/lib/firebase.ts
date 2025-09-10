@@ -1,8 +1,12 @@
 import type { FirebaseApp } from "firebase/app";
-import type { Auth } from "firebase/auth";
 import type { Firestore } from "firebase/firestore";
 import type { FirebaseStorage } from "firebase/storage";
 import type { Analytics } from "firebase/analytics";
+import { initializeApp } from "firebase/app";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
+import { getAnalytics } from "firebase/analytics";
+import { getAuth } from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -14,170 +18,59 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// Firebase services instances
-let app: FirebaseApp | null = null;
-let authInstance: Auth | null = null;
-let dbInstance: Firestore | null = null;
-let storageInstance: FirebaseStorage | null = null;
-let analyticsInstance: Analytics | null = null;
+// Initialize Firebase app immediately
+const app = initializeApp(firebaseConfig);
+console.log('🔥 Firebase app initialized successfully');
 
-// Initialize Firebase app lazily
-const initializeFirebase = async (): Promise<FirebaseApp> => {
-  if (app) return app;
+// Initialize Firestore immediately
+const dbInstance = getFirestore(app);
 
+// Initialize Storage immediately
+const storageInstance = getStorage(app);
+
+// Initialize Analytics immediately
+const analyticsInstance = getAnalytics(app);
+
+// Initialize Auth immediately (for custom token sign-in)
+const authInstance = getAuth(app);
+
+// Connect to emulator if in development
+if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true') {
   try {
-    const { initializeApp } = await import("firebase/app");
-    app = initializeApp(firebaseConfig);
-    console.log('🔥 Firebase app initialized successfully');
-    return app;
+    connectFirestoreEmulator(dbInstance, "localhost", 8080);
+    console.log('🔧 Connected to Firestore emulator');
   } catch (error) {
-    console.error('❌ Firebase initialization error:', error);
-    throw error;
+    console.log('Firestore emulator connection failed:', error);
   }
-};
+}
 
-// Initialize auth service
-const initializeAuth = async (): Promise<Auth> => {
-  if (authInstance) return authInstance;
-  
-  const firebaseApp = await initializeFirebase();
-  const { getAuth, connectAuthEmulator } = await import("firebase/auth");
-  authInstance = getAuth(firebaseApp);
-  
-  // Connect to emulators in development (only if explicitly enabled)
-  if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true') {
-    try {
-      connectAuthEmulator(authInstance, "http://localhost:9099");
-      console.log('🔧 Connected to Auth emulator');
-    } catch (error) {
-      console.log('Auth emulator connection failed:', error);
-    }
-  } else {
-    console.log('🔥 Using production Firebase Auth');
-  }
-  
-  return authInstance;
-};
+console.log('✅ All Firebase services initialized synchronously');
 
-// Initialize Firestore service
-const initializeFirestore = async (): Promise<Firestore> => {
-  if (dbInstance) return dbInstance;
-  
-  const firebaseApp = await initializeFirebase();
-  const { getFirestore, connectFirestoreEmulator } = await import("firebase/firestore");
-  dbInstance = getFirestore(firebaseApp);
-  
-  if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true') {
-    try {
-      connectFirestoreEmulator(dbInstance, "localhost", 8080);
-      console.log('🔧 Connected to Firestore emulator');
-    } catch (error) {
-      console.log('Firestore emulator connection failed:', error);
-    }
-  }
-  
-  return dbInstance;
-};
-
-// Initialize Storage service
-const initializeStorage = async (): Promise<FirebaseStorage> => {
-  if (storageInstance) return storageInstance;
-  
-  const firebaseApp = await initializeFirebase();
-  const { getStorage } = await import("firebase/storage");
-  storageInstance = getStorage(firebaseApp);
-  return storageInstance;
-};
-
-// Initialize Analytics service
-const initializeAnalytics = async (): Promise<Analytics | null> => {
-  if (analyticsInstance) return analyticsInstance;
-  
-  try {
-    const firebaseApp = await initializeFirebase();
-    const { getAnalytics, isSupported } = await import("firebase/analytics");
-    
-    if (await isSupported()) {
-      analyticsInstance = getAnalytics(firebaseApp);
-      console.log('📊 Firebase Analytics initialized');
-      return analyticsInstance;
-    }
-  } catch (error) {
-    console.log('📊 Firebase Analytics blocked or unavailable:', error);
-  }
-  
-  return null;
-};
-
-// Synchronous lazy getters for backwards compatibility
-let authPromise: Promise<Auth> | null = null;
-let dbPromise: Promise<Firestore> | null = null;
-let storagePromise: Promise<FirebaseStorage> | null = null;
-
-export const getAuth = (): Promise<Auth> => {
-  if (!authPromise) {
-    authPromise = initializeAuth();
-  }
-  return authPromise;
-};
-
-export const getFirestore = (): Promise<Firestore> => {
-  if (!dbPromise) {
-    dbPromise = initializeFirestore();
-  }
-  return dbPromise;
-};
-
-export const getStorage = (): Promise<FirebaseStorage> => {
-  if (!storagePromise) {
-    storagePromise = initializeStorage();
-  }
-  return storagePromise;
-};
-
-export const getAnalytics = (): Promise<Analytics | null> => {
-  return initializeAnalytics();
-};
-
-// Legacy synchronous exports (will be undefined initially, then populated)
-export let auth: Auth;
-export let db: Firestore; 
-export let storage: FirebaseStorage;
-
-// Initialize synchronous exports on first import (but don't block)
-getAuth().then(instance => { 
-  auth = instance;
-});
-
-getFirestore().then(instance => { 
-  db = instance;
-});
-
-getStorage().then(instance => { 
-  storage = instance;
-});
+// Export synchronous instances
+export { dbInstance as db };
+export { storageInstance as storage };
+export { analyticsInstance as analytics };
+export { authInstance as auth };
 
 // Network error handling utility
 export const handleNetworkError = (error: any) => {
   const errorMessage = error?.message || error?.toString() || 'Unknown error';
-  
+
   if (errorMessage.includes('ERR_BLOCKED_BY_CLIENT')) {
     return 'Request blocked by browser extension or ad blocker. Please disable ad blockers and try again.';
   }
-  
+
   if (errorMessage.includes('ERR_NAME_NOT_RESOLVED')) {
     return 'Network connection issue. Please check your internet connection and try again.';
   }
-  
+
   if (errorMessage.includes('ERR_NETWORK_IO_SUSPENDED')) {
     return 'Network connection suspended. Please check your internet connection and try again.';
   }
-  
+
   if (errorMessage.includes('offline') || errorMessage.includes('network')) {
     return 'You appear to be offline. Please check your internet connection and try again.';
   }
-  
+
   return errorMessage;
 };
-
-export default initializeFirebase;

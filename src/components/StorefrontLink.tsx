@@ -13,9 +13,9 @@ export const StorefrontLink = () => {
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
-  if (!user) return null;
+  if (!user || !user.uid) return null;
 
-  const storefrontUrl = `${window.location.origin}/storefront/${user.uid}`;
+  const storefrontUrl = `${window.location.origin}/store/${user.uid}`;
 
   const copyToClipboard = async () => {
     try {

@@ -48,11 +48,18 @@ export class MpesaPayment {
 
   async checkPaymentStatus(checkoutRequestId: string): Promise<any> {
     try {
-      // For now, return pending status. In production, you'd query M-Pesa
-      return {
-        status: 'pending',
-        checkoutRequestId
-      };
+      const res = await fetch(`${this.baseUrl}/.netlify/functions/mpesa-status/${encodeURIComponent(checkoutRequestId)}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        return { status: 'error', error: text || `HTTP ${res.status}` };
+      }
+      const data = await res.json();
+      // Normalize to simple statuses used by UI
+      const status = data.status || 'pending';
+      return { status, ...data };
     } catch (error) {
       console.error('Status check error:', error);
       return {

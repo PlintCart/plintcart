@@ -5,11 +5,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '../contexts/AuthContext';
-import { can } from '../lib/roles';
-import type { Role } from '../lib/roles';
+import { can } from '../lib/zkRoles';
+import type { Role } from '../lib/zkRoles';
 import { toast } from 'sonner';
 import { AdminLayout } from '../components/AdminLayout';
-import { getTestRole } from '../utils/testRole';
+import { getUserRole } from '../lib/zkRoles';
 
 export default function StaffManagement() {
   const { user } = useAuth();
@@ -18,30 +18,15 @@ export default function StaffManagement() {
   const [loading, setLoading] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
 
-  // Get current user's role (same logic as AdminSidebar)
+  // Get current user's role using zkLogin system
   useEffect(() => {
-    const getUserRole = async () => {
-      if (!user) return null;
-      
-      // First check localStorage for development
-      const localRole = getTestRole(user.uid);
-      if (localRole) {
-        return localRole;
-      }
-      
-      try {
-        // Fallback to Firebase custom claims for production
-        await user.getIdToken(true);
-        const idTokenResult = await user.getIdTokenResult();
-        return (idTokenResult.claims.role as string) || null;
-      } catch (error) {
-        console.error('Error getting user role:', error);
-        return null;
-      }
-    };
-
     const fetchRole = async () => {
-      const userRole = await getUserRole();
+      if (!user) {
+        setCurrentRole(null);
+        return;
+      }
+      
+      const userRole = await getUserRole(user.id);
       setCurrentRole(userRole);
     };
     
@@ -86,31 +71,13 @@ export default function StaffManagement() {
 
     setLoading(true);
     try {
-      // Get merchantId - check localStorage first, then Firebase claims
+      // Get merchantId - for zkLogin, we'll use user.id as basis
       let merchantId = null;
       
       if (user) {
-        // First check localStorage for development
-        const userRoles = JSON.parse(localStorage.getItem('userRoles') || '{}');
-        const localUserData = userRoles[user.uid];
-        
-        if (localUserData?.merchantId) {
-          merchantId = localUserData.merchantId;
-        } else {
-          // Fallback to Firebase custom claims for production
-          try {
-            const idTokenResult = await user.getIdTokenResult();
-            merchantId = idTokenResult.claims.merchantId as string;
-          } catch (error) {
-            console.error('Error getting merchantId from claims:', error);
-          }
-        }
-        
-        // If still no merchantId, create one for development
-        if (!merchantId) {
-          merchantId = 'test-merchant-' + user.uid;
-          console.log('🔧 Created development merchantId:', merchantId);
-        }
+        // For zkLogin, create a merchant ID based on user ID
+        merchantId = 'merchant-' + user.id;
+        console.log('🔧 Using zkLogin merchantId:', merchantId);
       }
 
       if (!merchantId) {

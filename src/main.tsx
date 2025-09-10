@@ -1,7 +1,7 @@
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
-import { PerformanceMonitor } from './components/PerformanceMonitor'
+import { Providers } from './providers'
 
 // Add loading indicator immediately
 const showLoadingSpinner = () => {
@@ -45,11 +45,20 @@ if (typeof window !== 'undefined') {
   deferNonCritical();
 }
 
+if (typeof window !== 'undefined') {
+  // Detect if running inside a popup window
+  if (window.opener && window.opener !== window) {
+    // Redirect the opener window to the current location or /admin
+    window.opener.location.href = window.location.href || '/admin';
+    // Close the popup window
+    window.close();
+  }
+}
+
 const root = createRoot(document.getElementById("root")!);
 
 root.render(
-  <>
-    <PerformanceMonitor />
+  <Providers>
     <App />
-  </>
+  </Providers>
 );

@@ -31,11 +31,11 @@ export default function AdminDashboard() {
   }, [user]);
 
   const fetchUserData = async () => {
-    if (!user) return;
+    if (!user || !user.id) return;
 
     try {
       // Fetch user's products
-      const q = query(collection(db, "products"), where("userId", "==", user.uid));
+      const q = query(collection(db, "products"), where("userId", "==", user.id));
       const querySnapshot = await getDocs(q);
       const productList: Product[] = [];
       
@@ -88,6 +88,31 @@ export default function AdminDashboard() {
 
         {/* Storefront Link */}
         <StorefrontLink />
+
+        {/* Wallet Address */}
+        {user?.address && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Wallet Address</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <code className="bg-muted px-2 py-1 rounded text-sm font-mono">
+                  {user.address}
+                </code>
+                <button
+                  onClick={() => navigator.clipboard.writeText(user.address)}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Copy
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                Your zkLogin wallet address for this session
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">

@@ -1,9 +1,17 @@
 import { Handler } from '@netlify/functions';
-import admin from 'firebase-admin';
+import { initializeApp, getApps } from 'firebase/app';
+import { getFirestore, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
-if (!admin.apps.length) {
-  const svc = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '{}');
-  admin.initializeApp({ credential: admin.credential.cert(svc) });
+// Initialize Firebase (client SDK)
+if (!getApps().length) {
+  initializeApp({
+    apiKey: process.env.VITE_FIREBASE_API_KEY,
+    authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.VITE_FIREBASE_APP_ID
+  });
 }
 
 export const handler: Handler = async (event) => {
@@ -16,15 +24,21 @@ export const handler: Handler = async (event) => {
     // Basic validation
     if (!uid || !merchantId || !role) return { statusCode: 400, body: 'Missing fields' };
 
-    // Set custom claims
-    await admin.auth().setCustomUserClaims(uid, { merchantId, role });
+    // Store role in Firestore (no more custom claims since we're using zkLogin)
+    const db = getFirestore();
+    
+    // Store the user's role in the roles collection
+    await setDoc(doc(db, 'roles', uid), {
+      role,
+      merchantId,
+      updatedAt: serverTimestamp()
+    });
 
-    // Mirror to Firestore members
-    const db = admin.firestore();
-    await db.doc(`merchants/${merchantId}/members/${uid}`).set(
-      { role, updatedAt: admin.firestore.FieldValue.serverTimestamp() },
-      { merge: true }
-    );
+    // Also mirror to members collection for backward compatibility
+    await setDoc(doc(db, `merchants/${merchantId}/members`, uid), {
+      role, 
+      updatedAt: serverTimestamp()
+    }, { merge: true });
 
     return { statusCode: 200, body: 'OK' };
   } catch (e: any) {

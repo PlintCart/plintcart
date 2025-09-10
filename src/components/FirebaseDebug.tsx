@@ -1,22 +1,23 @@
-// Debug component to test Firebase connection and auth
+// Debug component to test Firebase connection and Enoki auth
 import { useEffect, useState } from 'react';
-import { auth, db } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 import { collection, addDoc } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/contexts/AuthContext';
 
 export function FirebaseDebug() {
-  const [user, setUser] = useState(auth.currentUser);
+  const { user } = useAuth(); // Use Enoki user instead of Firebase auth
   const [testResult, setTestResult] = useState<string>('');
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setUser(user);
-      console.log('Auth state changed:', user?.uid || 'No user');
-    });
-
-    return () => unsubscribe();
-  }, []);
+  // Remove Firebase auth listener since we're using Enoki
+  // useEffect(() => {
+  //   const unsubscribe = auth.onAuthStateChanged((user) => {
+  //     setUser(user);
+  //     console.log('Auth state changed:', user?.uid || 'No user');
+  //   });
+  //   return () => unsubscribe();
+  // }, []);
 
   const testFirestore = async () => {
     try {

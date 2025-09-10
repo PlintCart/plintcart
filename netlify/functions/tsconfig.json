@@ -16,9 +16,14 @@
     "types": ["node"]
   },
   "include": [
+    "**/*.ts",
+    "**/*.tsx",
     "**/*.js"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "../.netlify/**",
+    "../dist/**",
+    "**/*.cjs"
   ]
 }

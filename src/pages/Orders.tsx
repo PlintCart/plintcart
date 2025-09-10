@@ -105,7 +105,10 @@ export default function Orders() {
   );
 
   const fetchOrders = async () => {
-    if (!user) return;
+    if (!user || !user.uid) {
+      console.warn('⚠️ User or user.uid is undefined, skipping orders query');
+      return;
+    }
 
     setLoading(true);
     try {

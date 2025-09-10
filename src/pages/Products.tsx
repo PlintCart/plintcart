@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Edit, Trash2, Eye, EyeOff, Share2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { collection, getDocs, doc, deleteDoc, updateDoc, query, where } from "firebase/firestore";
-import { db, auth } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSettings } from "@/contexts/SettingsContext";
@@ -49,7 +49,10 @@ export default function Products() {
   }, [user]);
 
   const fetchProducts = async () => {
-    if (!user) return;
+    if (!user || !user.uid) {
+      console.warn('⚠️ User or user.uid is undefined, skipping products query');
+      return;
+    }
     
     try {
       const q = query(collection(db, "products"), where("userId", "==", user.uid));

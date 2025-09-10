@@ -1,9 +1,17 @@
 import { Handler } from '@netlify/functions';
-import admin from 'firebase-admin';
+import { initializeApp, getApps } from 'firebase/app';
+import { getFirestore, collectionGroup, query, where, limit, getDocs, doc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
-if (!admin.apps.length) {
-  const svc = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '{}');
-  admin.initializeApp({ credential: admin.credential.cert(svc) });
+// Initialize Firebase (client SDK)
+if (!getApps().length) {
+  initializeApp({
+    apiKey: process.env.VITE_FIREBASE_API_KEY,
+    authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.VITE_FIREBASE_APP_ID
+  });
 }
 
 export const handler: Handler = async (event) => {
@@ -12,17 +20,18 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    const { token } = JSON.parse(event.body || '{}');
+    const { token, userId } = JSON.parse(event.body || '{}');
 
-    if (!token) {
-      return { statusCode: 400, body: 'Missing token' };
+    if (!token || !userId) {
+      return { statusCode: 400, body: 'Missing token or userId' };
     }
 
-    const db = admin.firestore();
+    const db = getFirestore();
 
     // Find the invitation
-    const invitesRef = db.collectionGroup('invites');
-    const snapshot = await invitesRef.where('token', '==', token).limit(1).get();
+    const invitesRef = collectionGroup(db, 'invites');
+    const q = query(invitesRef, where('token', '==', token), limit(1));
+    const snapshot = await getDocs(q);
 
     if (snapshot.empty) {
       return { statusCode: 404, body: 'Invalid invitation token' };
@@ -45,27 +54,25 @@ export const handler: Handler = async (event) => {
     const pathParts = inviteDoc.ref.path.split('/');
     const merchantId = pathParts[1]; // merchants/{merchantId}/invites/{token}
 
-    // Find user by email
-    const userRecord = await admin.auth().getUserByEmail(inviteData.email);
-
-    // Set custom claims
-    await admin.auth().setCustomUserClaims(userRecord.uid, {
+    // Store role in Firestore (since we're using zkLogin, no auth lookup needed)
+    await setDoc(doc(db, 'roles', userId), {
+      role: inviteData.role,
       merchantId,
-      role: inviteData.role
+      updatedAt: serverTimestamp()
     });
 
     // Update invitation status
-    await inviteDoc.ref.update({
+    await updateDoc(inviteDoc.ref, {
       status: 'accepted',
-      acceptedAt: admin.firestore.FieldValue.serverTimestamp(),
-      acceptedBy: userRecord.uid
+      acceptedAt: serverTimestamp(),
+      acceptedBy: userId
     });
 
     // Add to members collection
-    await db.doc(`merchants/${merchantId}/members/${userRecord.uid}`).set({
+    await setDoc(doc(db, `merchants/${merchantId}/members`, userId), {
       role: inviteData.role,
       email: inviteData.email,
-      joinedAt: admin.firestore.FieldValue.serverTimestamp()
+      joinedAt: serverTimestamp()
     });
 
     return {

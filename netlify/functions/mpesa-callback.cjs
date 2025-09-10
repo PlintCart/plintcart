@@ -1,10 +1,31 @@
 // Netlify Function for M-Pesa Callback Handling
-// File: netlify/functions/mpesa-callback.js
+// File: netlify/functions/mpesa-callback.cjs
 
-const { initializeApp, applicationDefault } = require('firebase-admin/app');
-const { getFirestore } = require('firebase-admin/firestore');
-initializeApp({ credential: applicationDefault() });
-const db = getFirestore();
+const admin = require('firebase-admin');
+
+// Initialize Firebase Admin using Service Account JSON (required)
+if (!admin.apps.length) {
+  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  if (!serviceAccountJson) {
+    throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON environment variable required');
+  }
+  let creds;
+  try {
+    creds = JSON.parse(serviceAccountJson);
+  } catch (e) {
+    console.error('Invalid FIREBASE_SERVICE_ACCOUNT_JSON format');
+    throw e;
+  }
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: creds.project_id,
+      clientEmail: creds.client_email,
+      privateKey: creds.private_key && creds.private_key.replace(/\\n/g, '\n'),
+    }),
+    projectId: creds.project_id,
+  });
+}
+const db = admin.firestore();
 
 exports.handler = async (event) => {
   // Enable CORS

@@ -116,22 +116,22 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
   // Load settings from Firebase when user changes
   useEffect(() => {
-    if (user) {
+    if (user && user.id) {
       loadSettings();
       loadProfile();
     } else {
       setSettings(defaultSettings);
       setProfile(defaultProfile);
     }
-  }, [user]);
+  }, [user?.id]); // Only depend on user.id to prevent infinite loops
 
   const loadSettings = async () => {
-    if (!user) return;
-    
+    if (!user || !user.id) return;
+
     try {
       setIsLoading(true);
-      const settingsDoc = await getDoc(doc(db, 'userSettings', user.uid));
-      
+      const settingsDoc = await getDoc(doc(db, 'userSettings', user.id));
+
       if (settingsDoc.exists()) {
         const data = settingsDoc.data() as BusinessSettings;
         setSettings({ ...defaultSettings, ...data });
@@ -140,18 +140,19 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error('Error loading settings:', error);
-      toast.error('Failed to load settings');
+      // Don't show toast for settings loading errors to avoid spam
+      // toast.error('Failed to load settings');
     } finally {
       setIsLoading(false);
     }
   };
 
   const loadProfile = async () => {
-    if (!user) return;
-    
+    if (!user || !user.id) return;
+
     try {
-      const profileDoc = await getDoc(doc(db, 'userProfiles', user.uid));
-      
+      const profileDoc = await getDoc(doc(db, 'userProfiles', user.id));
+
       if (profileDoc.exists()) {
         const data = profileDoc.data() as UserProfile;
         setProfile({ ...defaultProfile, ...data });
@@ -164,23 +165,24 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       console.error('Error loading profile:', error);
-      toast.error('Failed to load profile');
+      // Don't show toast for profile loading errors to avoid spam
+      // toast.error('Failed to load profile');
     }
   };
 
   const updateSettings = async (newSettings: Partial<BusinessSettings>) => {
-    if (!user) return;
-    
+    if (!user || !user.id) return;
+
     try {
       const updatedSettings = { ...settings, ...newSettings };
       setSettings(updatedSettings);
-      
+
       // Save to both collections for compatibility
       await Promise.all([
-        setDoc(doc(db, 'userSettings', user.uid), updatedSettings, { merge: true }),
-        setDoc(doc(db, 'settings', user.uid), updatedSettings, { merge: true }) // Legacy compatibility
+        setDoc(doc(db, 'userSettings', user.id), updatedSettings, { merge: true }),
+        setDoc(doc(db, 'settings', user.id), updatedSettings, { merge: true }) // Legacy compatibility
       ]);
-      
+
       toast.success('Settings updated successfully');
     } catch (error) {
       console.error('Error updating settings:', error);
@@ -191,13 +193,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateProfile = async (newProfile: Partial<UserProfile>) => {
-    if (!user) return;
-    
+    if (!user || !user.id) return;
+
     try {
       const updatedProfile = { ...profile, ...newProfile };
       setProfile(updatedProfile);
-      
-      await setDoc(doc(db, 'userProfiles', user.uid), updatedProfile, { merge: true });
+
+      await setDoc(doc(db, 'userProfiles', user.id), updatedProfile, { merge: true });
       toast.success('Profile updated successfully');
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -208,18 +210,18 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   };
 
   const saveAllSettings = async () => {
-    if (!user) return;
-    
+    if (!user || !user.id) return;
+
     try {
       setIsLoading(true);
-      
+
       // Save both settings and profile to both collections for compatibility
       await Promise.all([
-        setDoc(doc(db, 'userSettings', user.uid), settings),
-        setDoc(doc(db, 'userProfiles', user.uid), profile),
-        setDoc(doc(db, 'settings', user.uid), settings), // Legacy compatibility
+        setDoc(doc(db, 'userSettings', user.id), settings),
+        setDoc(doc(db, 'userProfiles', user.id), profile),
+        setDoc(doc(db, 'settings', user.id), settings), // Legacy compatibility
       ]);
-      
+
       toast.success('All settings saved successfully');
     } catch (error) {
       console.error('Error saving all settings:', error);

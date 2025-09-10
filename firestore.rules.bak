@@ -1,0 +1,252 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Simplified rules for Enoki wallet authentication
+    // Since we don't have Firebase Auth tokens, we allow broader access
+    // but still maintain some security through client-side validation
+    
+    function isValidWalletAddress(address) {
+      return address.matches('^0x[a-fA-F0-9]{40,}$') || address.matches('^dev-user-.*$');
+    }
+    
+    // Users collection - for zkLogin user management
+    match /users/{userId} {
+      // Allow read/write for wallet addresses and dev users
+      allow read, write: if isValidWalletAddress(userId);
+    }
+
+    // Products collection
+    match /products/{productId} {
+      // Allow public read for visible products
+      allow read: if resource.data.isVisible == true;
+      // Allow full access for wallet addresses
+      allow read, write: if isValidWalletAddress(resource.data.userId);
+      allow create: if isValidWalletAddress(request.resource.data.userId);
+    }
+
+    // Orders collection  
+    match /orders/{orderId} {
+      // Allow read/write for wallet addresses
+      allow read, write: if isValidWalletAddress(resource.data.merchantId) || 
+                          isValidWalletAddress(resource.data.userId);
+      allow create: if isValidWalletAddress(request.resource.data.merchantId) || 
+                    isValidWalletAddress(request.resource.data.userId);
+    }
+
+    // Stock transactions
+    match /stockTransactions/{transactionId} {
+      allow read, write: if isValidWalletAddress(resource.data.userId);
+      allow create: if isValidWalletAddress(request.resource.data.userId);
+    }
+
+    // Settings collections
+    match /settings/{userId} {
+      allow read, write: if isValidWalletAddress(userId);
+    }
+
+    match /userSettings/{userId} {
+      allow read, write: if isValidWalletAddress(userId);
+    }
+
+    // Payment related collections
+    match /payments/{paymentId} {
+      allow read, write: if isValidWalletAddress(resource.data.merchantId) ||
+                          isValidWalletAddress(resource.data.userId);
+      allow create: if isValidWalletAddress(request.resource.data.merchantId) ||
+                    isValidWalletAddress(request.resource.data.userId);
+    }
+
+    // Analytics and other collections - allow broader access for now
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
+
+    // Merchant-scoped collections
+    match /merchants/{mId} {
+      allow read: if isSignedIn() && mId == merchantId();
+
+      // Settings/payment (sensitive)
+      match /settings/{docId} {
+        allow read, write: if isSignedIn() && mId == merchantId() && isOwner();
+      }
+
+      // Members
+      match /members/{uid} {
+        allow read: if isSignedIn() && mId == merchantId() && (isManager() || request.auth.uid == uid);
+        allow write: if isSignedIn() && mId == merchantId() && isOwner();
+      }
+
+      // Products
+      match /products/{pid} {
+        allow read: if true; // public storefront
+        allow create, update: if (isSignedIn() && mId == merchantId() && (isManager() || role() == 'staff')) ||
+          (request.auth == null && mId.matches('^0x[a-fA-F0-9]{40,}$') && pid.matches('^0x[a-fA-F0-9]{40,}$'));
+        allow delete: if (isSignedIn() && mId == merchantId() && isManager()) ||
+          (request.auth == null && mId.matches('^0x[a-fA-F0-9]{40,}$'));
+        allow update: if (isSignedIn() && mId == merchantId() &&
+          (
+            isManager() ||
+            (role() == 'staff' &&
+              // staff cannot change price/tax
+              request.resource.data.price == resource.data.price &&
+              request.resource.data.tax == resource.data.tax
+            )
+          )) ||
+          (request.auth == null && mId.matches('^0x[a-fA-F0-9]{40,}$'));
+      }
+
+      // Orders
+      match /orders/{oid} {
+        allow read: if (isSignedIn() && mId == merchantId() && role() in ['owner','manager','staff','cashier','viewer']) ||
+          (request.auth == null && mId.matches('^0x[a-fA-F0-9]{40,}$'));
+        allow create: if (isSignedIn() && mId == merchantId() && role() in ['owner','manager','staff','cashier']) ||
+          (request.auth == null && mId.matches('^0x[a-fA-F0-9]{40,}$'));
+        allow update: if (isSignedIn() && mId == merchantId() &&
+          (
+            isManager() ||
+            (role() == 'staff' && request.resource.data.status in ['packed','shipped','delivered']) ||
+            (role() == 'cashier' && request.resource.data.status in ['paid'])
+          )) ||
+          (request.auth == null && mId.matches('^0x[a-fA-F0-9]{40,}$'));
+        allow delete: if false; // use soft delete via status=canceled, and only manager+
+      }
+
+      // Audit logs: append-only by anyone signed in
+      match /auditLogs/{logId} {
+        allow create: if isSignedIn() && mId == merchantId();
+        allow read: if isSignedIn() && mId == merchantId() && isManager();
+        allow update, delete: if false;
+      }
+
+      // Invites
+      match /invites/{invId} {
+        allow create, delete: if isSignedIn() && mId == merchantId() && isOwner();
+        allow read: if isSignedIn() && mId == merchantId() && isOwner();
+        allow update: if false;
+      }
+    }
+
+    // Legacy collections (for backward compatibility)
+    match /products/{productId} {
+      allow read: if resource.data.isVisible == true;
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId ||
+        resource.data.userId.matches('^dev-user-.*$') ||
+        resource.data.userId.matches('^0x[a-fA-F0-9]{40,}$');
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId ||
+        request.resource.data.userId.matches('^dev-user-.*$') ||
+        request.resource.data.userId.matches('^0x[a-fA-F0-9]{40,}$');
+    }
+
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /settings/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId &&
+        !fieldChanged('mpesaSecretKey') &&
+        !fieldChanged('mpesaShortCode') &&
+        !fieldChanged('mpesaPasskey') &&
+        !fieldChanged('mpesaConsumerKey') &&
+        !fieldChanged('mpesaConsumerSecret') &&
+        !fieldChanged('mpesaWebhookSecret');
+    }
+
+    match /userSettings/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /userProfiles/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /orders/{orderId} {
+      allow read: if request.auth != null &&
+        (resource.data.businessOwnerId == request.auth.uid ||
+         resource.data.customerId == request.auth.uid ||
+         resource.data.merchantId == request.auth.uid);
+
+      allow create: if
+        (!('paymentStatus' in request.resource.data) || request.resource.data.paymentStatus == 'unpaid') &&
+        !('paymentRef' in request.resource.data) &&
+        !('mpesaReceiptNumber' in request.resource.data) &&
+        !('mpesaTransactionDate' in request.resource.data) &&
+        !('settlementStatus' in request.resource.data) &&
+        !('lastPaymentCheckAt' in request.resource.data);
+
+      allow update: if request.auth != null &&
+        (request.auth.uid == resource.data.merchantId ||
+         request.auth.uid == resource.data.businessOwnerId ||
+         request.auth.uid == resource.data.customerId) &&
+        !fieldChanged('paymentStatus') &&
+        !fieldChanged('paymentRef') &&
+        !fieldChanged('paymentProvider') &&
+        !fieldChanged('paymentAmount') &&
+        !fieldChanged('paymentCurrency') &&
+        !fieldChanged('settlementStatus') &&
+        !fieldChanged('lastPaymentCheckAt') &&
+        !fieldChanged('mpesaReceiptNumber') &&
+        !fieldChanged('mpesaTransactionDate') &&
+        !fieldChanged('mpesaPhoneNumber') &&
+        !fieldChanged('mpesaCheckoutRequestID') &&
+        !fieldChanged('subscriptionId') &&
+        !fieldChanged('subscriptionStatus');
+    }
+
+    match /payments/{paymentId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null &&
+        (request.auth.uid == resource.data.customerId ||
+         request.auth.uid == resource.data.merchantId);
+      allow update: if request.auth != null &&
+        request.auth.uid == resource.data.merchantId;
+    }
+
+    match /payment_events/{eventId} {
+      allow read: if false;
+      allow write: if false;
+    }
+
+    match /mpesa_transactions/{transactionId} {
+      allow read: if request.auth != null &&
+        (request.auth.uid == resource.data.customerId ||
+         request.auth.uid == resource.data.merchantId);
+      allow create, update, delete: if false;
+    }
+
+    match /businesses/{businessId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == businessId;
+    }
+
+    match /stockTransactions/{transactionId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      // Allow read for wallet-based users (Enoki)
+      allow read: if request.auth == null && resource.data.userId.matches('^0x[a-fA-F0-9]{40,}$');
+      allow create: if request.auth == null && request.resource.data.userId.matches('^0x[a-fA-F0-9]{40,}$');
+    }
+
+    match /analytics/{analyticsId} {
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      // Allow read for wallet-based users (Enoki)
+      allow read: if request.auth == null && resource.data.userId.matches('^0x[a-fA-F0-9]{40,}$');
+      allow create: if request.auth == null && request.resource.data.userId.matches('^0x[a-fA-F0-9]{40,}$');
+    }
+
+    match /storeConfigs/{configId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == configId;
+    }
+
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

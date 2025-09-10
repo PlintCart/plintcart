@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
+import { useAuth } from '@/contexts/AuthContext';
 import { AdminLayout } from '@/components/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ import { SalesAnalyticsService, ProductSalesAnalytics } from '@/services/SalesAn
 import { Product } from '@/types/product';
 
 export default function StockManagement() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
@@ -39,15 +41,18 @@ export default function StockManagement() {
 
   // Firebase-friendly: Load products with simple query (avoid composite index requirement)
   const loadProducts = async () => {
-    if (!auth.currentUser) return;
-    
+    if (!user || !user.uid) {
+      console.warn('⚠️ User or user.uid is undefined, skipping products query');
+      return;
+    }
+
     setLoading(true);
     try {
       const productsRef = collection(db, 'products');
       // Simplified query - only filter by userId to avoid composite index requirement
       const q = query(
         productsRef,
-        where('userId', '==', auth.currentUser.uid),
+        where('userId', '==', user.uid),
         limit(50) // Free tier friendly - limit results
       );
       
@@ -80,11 +85,14 @@ export default function StockManagement() {
 
   // Load sales analytics
   const loadSalesAnalytics = async () => {
-    if (!auth.currentUser) return;
-    
+    if (!user || !user.uid) {
+      console.warn('⚠️ User or user.uid is undefined, skipping sales analytics');
+      return;
+    }
+
     try {
       const analytics = await SalesAnalyticsService.getMostFrequentlyBoughtProducts(
-        auth.currentUser.uid, 
+        user.uid,
         10
       );
       setMostFrequentProducts(analytics);

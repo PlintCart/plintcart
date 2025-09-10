@@ -4,7 +4,7 @@
 
 [dev]
   command = "npm run dev"
-  targetPort = 8081
+  targetPort = 8080
   port = 8888
   autoLaunch = false
 
@@ -24,6 +24,12 @@
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+# Specific headers for auth callback to allow popup communication
+[[headers]]
+  for = "/auth/callback"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
 
 # Force proper MIME types and long caching for built assets
 [[headers]]

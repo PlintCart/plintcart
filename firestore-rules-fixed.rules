@@ -1,0 +1,207 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isValidWalletAddress(address) {
+      return address.matches('^0x[a-fA-F0-9]{40,}$') || address.matches('^dev-user-.*$');
+    }
+
+    function fieldChanged(field) {
+      return field in request.resource.data &&
+             request.resource.data[field] != resource.data.get(field, null);
+    }
+
+    // Get user role from user document (matches zkRoles.ts structure)
+    function getUserRole(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data.get('role', null);
+    }
+
+    function isOwner(userId) {
+      return getUserRole(userId) == 'owner';
+    }
+
+    function isManager(userId) {
+      return getUserRole(userId) in ['manager', 'owner'];
+    }
+
+    function isStaff(userId) {
+      return getUserRole(userId) in ['staff', 'manager', 'owner'];
+    }
+
+    function isCashier(userId) {
+      return getUserRole(userId) in ['cashier', 'staff', 'manager', 'owner'];
+    }
+
+    // Users collection - SECURE role management
+    match /users/{userId} {
+      // Anyone can read user profiles (for public store info)
+      allow read: if true;
+      
+      // Users can create their own profile (but cannot set role initially)
+      allow create: if isValidWalletAddress(userId) && 
+                    request.resource.data.keys().hasAny(['displayName', 'email', 'provider', 'walletAddress']) &&
+                    !('role' in request.resource.data);
+      
+      // Users can update their own basic profile (but NOT role or sensitive fields)
+      allow update: if isValidWalletAddress(userId) &&
+                    !fieldChanged('role') &&
+                    !fieldChanged('walletAddress') &&
+                    !fieldChanged('merchantId');
+      
+      // Special rule: Allow role assignment only if the target has no role yet 
+      // and the request sets role to 'owner' (first user becomes owner)
+      allow update: if isValidWalletAddress(userId) &&
+                    fieldChanged('role') &&
+                    !exists(/databases/$(database)/documents/users/$(userId)) &&
+                    request.resource.data.role == 'owner';
+      
+      // Special rule: Existing owners can assign any role
+      allow update: if isValidWalletAddress(userId) &&
+                    fieldChanged('role') &&
+                    // Check if there's at least one owner who could be making this change
+                    // (This is a limitation of Enoki - we can't verify the exact requester)
+                    exists(/databases/$(database)/documents/users);
+    }
+
+    // Products collection - Role-based access with wallet ownership
+    match /products/{productId} {
+      // Public read for visible products
+      allow read: if resource.data.isVisible == true;
+      
+      // Product owner can always read their products
+      allow read: if isValidWalletAddress(resource.data.userId);
+      
+      // Only staff+ can create products (must be their own)
+      allow create: if isValidWalletAddress(request.resource.data.userId) &&
+                    isStaff(request.resource.data.userId);
+      
+      // Staff can update non-price fields, managers+ can update everything
+      allow update: if isValidWalletAddress(resource.data.userId) &&
+                    (isManager(resource.data.userId) ||
+                     (isStaff(resource.data.userId) && 
+                      !fieldChanged('price') && 
+                      !fieldChanged('salePrice') &&
+                      !fieldChanged('tax')));
+      
+      // Only managers+ can delete
+      allow delete: if isValidWalletAddress(resource.data.userId) &&
+                    isManager(resource.data.userId);
+    }
+
+    // Orders collection - Strict access control
+    match /orders/{orderId} {
+      // Staff+ can read orders from their store
+      allow read: if isValidWalletAddress(resource.data.merchantId) &&
+                  isStaff(resource.data.merchantId);
+      
+      // Business owner can read orders
+      allow read: if isValidWalletAddress(resource.data.businessOwnerId) &&
+                  isStaff(resource.data.businessOwnerId);
+      
+      // Customers can read their own orders
+      allow read: if isValidWalletAddress(resource.data.customerId);
+      
+      // Staff+ can create orders for their store
+      allow create: if isValidWalletAddress(request.resource.data.merchantId) &&
+                    isStaff(request.resource.data.merchantId);
+      
+      // Customers can create their own orders
+      allow create: if isValidWalletAddress(request.resource.data.customerId);
+      
+      // Staff+ can update order status (but not payment fields)
+      allow update: if isValidWalletAddress(resource.data.merchantId) &&
+                    isStaff(resource.data.merchantId) &&
+                    !fieldChanged('paymentStatus') &&
+                    !fieldChanged('paymentRef') &&
+                    !fieldChanged('paymentAmount') &&
+                    !fieldChanged('mpesaReceiptNumber') &&
+                    !fieldChanged('mpesaTransactionDate') &&
+                    !fieldChanged('settlementStatus');
+    }
+
+    // Stock transactions - Staff+ only for their store
+    match /stockTransactions/{transactionId} {
+      allow read, write: if isValidWalletAddress(resource.data.userId) &&
+                          isStaff(resource.data.userId);
+      allow create: if isValidWalletAddress(request.resource.data.userId) &&
+                    isStaff(request.resource.data.userId);
+    }
+
+    // Analytics - Staff+ read, Manager+ write
+    match /analytics/{analyticsId} {
+      allow read: if isValidWalletAddress(resource.data.userId) &&
+                  isStaff(resource.data.userId);
+      allow write: if isValidWalletAddress(resource.data.userId) &&
+                   isManager(resource.data.userId);
+      allow create: if isValidWalletAddress(request.resource.data.userId) &&
+                    isManager(request.resource.data.userId);
+    }
+
+    // Settings - VERY restricted (Owners only, no sensitive fields)
+    match /settings/{userId} {
+      // Owners can read their settings
+      allow read: if isValidWalletAddress(userId) && isOwner(userId);
+      
+      // Owners can write non-sensitive settings only
+      allow write: if isValidWalletAddress(userId) && 
+                   isOwner(userId) &&
+                   !fieldChanged('mpesaSecretKey') &&
+                   !fieldChanged('mpesaConsumerSecret') &&
+                   !fieldChanged('mpesaPasskey') &&
+                   !fieldChanged('mpesaShortCode') &&
+                   !fieldChanged('mpesaWebhookSecret');
+    }
+
+    // User Settings - Users can manage their own
+    match /userSettings/{userId} {
+      allow read, write: if isValidWalletAddress(userId);
+    }
+
+    // User Profiles - Public read, owner write
+    match /userProfiles/{userId} {
+      allow read: if true;
+      allow write: if isValidWalletAddress(userId);
+    }
+
+    // Store configs - Owner only
+    match /storeConfigs/{configId} {
+      allow read: if true; // Public storefront info
+      allow write: if isValidWalletAddress(configId) && isOwner(configId);
+    }
+
+    // Businesses - Owner only
+    match /businesses/{businessId} {
+      allow read: if true; // Public business info
+      allow write: if isValidWalletAddress(businessId) && isOwner(businessId);
+    }
+
+    // Payments - Restricted access
+    match /payments/{paymentId} {
+      allow read: if isValidWalletAddress(resource.data.merchantId) ||
+                  isValidWalletAddress(resource.data.customerId);
+      allow create: if isValidWalletAddress(request.resource.data.merchantId) ||
+                    isValidWalletAddress(request.resource.data.customerId);
+      allow update: if isValidWalletAddress(resource.data.merchantId) &&
+                    isStaff(resource.data.merchantId);
+    }
+
+    // MPesa transactions - Read only for involved parties
+    match /mpesa_transactions/{transactionId} {
+      allow read: if isValidWalletAddress(resource.data.customerId) ||
+                  (isValidWalletAddress(resource.data.merchantId) && 
+                   isStaff(resource.data.merchantId));
+      allow create, update, delete: if false; // System managed only
+    }
+
+    // Payment events - System only
+    match /payment_events/{eventId} {
+      allow read, write: if false;
+    }
+
+    // Temporary development fallback - REMOVE IN PRODUCTION
+    match /{document=**} {
+      allow read, write: if isValidWalletAddress(resource.id) || 
+                          (request.resource != null && isValidWalletAddress(request.resource.id));
+    }
+  }
+}

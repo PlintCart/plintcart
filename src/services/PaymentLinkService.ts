@@ -66,7 +66,7 @@ export class PaymentLinkService {
     paymentUrl: string
   ): string {
     const itemText = quantity > 1 ? `${quantity}x ${product.name}` : product.name;
-    const storeUrl = `${window.location.origin}/storefront/${product.userId}`;
+    const storeUrl = `${window.location.origin}/store/${product.userId}`;
     return `🛍️ *${itemText}*\n💰 Total: $${totalAmount.toFixed(2)}\n\n🔗 Pay instantly: ${paymentUrl}\n\n🏪 Visit store: ${storeUrl}\n\nClick the links to pay with M-Pesa or browse more products!`;
   }
 

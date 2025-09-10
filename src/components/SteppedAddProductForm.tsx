@@ -4,9 +4,10 @@ import { Form } from "@/components/ui/form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { collection, addDoc, doc, getDoc, updateDoc } from "firebase/firestore";
-import { db, auth } from "@/lib/firebase";
+import { db } from "@/lib/firebase";
 import { StockManagementService } from "@/services/StockManagementService";
 import { useSettings } from "@/contexts/SettingsContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Stepper } from "@/components/ui/stepper";
@@ -104,6 +105,7 @@ export function SteppedAddProductForm({ productId, onSuccess, onCancel }: Steppe
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { settings } = useSettings();
+  const { user } = useAuth();
 
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -222,9 +224,6 @@ export function SteppedAddProductForm({ productId, onSuccess, onCancel }: Steppe
   };
 
   const uploadImage = async (file: File): Promise<string> => {
-    const user = auth.currentUser;
-    if (!user) throw new Error("User not authenticated");
-
     const maxFileSize = 2 * 1024 * 1024; // 2MB
     if (file.size > maxFileSize) {
       throw new Error("Image file is too large. Please choose an image smaller than 2MB.");
@@ -286,12 +285,11 @@ export function SteppedAddProductForm({ productId, onSuccess, onCancel }: Steppe
   console.log("DEBUG: imagePreview", imagePreview);
     setIsLoading(true);
     try {
-      const user = auth.currentUser;
-      if (!user) {
-        toast.error("User not authenticated");
-        console.log("User not authenticated");
+      if (!user || !user.uid) {
+        toast.error('Please sign in to add products');
         return;
       }
+
       let imageUrl = imagePreview; // Keep existing image if no new file uploaded
       if (imageFile) {
         imageUrl = await uploadImage(imageFile);
@@ -299,7 +297,7 @@ export function SteppedAddProductForm({ productId, onSuccess, onCancel }: Steppe
       const productData = {
         ...data,
         imageUrl,
-        userId: user.uid,
+        userId: user.uid, // Use actual authenticated user ID
         updatedAt: new Date(),
         currency: settings.currency || 'usd',
       };

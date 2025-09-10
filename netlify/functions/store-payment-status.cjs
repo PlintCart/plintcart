@@ -3,11 +3,26 @@
 
 const admin = require('firebase-admin');
 
-// Initialize Firebase Admin (you'll need to add your service account)
+// Initialize Firebase Admin using Service Account JSON (required)
 if (!admin.apps.length) {
+  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  if (!serviceAccountJson) {
+    throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON environment variable required');
+  }
+  let creds;
+  try {
+    creds = JSON.parse(serviceAccountJson);
+  } catch (e) {
+    console.error('Invalid FIREBASE_SERVICE_ACCOUNT_JSON format');
+    throw e;
+  }
   admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
-    databaseURL: 'https://plintcart-default-rtdb.firebaseio.com'
+    credential: admin.credential.cert({
+      projectId: creds.project_id,
+      clientEmail: creds.client_email,
+      privateKey: creds.private_key && creds.private_key.replace(/\\n/g, '\n'),
+    }),
+    projectId: creds.project_id,
   });
 }
 

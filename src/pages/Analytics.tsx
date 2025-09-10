@@ -7,9 +7,7 @@ import pdfMake from 'pdfmake/build/pdfmake';
 import pdfFonts from 'pdfmake/build/vfs_fonts';
 pdfMake.vfs = pdfFonts.vfs;
 import { Badge } from '@/components/ui/badge';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '@/lib/firebase';
-// ...existing code...
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { AdminLayout } from '@/components/AdminLayout';
 
@@ -42,7 +40,7 @@ interface AnalyticsData {
 }
 
 function Analytics() {
-	const [user] = useAuthState(auth);
+	const { user } = useAuth();
 	const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | '1y'>('30d');
@@ -60,7 +58,7 @@ function Analytics() {
 		try {
 			setLoading(true);
 			// Fetch sales metrics for the current merchant
-			const metrics: SalesMetrics = await SalesAnalyticsService.getSalesMetrics(user.uid);
+			const metrics: SalesMetrics = await SalesAnalyticsService.getSalesMetrics(user.id);
 
 			// Calculate monthly stats (last 30 days)
 			const now = new Date();
@@ -71,9 +69,27 @@ function Analytics() {
 
 			// Aggregate sales by calendar month using stockTransactions
 			const transactionsRef = collection(db, 'stockTransactions');
+			
+			// Guard against undefined user.id
+			if (!user?.id) {
+				console.warn('⚠️ User ID is undefined, skipping analytics query');
+				setAnalyticsData({
+					totalRevenue: 0,
+					monthlyRevenue: 0,
+					totalOrders: 0,
+					monthlyOrders: 0,
+					averageOrderValue: 0,
+					topProducts: [],
+					revenueByMonth: [],
+					userGrowth: []
+				});
+				setLoading(false);
+				return;
+			}
+			
 			const transactionsQuery = query(
 				transactionsRef,
-				where('userId', '==', user.uid),
+				where('userId', '==', user.id),
 				where('type', '==', 'sold')
 			);
 			const transactionsSnapshot = await getDocs(transactionsQuery);

@@ -1,10 +1,18 @@
 import { Handler } from '@netlify/functions';
-import admin from 'firebase-admin';
+import { initializeApp, getApps } from 'firebase/app';
+import { getFirestore, collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import crypto from 'crypto';
 
-if (!admin.apps.length) {
-  const svc = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '{}');
-  admin.initializeApp({ credential: admin.credential.cert(svc) });
+// Initialize Firebase (client SDK)
+if (!getApps().length) {
+  initializeApp({
+    apiKey: process.env.VITE_FIREBASE_API_KEY,
+    authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: process.env.VITE_FIREBASE_APP_ID
+  });
 }
 
 export const handler: Handler = async (event) => {
@@ -26,15 +34,15 @@ export const handler: Handler = async (event) => {
     const token = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-    const db = admin.firestore();
+    const db = getFirestore();
 
     // Store invitation
-    await db.collection(`merchants/${merchantId}/invites`).doc(token).set({
+    await setDoc(doc(db, `merchants/${merchantId}/invites`, token), {
       email,
       role,
       token,
       expiresAt,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: serverTimestamp(),
       status: 'pending'
     });
 

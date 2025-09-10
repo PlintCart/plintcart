@@ -1,10 +1,29 @@
-import { ReactNode } from 'react';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { auth } from '../lib/firebase'; // Adjust path to your Firebase config
+import { ReactNode, useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { getUserRole } from '@/lib/zkRoles';
 
 export function RoleGate({ allow, children }: { allow: string[]; children: ReactNode }) {
-  const [user, loading] = useAuthState(auth);
+  const { user } = useAuth();
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRole = async () => {
+      if (!user) {
+        setUserRole(null);
+        setLoading(false);
+        return;
+      }
+      
+      const role = await getUserRole(user.id);
+      setUserRole(role);
+      setLoading(false);
+    };
+    
+    fetchRole();
+  }, [user]);
+
   if (loading) return <div>Loading...</div>;
-  const role = (user as any)?.stsTokenManager?.claims?.role || (user as any)?.role;
-  return allow.includes(role) ? <>{children}</> : null;
+  
+  return (userRole && allow.includes(userRole)) ? <>{children}</> : null;
 }

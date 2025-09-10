@@ -1,194 +1,185 @@
-import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { db } from "@/lib/firebase";
-import { doc, setDoc, getDoc } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Loader2 } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
-
-const signInSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-});
-
-type SignInFormData = z.infer<typeof signInSchema>;
+import { FaFacebook } from "react-icons/fa";
+import { getUserRole } from "@/lib/zkRoles";
+import { useState, useEffect } from "react";
 
 interface AuthModalProps {
-  mode: 'signin' | 'signup';
-  onModeChange: (mode: 'signin' | 'signup') => void;
+  mode: "signin" | "signup";
+  onModeChange: (mode: "signin" | "signup") => void;
   onSuccess: () => void;
 }
 
 export function AuthModal({ mode, onModeChange, onSuccess }: AuthModalProps) {
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const { signIn, signUp, signInWithGoogle } = useAuth();
+  const { user, signInWithGoogle, signInWithFacebook, logout, loading } = useAuth();
+  const [userRole, setUserRole] = useState<string | null>(null);
 
-  const form = useForm<SignInFormData>({
-    resolver: zodResolver(signInSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
-
-  const onSubmit = async (data: SignInFormData) => {
-    try {
-      setLoading(true);
-      let userCredential;
-      if (mode === 'signin') {
-        await signIn(data.email, data.password);
-      } else {
-        userCredential = await signUp(data.email, data.password);
-        // After signup, create Firestore user document if not exists
-        const user = userCredential?.user;
-        if (user) {
-          const userDocRef = doc(db, "users", user.uid);
-          const userDocSnap = await getDoc(userDocRef);
-          if (!userDocSnap.exists()) {
-            await setDoc(userDocRef, {
-              email: user.email,
-              createdAt: new Date(),
-              subscriptionTier: "free",
-              subscriptionStatus: "active"
-            });
-          }
+  useEffect(() => {
+    const fetchRole = async () => {
+      if (user) {
+        try {
+          const role = await getUserRole(user.id);
+          setUserRole(role);
+        } catch (error) {
+          console.error("Error fetching user role:", error);
+          setUserRole(null);
         }
+      } else {
+        setUserRole(null);
       }
-      onSuccess();
-    } catch (error) {
-      // Error is handled in the auth context
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+    fetchRole();
+  }, [user?.id]); // Only depend on user.id to prevent unnecessary re-runs
 
-  const handleGoogleSignIn = async () => {
+  const handleConnectGoogle = async () => {
     try {
-      setLoading(true);
       await signInWithGoogle();
       onSuccess();
     } catch (error) {
-      // Error is handled in the auth context
-    } finally {
-      setLoading(false);
+      console.error("Google connection error:", error);
     }
   };
+
+  const handleConnectFacebook = async () => {
+    try {
+      await signInWithFacebook();
+      onSuccess();
+    } catch (error) {
+      console.error("Facebook connection error:", error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
+  // If user is already authenticated, show user info
+  if (user) {
+    return (
+      <Card className="w-full max-w-md mx-auto">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold">Welcome Back!</CardTitle>
+          <p className="text-muted-foreground">You're already signed in</p>
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2">
+              <Badge variant="outline">Connected</Badge>
+              <Badge variant={userRole ? "default" : "secondary"}>
+                Role: {userRole || 'None'}
+              </Badge>
+            </div>
+
+            <div className="text-sm space-y-1">
+              <p><strong>User ID:</strong> {user.id}</p>
+              <p><strong>Address:</strong> {user.address}</p>
+              <p><strong>Display Name:</strong> {user.displayName}</p>
+              <p><strong>Role:</strong> {userRole || 'Loading...'}</p>
+            </div>
+
+            <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-xs text-green-800">
+              <strong>✅ Success!</strong> User authenticated and document created in Firestore.
+              <br />
+              <strong>Next:</strong> Go to <a href="/staff/manage" className="underline">Staff Management</a> to assign roles.
+            </div>
+
+            <Button onClick={handleLogout} variant="outline" className="w-full">
+              Logout
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="w-full max-w-md mx-auto">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">
-          {mode === 'signin' ? 'Welcome Back' : 'Create Account'}
+          {mode === "signin" ? "Welcome Back" : "Create Account"}
         </CardTitle>
         <p className="text-muted-foreground">
-          {mode === 'signin' 
-            ? 'Sign in to your plint account' 
-            : 'Start managing your business today'
-          }
+          {mode === "signin"
+            ? "Sign in to continue"
+            : "Start by connecting your account"}
         </p>
       </CardHeader>
+
       <CardContent className="space-y-6">
         {/* Google Sign In */}
         <Button
           type="button"
           variant="outline"
-          className="w-full"
-          onClick={handleGoogleSignIn}
+          className="w-full flex items-center justify-center"
+          onClick={handleConnectGoogle}
           disabled={loading}
         >
-          <FcGoogle className="w-5 h-5 mr-2" />
-          Continue with Google
+          {loading ? (
+            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+          ) : (
+            <FcGoogle className="w-5 h-5 mr-2" />
+          )}
+          {loading ? "Connecting..." : "Continue with Google"}
         </Button>
 
+        {/* Facebook Sign In */}
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full flex items-center justify-center"
+          onClick={handleConnectFacebook}
+          disabled={loading}
+        >
+          {loading ? (
+            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+          ) : (
+            <FaFacebook className="w-5 h-5 mr-2 text-[#1877F2]" />
+          )}
+          {loading ? "Connecting..." : "Continue with Facebook"}
+        </Button>
+
+        {/* Divider */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-background px-2 text-muted-foreground">
-              Or continue with email
+              Or continue later
             </span>
           </div>
         </div>
 
-        {/* Email/Password Form */}
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Enter your email"
-                        className="pl-10"
-                        {...field}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Enter your password"
-                        className="pl-10 pr-10"
-                        {...field}
-                      />
-                      <button
-                        type="button"
-                        className="absolute right-3 top-3 h-4 w-4 text-muted-foreground hover:text-foreground"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? <EyeOff /> : <Eye />}
-                      </button>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Loading...' : mode === 'signin' ? 'Sign In' : 'Create Account'}
-            </Button>
-          </form>
-        </Form>
-
-        {/* Mode Switch */}
+        {/* Switch Sign In / Sign Up */}
         <div className="text-center text-sm">
           <span className="text-muted-foreground">
-            {mode === 'signin' ? "Don't have an account? " : "Already have an account? "}
+            {mode === "signin"
+              ? "Don’t have an account? "
+              : "Already have an account? "}
           </span>
           <button
             type="button"
             className="text-primary hover:underline font-medium"
-            onClick={() => onModeChange(mode === 'signin' ? 'signup' : 'signin')}
+            onClick={() =>
+              onModeChange(mode === "signin" ? "signup" : "signin")
+            }
           >
-            {mode === 'signin' ? 'Sign up' : 'Sign in'}
+            {mode === "signin" ? "Sign up" : "Sign in"}
           </button>
+        </div>
+
+        {/* Development Mode Warning */}
+        <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+          <strong>💡 Development Mode:</strong> If Enoki API key fails, a mock user will be created for testing staff management features.
         </div>
       </CardContent>
     </Card>

@@ -4,6 +4,7 @@ import { Smartphone, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { Product } from '@/types/product';
 import { ProductSharingService } from '@/lib/productSharing';
+import { getCurrencySymbol } from '@/lib/utils';
 
 interface WhatsAppStorefrontShareProps {
   product: Product;
@@ -27,6 +28,13 @@ export function WhatsAppStorefrontShare({
   
   const handleWhatsAppShare = async () => {
     try {
+      // Guard against undefined userId
+      if (!product.userId) {
+        console.warn('⚠️ Product userId is undefined, cannot generate store URL');
+        toast.error('Unable to generate store link - missing user data');
+        return;
+      }
+      
       // Generate enhanced message with only storefront link
       const storeUrl = `${window.location.origin}/store/${product.userId}`; // Only storefront link
       const currencySymbol = getCurrencySymbol(businessSettings?.currency || 'usd');

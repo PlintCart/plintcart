@@ -149,11 +149,11 @@ exports.handler = async (event, context) => {
     console.log(`  description: "${requestData.description}" (type: ${typeof requestData.description})`);
     console.log(`  merchantSettings: ${JSON.stringify(requestData.merchantSettings)} (type: ${typeof requestData.merchantSettings})`);
 
-    // Handle both direct and nested data structures  
-    const phoneNumber = requestData.phoneNumber;
-    const amount = requestData.amount;
-    const orderId = requestData.orderId;
-    const description = requestData.description || `Payment for order ${orderId}`;
+  // Handle both direct and alternative field names
+  const phoneNumber = requestData.phoneNumber || requestData.phone;
+  const amount = requestData.amount;
+  const orderId = requestData.orderId || requestData.reference || requestData.orderRef;
+  const description = requestData.description || `Payment for order ${orderId}`;
 
     console.log('📱 Extracted payment data:', { phoneNumber, amount, orderId, description });
     console.log('📱 Data types:', { 
@@ -249,8 +249,9 @@ exports.handler = async (event, context) => {
     console.log('🕐 Timestamp:', timestamp);
     console.log('🏢 Business short code:', process.env.MPESA_BUSINESS_SHORT_CODE);
 
-    // STK Push data
-    const stkPushData = {
+  // STK Push data (use env callback URL or infer from request)
+  const callBackUrl = process.env.MPESA_CALLBACK_URL || `${event.headers['x-forwarded-proto'] || 'http'}://${event.headers.host}/.netlify/functions/mpesa-callback`;
+  const stkPushData = {
       BusinessShortCode: process.env.MPESA_BUSINESS_SHORT_CODE,
       Password: password,
       Timestamp: timestamp,
@@ -259,7 +260,7 @@ exports.handler = async (event, context) => {
       PartyA: formattedPhone,
       PartyB: process.env.MPESA_BUSINESS_SHORT_CODE,
       PhoneNumber: formattedPhone,
-      CallBackURL: process.env.MPESA_CALLBACK_URL,
+  CallBackURL: callBackUrl,
       AccountReference: orderId,
       TransactionDesc: description || `Payment for order ${orderId}`
     };
@@ -287,6 +288,7 @@ exports.handler = async (event, context) => {
         res.on('end', () => {
           console.log('📥 M-Pesa STK response status:', res.statusCode);
           console.log('📥 M-Pesa STK response data:', data);
+          console.log('Callback URL used:', callBackUrl);
           try {
             const response = JSON.parse(data);
             resolve(response);
@@ -309,6 +311,39 @@ exports.handler = async (event, context) => {
 
     // Check if STK push was successful
     if (stkResponse.ResponseCode === '0') {
+      // Optionally create a pending payment doc for correlation
+      try {
+        const admin = require('firebase-admin');
+        if (!admin.apps.length) {
+          const sa = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+          if (sa) {
+            const creds = JSON.parse(sa);
+            admin.initializeApp({
+              credential: admin.credential.cert({
+                projectId: creds.project_id,
+                clientEmail: creds.client_email,
+                privateKey: creds.private_key && creds.private_key.replace(/\\n/g, '\n'),
+              }),
+              projectId: creds.project_id,
+            });
+          }
+        }
+        if (admin.apps.length) {
+          const db = admin.firestore();
+          await db.collection('payments').add({
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            status: 'pending',
+            paymentMethod: 'mpesa',
+            amount: numAmount,
+            mpesaPhoneNumber: formattedPhone,
+            orderId,
+            checkoutRequestId: stkResponse.CheckoutRequestID,
+          });
+        }
+      } catch (e) {
+        console.warn('Could not write pending payment doc:', e.message);
+      }
       return {
         statusCode: 200,
         headers,
