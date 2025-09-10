@@ -19,6 +19,7 @@ export interface EnokiUser {
 interface AuthContextType {
   user: EnokiUser | null;
   loading: boolean;
+  authReady: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
@@ -48,6 +49,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const { mutateAsync: disconnect } = useDisconnectWallet();
   const [user, setUser] = useState<EnokiUser | null>(null);
   const [loading, setLoading] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
 
   const walletsByProvider = wallets.reduce(
     (map, wallet) => map.set(wallet.provider, wallet),
@@ -96,7 +98,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         // Ensure Firebase custom token sign-in (only if not already signed in)
-        try {
+  try {
           if (auth.currentUser?.uid !== currentAccount.address) {
             await signInWithWallet(currentAccount.address, provider);
           }
@@ -145,6 +147,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       } else {
         setUser(null);
       }
+      // Mark auth as initialized after processing the account (present or not)
+      setAuthReady(true);
     };
 
     handleAccountChange();
@@ -172,8 +176,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('🔐 Attempting Google Sign-In with Enoki...');
 
       // Actually connect to Google wallet (not development mode)
-      await connect({ wallet: googleWallet });
+      const result = await connect({ wallet: googleWallet });
       toast.success('✅ Google Sign-In successful! Wallet connected.');
+
+      // Wait briefly for Firebase custom token sign-in to complete (effect triggers it)
+      try {
+        const target = currentAccount?.address;
+        const timeoutMs = 6000;
+        const start = Date.now();
+        while (target && auth.currentUser?.uid !== target && Date.now() - start < timeoutMs) {
+          await new Promise((r) => setTimeout(r, 150));
+        }
+        if (target && auth.currentUser?.uid === target) {
+          console.log('✅ Firebase auth matched connected Google wallet');
+        } else {
+          console.warn('⚠️ Firebase auth did not match wallet within timeout');
+        }
+      } catch (waitErr) {
+        console.warn('⚠️ Error waiting for Firebase auth after Google connect:', waitErr);
+      }
 
     } catch (error: any) {
       console.error('❌ Google Sign-In error:', error);
@@ -232,6 +253,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setLoading(true);
       await connect({ wallet: facebookWallet });
       toast.success('Facebook Sign-In successful!');
+
+      // Wait briefly for Firebase custom token sign-in to complete (effect triggers it)
+      try {
+        const target = currentAccount?.address;
+        const timeoutMs = 6000;
+        const start = Date.now();
+        while (target && auth.currentUser?.uid !== target && Date.now() - start < timeoutMs) {
+          await new Promise((r) => setTimeout(r, 150));
+        }
+        if (target && auth.currentUser?.uid === target) {
+          console.log('✅ Firebase auth matched connected Facebook wallet');
+        } else {
+          console.warn('⚠️ Firebase auth did not match wallet within timeout');
+        }
+      } catch (waitErr) {
+        console.warn('⚠️ Error waiting for Firebase auth after Facebook connect:', waitErr);
+      }
     } catch (error) {
       console.error('Facebook Sign-In error:', error);
       toast.error('Failed to sign in with Facebook.');
@@ -263,6 +301,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const value: AuthContextType = {
     user,
     loading,
+  authReady,
     signIn,
     signUp,
     signInWithGoogle,

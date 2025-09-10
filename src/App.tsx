@@ -99,7 +99,8 @@ const App = () => {
   // Clear Firebase cache on app startup to ensure fresh data
   useEffect(() => {
     const shouldClearCache = sessionStorage.getItem('firebase-cache-cleared');
-    if (!shouldClearCache) {
+  const onAuthRoute = typeof window !== 'undefined' && window.location.pathname.startsWith('/auth');
+  if (!shouldClearCache && !onAuthRoute) {
       clearAllFirebaseCache().then(() => {
         sessionStorage.setItem('firebase-cache-cleared', 'true');
         console.log('🔄 Firebase cache cleared for new project');
