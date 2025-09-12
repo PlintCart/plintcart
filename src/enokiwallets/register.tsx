@@ -27,8 +27,10 @@ export function RegisterEnokiWallets() {
       providers: {
         google: {
           clientId: import.meta.env.VITE_PUBLIC_GOOGLE_CLIENT_ID!,
-          // Explicitly set redirect URL
-          redirectUrl: 'http://localhost:8080',
+          // Use dynamic redirect URL based on environment
+          redirectUrl: import.meta.env.DEV 
+            ? 'http://localhost:8080'
+            : 'https://plintcart.netlify.app',
         },
         // Temporarily disable Facebook to isolate the issue
         // facebook: {

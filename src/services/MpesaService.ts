@@ -134,8 +134,13 @@ export class MpesaService {
     try {
       console.log('🚀 MpesaService.initiatePayment called with:', request);
       
+      // Use explicit URLs for development and production
+      const url = import.meta.env.DEV 
+        ? "http://localhost:8888/.netlify/functions/emergency-stk"
+        : "https://plintcart.netlify.app/.netlify/functions/emergency-stk";
+      
       // EMERGENCY: Use simplified function with correct data format
-      const response = await fetch("http://localhost:8888/.netlify/functions/emergency-stk", {
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -206,8 +211,12 @@ export class MpesaService {
     try {
       console.log('🔍 Checking payment status for:', checkoutRequestId);
       
-      // BACK TO WORKING VERSION for boss demo
-      const response = await fetch(`/.netlify/functions/mpesa-status-simple-fix/${checkoutRequestId}`);
+      // Use explicit URLs for development and production
+      const baseUrl = import.meta.env.DEV 
+        ? "http://localhost:8888"
+        : "https://plintcart.netlify.app";
+      
+      const response = await fetch(`${baseUrl}/.netlify/functions/mpesa-status-simple-fix/${checkoutRequestId}`);
       
       if (!response.ok) {
         console.error('❌ Status check failed:', response.status, response.statusText);

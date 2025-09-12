@@ -34,14 +34,17 @@ const analyticsInstance = getAnalytics(app);
 // Initialize Auth immediately (for custom token sign-in)
 const authInstance = getAuth(app);
 
-// Connect to emulator if in development
+// Connect to emulator only in development with explicit flag
 if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATOR === 'true') {
   try {
+    console.log('🔧 Attempting to connect to Firestore emulator...');
     connectFirestoreEmulator(dbInstance, "localhost", 8080);
     console.log('🔧 Connected to Firestore emulator');
   } catch (error) {
     console.log('Firestore emulator connection failed:', error);
   }
+} else {
+  console.log('🌐 Using production Firestore (emulator disabled)');
 }
 
 console.log('✅ All Firebase services initialized synchronously');
