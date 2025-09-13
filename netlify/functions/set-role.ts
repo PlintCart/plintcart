@@ -24,7 +24,7 @@ export const handler: Handler = async (event) => {
     // Basic validation
     if (!uid || !merchantId || !role) return { statusCode: 400, body: 'Missing fields' };
 
-    // Store role in Firestore (no more custom claims since we're using zkLogin)
+    // Store role in Firestore (Firebase auth with Firestore roles)
     const db = getFirestore();
     
     // Store the user's role in the roles collection

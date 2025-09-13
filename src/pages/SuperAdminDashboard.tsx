@@ -1,257 +1,282 @@
-
-import { useEffect, useState } from "react";
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { AdminLayout } from '../components/AdminLayout';
+import { useAuth } from '../contexts/AuthContext';
+import { can } from '../lib/roles';
+import type { Role } from '../lib/roles';
+import { toast } from 'sonner';
+import { getUserRole } from '../lib/roles';
+import { Users, AlertTriangle, BarChart3, MessageSquare } from 'lucide-react';
 import { db } from "@/lib/firebase";
-import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
-import { AdminSidebar } from "@/components/AdminSidebar";
+import { collection, getDocs, doc, updateDoc, query, where } from "firebase/firestore";
+
+interface Owner {
+  uid: string;
+  email: string;
+  displayName: string;
+  isActive: boolean;
+  staff: string[];
+  joinedAt: Date;
+}
 
 const SuperAdminDashboard = () => {
-  const [users, setUsers] = useState<any[]>([]);
+  const { user } = useAuth();
+  const [currentRole, setCurrentRole] = useState<string | null>(null);
+  const [owners, setOwners] = useState<Owner[]>([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    activeSubscriptions: 0,
-    totalRevenue: 0,
-    expiringSoon: 0,
-  });
-  const [modal, setModal] = useState<null | {
-    action: "deactivate" | "upgrade" | "downgrade" | "view";
-    userId: string;
-  }>(null);
-
-  const handleDowngrade = (userId: string) => {
-    setModal({ action: "downgrade", userId });
-  };
-  // User management handlers
-  const handleDeactivate = (userId: string) => {
-    setModal({ action: "deactivate", userId });
-  };
-  const handleUpgrade = (userId: string) => {
-    setModal({ action: "upgrade", userId });
-  };
-  const handleViewDetails = (userId: string) => {
-    setModal({ action: "view", userId });
-  };
-  const handleConfirm = async () => {
-    if (!modal) return;
-    if (modal.action === "upgrade") {
-      try {
-        const userRef = doc(db, "users", modal.userId);
-        await updateDoc(userRef, {
-          subscriptionTier: "premium",
-          subscriptionStatus: "upgraded"
-        });
-        setUsers(prev => prev.map(u =>
-          u.id === modal.userId
-            ? { ...u, subscriptionTier: "premium", subscriptionStatus: "upgrailded" }
-            : u
-        ));
-      } catch (err) {
-        alert("Failed to upgrade user: " + err);
-      }
-    } else if (modal.action === "downgrade") {
-      try {
-        const userRef = doc(db, "users", modal.userId);
-        await updateDoc(userRef, {
-          subscriptionTier: "free",
-          subscriptionStatus: "downgraded"
-        });
-        setUsers(prev => prev.map(u =>
-          u.id === modal.userId
-            ? { ...u, subscriptionTier: "free", subscriptionStatus: "downgraded" }
-            : u
-        ));
-      } catch (err) {
-        alert("Failed to downgrade user: " + err);
-      }
-    }
-    setModal(null);
-  };
-  const handleCancel = () => setModal(null);
+  const [suspendingOwner, setSuspendingOwner] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-  const snapshot = await getDocs(collection(db, "users"));
-  const userList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  console.log("Fetched users:", userList.map(u => u.id));
-  setUsers(userList);
-
-        // Analytics calculations
-        const now = Date.now();
-        let activeSubscriptions = 0;
-        let totalRevenue = 0;
-        let expiringSoon = 0;
-        userList.forEach(user => {
-          const u = user as any;
-          // Subscription status
-          let expires: Date | null = null;
-          if (u.subscriptionEnd && typeof u.subscriptionEnd === 'object' && typeof u.subscriptionEnd.toDate === 'function') {
-            expires = u.subscriptionEnd.toDate();
-          } else if (u.subscriptionExpires && typeof u.subscriptionExpires === 'object' && typeof u.subscriptionExpires.toDate === 'function') {
-            expires = u.subscriptionExpires.toDate();
-          }
-          if (expires && expires.getTime() > now) {
-            activeSubscriptions++;
-            // Expiring within 7 days
-            if (expires.getTime() - now < 7 * 24 * 60 * 60 * 1000) expiringSoon++;
-          }
-          // Revenue
-          if (u.lastPayment && typeof u.lastPayment === 'object' && u.lastPayment.amount) {
-            totalRevenue += Number(u.lastPayment.amount);
-          }
-        });
-        setStats({
-          totalUsers: userList.length,
-          activeSubscriptions,
-          totalRevenue,
-          expiringSoon,
-        });
-      } catch (err) {
-        console.error("Error fetching users:", err);
-      } finally {
-        setLoading(false);
-      }
+    const checkRole = async () => {
+      if (!user) return;
+      const role = await getUserRole(user.id);
+      setCurrentRole(role);
     };
-    fetchUsers();
+    checkRole();
+  }, [user]);
+
+  useEffect(() => {
+    fetchOwners();
   }, []);
 
-  return (
-    <div className="bg-background min-h-screen">
-      <div className="flex min-h-screen">
-  {/* Sidebar: always rendered, handles its own mobile logic */}
-  <AdminSidebar />
-        {/* Mobile sidebar overlay (handled by AdminSidebar itself) */}
-        <div className="flex-1 lg:ml-64 w-full">
-          <main className="p-4 sm:p-6 md:p-8 max-w-full">
-            <h1 className="text-2xl sm:text-3xl font-bold mb-4">Super Admin Dashboard</h1>
-            <p className="text-base sm:text-lg text-muted-foreground mb-8">Full management, supervision, and analytics for your business.</p>
-        {/* Analytics Widgets */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow p-4 flex flex-col items-center">
-          <div className="text-2xl font-bold">{stats.totalUsers}</div>
-          <div className="text-sm text-muted-foreground">Total Users</div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4 flex flex-col items-center">
-          <div className="text-2xl font-bold">{stats.activeSubscriptions}</div>
-          <div className="text-sm text-muted-foreground">Active Subscriptions</div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4 flex flex-col items-center">
-          <div className="text-2xl font-bold">KES {stats.totalRevenue.toLocaleString()}</div>
-          <div className="text-sm text-muted-foreground">Total Revenue</div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4 flex flex-col items-center">
-          <div className="text-2xl font-bold">{stats.expiringSoon}</div>
-          <div className="text-sm text-muted-foreground">Expiring Soon</div>
-        </div>
-      </div>
-            <div className="bg-white rounded-lg shadow p-4 sm:p-6 overflow-x-auto">
-        <h2 className="text-xl font-semibold mb-4">Subscriptions</h2>
-        {loading ? (
-          <div>Loading users...</div>
-        ) : (
-          <div className="overflow-x-auto">
-            <div className="mb-2 text-xs text-gray-500">Debug: Fetched {users.length} users: {users.map(u => u.id).join(", ")}</div>
-            <table className="min-w-full text-xs sm:text-sm">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="px-4 py-2 text-left">User</th>
-                  <th className="px-4 py-2 text-left">Tier</th>
-                  <th className="px-4 py-2 text-left">Status</th>
-                  <th className="px-4 py-2 text-left">Expires</th>
-                  <th className="px-4 py-2 text-left">Last Payment</th>
-                  <th className="px-4 py-2 text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map(user => {
-                  const u = user as any;
-                  return (
-                    <tr key={user.id} className="border-b">
-                      <td className="px-4 py-2">{u.email || u.phone || user.id}</td>
-                      <td className="px-4 py-2">{u.subscriptionTier || u.subscription || 'free'}</td>
-                      <td className="px-4 py-2">{u.subscriptionStatus || 'active'}</td>
-                      <td className="px-4 py-2">{u.subscriptionEnd?.toDate ? u.subscriptionEnd.toDate().toLocaleDateString() : (u.subscriptionExpires?.toDate ? u.subscriptionExpires.toDate().toLocaleDateString() : 'N/A')}</td>
-                      <td className="px-4 py-2">
-                        {u.lastPayment ? (
-                          <>
-                            <span>KES {u.lastPayment.amount}</span><br />
-                            <span>{u.lastPayment.mpesaReceiptNumber}</span><br />
-                            <span>{u.lastPayment.timestamp ? new Date(u.lastPayment.timestamp).toLocaleString() : ''}</span>
-                          </>
-                        ) : '—'}
-                      </td>
-                      <td className="px-4 py-2">
-                        <div className="flex gap-2">
-                          <button
-                            className="px-2 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
-                            onClick={() => handleDeactivate(user.id)}
-                          >Deactivate</button>
-                          <button
-                            className="px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
-                            onClick={() => handleUpgrade(user.id)}
-                          >Upgrade</button>
-                          <button
-                            className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200"
-                            onClick={() => handleDowngrade(user.id)}
-                          >Downgrade</button>
-                          <button
-                            className="px-2 py-1 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
-                            onClick={() => handleViewDetails(user.id)}
-                          >View</button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-        {/* Confirmation Modal OUTSIDE table */}
-  {modal && modal.action === "view" ? (
-        (() => {
-          const user = users.find(u => u.id === modal.userId);
-          if (!user) return null;
-          return (
-            <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-              <div className="bg-white rounded-lg shadow-lg p-6 min-w-[300px]">
-                <h3 className="text-lg font-semibold mb-4">User Details</h3>
-                <div className="mb-4">
-                  <div><span className="font-semibold">Email:</span> {user.email || user.phone || user.id}</div>
-                  <div><span className="font-semibold">Tier:</span> {user.subscriptionTier || user.subscription || 'free'}</div>
-                  <div><span className="font-semibold">Status:</span> {user.subscriptionStatus || 'active'}</div>
-                  <div><span className="font-semibold">Expires:</span> {user.subscriptionEnd?.toDate ? user.subscriptionEnd.toDate().toLocaleDateString() : (user.subscriptionExpires?.toDate ? user.subscriptionExpires.toDate().toLocaleDateString() : 'N/A')}</div>
-                  <div><span className="font-semibold">Last Payment:</span> {user.lastPayment ? `KES ${user.lastPayment.amount}, ${user.lastPayment.mpesaReceiptNumber}, ${user.lastPayment.timestamp ? new Date(user.lastPayment.timestamp).toLocaleString() : ''}` : '—'}</div>
-                </div>
-                <div className="flex gap-4 justify-end">
-                  <button className="px-4 py-2 bg-gray-200 rounded" onClick={handleCancel}>Close</button>
-                </div>
-              </div>
-            </div>
-          );
-        })()
-      ) : modal ? (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 min-w-[300px]">
-            <h3 className="text-lg font-semibold mb-4">Confirm Action</h3>
-            <p className="mb-6">
-              {modal.action === "deactivate" && "Are you sure you want to deactivate this user?"}
-              {modal.action === "upgrade" && "Are you sure you want to upgrade this user's subscription?"}
-              {modal.action === "downgrade" && "Are you sure you want to downgrade this user's subscription?"}
+  const fetchOwners = async () => {
+    try {
+      setLoading(true);
+      const ownersQuery = query(
+        collection(db, 'users'),
+        where('role', '==', 'owner')
+      );
+      const ownersSnapshot = await getDocs(ownersQuery);
+      
+      const ownersList = ownersSnapshot.docs.map(doc => ({
+        uid: doc.id,
+        ...doc.data(),
+        joinedAt: doc.data().signInTime?.toDate() || new Date(),
+      })) as Owner[];
+
+      setOwners(ownersList);
+    } catch (error) {
+      console.error('Error fetching owners:', error);
+      toast.error('Failed to load owners');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSuspendOwner = async (ownerId: string) => {
+    try {
+      setSuspendingOwner(ownerId);
+      const ownerRef = doc(db, 'users', ownerId);
+      await updateDoc(ownerRef, {
+        isActive: false,
+        suspendedAt: new Date(),
+        suspendedBy: user?.id
+      });
+      
+      await fetchOwners();
+      toast.success('Owner has been suspended');
+    } catch (error) {
+      console.error('Error suspending owner:', error);
+      toast.error('Failed to suspend owner');
+    } finally {
+      setSuspendingOwner(null);
+    }
+  };
+
+  const handleReactivateOwner = async (ownerId: string) => {
+    try {
+      setSuspendingOwner(ownerId);
+      const ownerRef = doc(db, 'users', ownerId);
+      await updateDoc(ownerRef, {
+        isActive: true,
+        reactivatedAt: new Date(),
+        reactivatedBy: user?.id
+      });
+      
+      await fetchOwners();
+      toast.success('Owner has been reactivated');
+    } catch (error) {
+      console.error('Error reactivating owner:', error);
+      toast.error('Failed to reactivate owner');
+    } finally {
+      setSuspendingOwner(null);
+    }
+  };
+
+  // Check if user has super admin access
+  if (!can.managePlatform(currentRole as Role)) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
+            <p className="text-muted-foreground">
+              You don't have permission to access the Super Admin Dashboard.
             </p>
-            <div className="flex gap-4 justify-end">
-              <button className="px-4 py-2 bg-gray-200 rounded" onClick={handleCancel}>Cancel</button>
-              <button className="px-4 py-2 bg-blue-600 text-white rounded" onClick={handleConfirm}>Confirm</button>
-            </div>
           </div>
         </div>
-        ) : null}
-          </main>
+      </AdminLayout>
+    );
+  }
+
+  return (
+    <AdminLayout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-semibold">
+            <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">Platform</span> Administration
+          </h1>
+          <p className="text-muted-foreground">Manage store owners, monitor platform activity, and handle feedback</p>
         </div>
+
+        {/* Platform Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Owners</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{owners.length}</div>
+              <p className="text-xs text-muted-foreground">
+                Active store owners on platform
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Staff</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {owners.reduce((acc, owner) => acc + (owner.staff?.length || 0), 0)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Staff members across all owners
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Platform Analytics</CardTitle>
+              <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">--</div>
+              <p className="text-xs text-muted-foreground">
+                Coming soon
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Feedback</CardTitle>
+              <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">--</div>
+              <p className="text-xs text-muted-foreground">
+                Customer feedback pending
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Owner Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Owner Management</CardTitle>
+            <CardDescription>
+              View and manage all store owners on the platform
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {loading ? (
+                <p className="text-muted-foreground text-center py-8">Loading owners...</p>
+              ) : owners.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">
+                  No owners found. Owners will appear here once they sign up.
+                </p>
+              ) : (
+                owners.map((owner) => (
+                  <div key={owner.uid} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <h3 className="font-medium">{owner.displayName}</h3>
+                        <Badge variant={owner.isActive ? "default" : "secondary"}>
+                          {owner.isActive ? "Active" : "Suspended"}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{owner.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {owner.staff?.length || 0} staff members
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {owner.isActive ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleSuspendOwner(owner.uid)}
+                          disabled={suspendingOwner === owner.uid}
+                        >
+                          <AlertTriangle className="h-4 w-4 mr-1" />
+                          Suspend
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleReactivateOwner(owner.uid)}
+                          disabled={suspendingOwner === owner.uid}
+                        >
+                          Reactivate
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Platform Analytics */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Platform Analytics</CardTitle>
+            <CardDescription>
+              Overview of platform performance and usage
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">Analytics dashboard coming soon...</p>
+          </CardContent>
+        </Card>
+
+        {/* Feedback Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Customer Feedback</CardTitle>
+            <CardDescription>
+              Review and respond to customer feedback and reports
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">Feedback management system coming soon...</p>
+          </CardContent>
+        </Card>
       </div>
-    </div>
+    </AdminLayout>
   );
-}
+};
 
 export default SuperAdminDashboard;

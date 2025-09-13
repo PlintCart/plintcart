@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Smartphone, CheckCircle, XCircle } from 'lucide-react';
 import { usePayment } from '@/hooks/usePayment';
@@ -120,6 +120,9 @@ export function PayNowButton({
             <Smartphone className="h-5 w-5 text-green-600" />
             M-Pesa Payment
           </DialogTitle>
+          <DialogDescription>
+            Enter your M-Pesa number to complete the payment.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">

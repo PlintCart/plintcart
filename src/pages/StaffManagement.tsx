@@ -5,11 +5,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '../contexts/AuthContext';
-import { can } from '../lib/zkRoles';
-import type { Role } from '../lib/zkRoles';
+import { can } from '../lib/roles';
+import type { Role } from '../lib/roles';
 import { toast } from 'sonner';
 import { AdminLayout } from '../components/AdminLayout';
-import { getUserRole } from '../lib/zkRoles';
+import { getUserRole } from '../lib/roles';
 
 export default function StaffManagement() {
   const { user } = useAuth();
@@ -18,7 +18,7 @@ export default function StaffManagement() {
   const [loading, setLoading] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
 
-  // Get current user's role using zkLogin system
+  // Get current user's role using Firebase auth
   useEffect(() => {
     const fetchRole = async () => {
       if (!user) {
@@ -44,7 +44,7 @@ export default function StaffManagement() {
     };
   }, [user]);
 
-  // Only owners can manage staff
+  // Only vendors can manage staff
   if (!can.manageStaff(currentRole as Role)) {
     return (
       <AdminLayout>
@@ -52,10 +52,10 @@ export default function StaffManagement() {
           <div className="bg-red-50 border border-red-200 rounded-lg p-4">
             <h2 className="text-red-800 font-medium">Access Restricted</h2>
             <p className="text-red-700 mt-1">
-              Only store owners can manage staff. Your current role: <strong>{currentRole || 'No role assigned'}</strong>
+              Only owners can manage staff. Your current role: <strong>{currentRole || 'No role assigned'}</strong>
             </p>
             <p className="text-red-600 text-sm mt-2">
-              If you need access to staff management, please contact your store owner.
+              If you need access to staff management, please contact your store owner or upgrade to an owner account.
             </p>
           </div>
         </div>
@@ -71,17 +71,17 @@ export default function StaffManagement() {
 
     setLoading(true);
     try {
-      // Get merchantId - for zkLogin, we'll use user.id as basis
+      // Get merchantId - for Firebase auth, we'll use user.id as basis
       let merchantId = null;
       
       if (user) {
-        // For zkLogin, create a merchant ID based on user ID
-        merchantId = 'merchant-' + user.id;
-        console.log('🔧 Using zkLogin merchantId:', merchantId);
+        // Use the user's UID as the vendor ID
+        merchantId = user.uid || user.id;
+        console.log('🔧 Using vendor ID:', merchantId);
       }
 
       if (!merchantId) {
-        toast.error('Unable to determine merchant ID');
+        toast.error('Unable to determine vendor ID');
         return;
       }
 
@@ -93,8 +93,8 @@ export default function StaffManagement() {
         },
         body: JSON.stringify({
           email: email.trim(),
-          role,
-          merchantId
+          role: 'staff', // All invitations are for staff role
+          vendorId: merchantId
         })
       });
 
@@ -156,10 +156,7 @@ export default function StaffManagement() {
                   <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="viewer">Viewer - Read-only access</SelectItem>
-                  <SelectItem value="cashier">Cashier - Order management</SelectItem>
-                  <SelectItem value="staff">Staff - Product and order management</SelectItem>
-                  <SelectItem value="manager">Manager - Full operational access</SelectItem>
+                  <SelectItem value="staff">Staff - Product and order management, customer support</SelectItem>
                 </SelectContent>
               </Select>
             </div>

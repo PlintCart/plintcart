@@ -5,6 +5,14 @@ import { useSuiClientContext } from '@mysten/dapp-kit';
 import { useEffect } from 'react';
 
 export function RegisterEnokiWallets() {
+  // Gate Enoki behind feature flag - default to Firebase auth
+  const AUTH_PROVIDER = import.meta.env.VITE_AUTH_PROVIDER || 'firebase';
+  
+  if (AUTH_PROVIDER !== 'enoki') {
+    console.log('🔧 Enoki disabled via VITE_AUTH_PROVIDER:', AUTH_PROVIDER);
+    return null;
+  }
+
   const { client, network } = useSuiClientContext();
 
   useEffect(() => {

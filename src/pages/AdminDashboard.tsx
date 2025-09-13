@@ -108,7 +108,7 @@ export default function AdminDashboard() {
                 </button>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                Your zkLogin wallet address for this session
+                Your Firebase user ID for this session
               </p>
             </CardContent>
           </Card>

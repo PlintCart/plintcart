@@ -1,0 +1,159 @@
+﻿rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    /*************************************************
+     * CLEAN BASELINE RULES FOR WALLET + ROLE MODEL  *
+     * --------------------------------------------- *
+     * Assumptions:                                  *
+     *  - Frontend creates Firebase custom tokens    *
+     *    (recommended) with uid = wallet address,   *
+     *    and role stored in /users/{wallet}.role    *
+     *  - If you do NOT issue custom tokens yet,    *
+     *    set devMode() = true temporarily to allow *
+     *    limited unsigned writes while you finish  *
+     *    the auth bridge.                          *
+     *************************************************/
+
+    /* ---------- CONFIG TOGGLE (DO NOT DEPLOY WITH true) ---------- */
+    function devMode() { return false; } // flip to true ONLY during local development
+
+    /* ---------- HELPERS ---------- */
+    function hasAuth() { return request.auth != null; }
+    function wallet() { return hasAuth() ? request.auth.uid : null; }
+
+    function isValidWallet(a) { return a != null && a.matches('^0x[a-fA-F0-9]{40,}$'); }
+
+    function userExists(a) { return isValidWallet(a) && exists(/databases/$(database)/documents/users/$(a)); }
+    function roleOf(a) { return userExists(a) ? get(/databases/$(database)/documents/users/$(a)).data.role : null; }
+
+    function isOwner(a) { return roleOf(a) == 'owner'; }
+    function isManager(a) { return roleOf(a) in ['manager','owner']; }
+    function isStaff(a) { return roleOf(a) in ['staff','manager','owner']; }
+    function isCashier(a) { return roleOf(a) in ['cashier','staff','manager','owner']; }
+
+    function fieldUnchanged(field) {
+      return !(field in request.resource.data) || request.resource.data[field] == resource.data.get(field, null);
+    }
+
+    /* ---------- USERS (self‑service limited; role escalation blocked) ---------- */
+    match /users/{uid} {
+      allow read: if true; // public profile/metadata
+
+      // Create: user may create their own doc (auth) OR (devMode) unsigned wallet bootstrap
+      allow create: if (hasAuth() && wallet() == uid && isValidWallet(uid)) || (devMode() && isValidWallet(uid));
+
+      // Update: only the authenticated wallet owner; cannot change role after initial set (unless owner changes others via backend)
+      allow update: if hasAuth() && wallet() == uid && isValidWallet(uid)
+                    && fieldUnchanged('role');
+
+      // Delete: disallow from client
+      allow delete: if false;
+    }
+
+    /* ---------- PRODUCTS ---------- */
+    match /products/{pid} {
+      allow read: if true; // public storefront
+
+      allow create: if hasAuth() && isValidWallet(wallet()) && (isStaff(wallet()) || isManager(wallet()) || isOwner(wallet()))
+                    || (devMode() && isValidWallet(request.resource.data.userId));
+
+      allow update: if hasAuth() && wallet() == resource.data.userId && isValidWallet(wallet()) && (
+                        isOwner(wallet()) || isManager(wallet()) ||
+                        (isStaff(wallet()) && fieldUnchanged('price') && fieldUnchanged('tax'))
+                     );
+
+      allow delete: if hasAuth() && wallet() == resource.data.userId && (isOwner(wallet()) || isManager(wallet()));
+    }
+
+    /* ---------- ORDERS ---------- */
+    match /orders/{oid} {
+      allow create: if hasAuth() && isValidWallet(wallet()) && (isCashier(wallet()) || isStaff(wallet()) || isManager(wallet()) || isOwner(wallet()))
+                    || (devMode() && isValidWallet(request.resource.data.merchantId));
+
+      allow read: if hasAuth() && (
+                    wallet() == resource.data.merchantId ||
+                    wallet() == resource.data.businessOwnerId ||
+                    wallet() == resource.data.customerId ||
+                    isStaff(wallet()) || isManager(wallet()) || isOwner(wallet())
+                  );
+
+      allow update: if hasAuth() && wallet() == resource.data.merchantId && (
+                        isOwner(wallet()) || isManager(wallet()) ||
+                        (isStaff(wallet()) && fieldUnchanged('paymentStatus') && fieldUnchanged('paymentRef')) ||
+                        (isCashier(wallet()) && fieldUnchanged('paymentRef'))
+                     );
+
+      allow delete: if false; // soft delete only
+    }
+
+    /* ---------- STOCK TRANSACTIONS ---------- */
+    match /stockTransactions/{txId} {
+      allow create, read: if hasAuth() && wallet() == request.resource.data.userId && isStaff(wallet());
+      allow update, delete: if hasAuth() && wallet() == resource.data.userId && (isManager(wallet()) || isOwner(wallet()));
+    }
+
+    /* ---------- ANALYTICS (generated server-side ideally) ---------- */
+    match /analytics/{docId} {
+      allow read: if hasAuth() && wallet() == resource.data.userId && (isManager(wallet()) || isOwner(wallet()));
+      allow write: if hasAuth() && wallet() == resource.data.userId && isOwner(wallet());
+    }
+
+    /* ---------- SETTINGS (sensitive) ---------- */
+    match /settings/{uid} {
+      allow read: if hasAuth() && wallet() == uid && (isManager(wallet()) || isOwner(wallet()));
+      allow write: if hasAuth() && wallet() == uid && isOwner(wallet()) &&
+                      fieldUnchanged('mpesaSecretKey') &&
+                      fieldUnchanged('mpesaConsumerSecret') &&
+                      fieldUnchanged('mpesaPasskey');
+      allow delete: if false;
+    }
+
+    /* ---------- USER PROFILES (public display + controlled self updates) ---------- */
+    match /userProfiles/{uid} {
+      allow read: if true;
+      allow create: if hasAuth() && wallet() == uid && isValidWallet(uid) || (devMode() && isValidWallet(uid));
+      allow update: if hasAuth() && wallet() == uid;
+      allow delete: if false;
+    }
+
+    /* ---------- PAYMENTS ---------- */
+    match /payments/{pid} {
+      allow create: if hasAuth() && (
+                      wallet() == request.resource.data.merchantId || wallet() == request.resource.data.customerId
+                    ) || (devMode() && isValidWallet(request.resource.data.merchantId));
+      allow read: if hasAuth() && (
+                    wallet() == resource.data.merchantId || wallet() == resource.data.customerId || isManager(wallet()) || isOwner(wallet())
+                  );
+      allow update: if hasAuth() && wallet() == resource.data.merchantId && (isCashier(wallet()) || isStaff(wallet()) || isManager(wallet()) || isOwner(wallet()));
+      allow delete: if false;
+    }
+
+    /* ---------- BUSINESSES & STORE CONFIG ---------- */
+    match /businesses/{bid} {
+      allow read: if true;
+      allow write: if hasAuth() && wallet() == bid && (isOwner(wallet()) || isManager(wallet()));
+    }
+
+    match /storeConfigs/{cfg} {
+      allow read: if true;
+      allow write: if hasAuth() && wallet() == cfg && (isOwner(wallet()) || isManager(wallet()));
+    }
+
+    /* ---------- MPESA TRANSACTIONS (immutable, system appended) ---------- */
+    match /mpesa_transactions/{tx} {
+      allow read: if hasAuth() && (wallet() == resource.data.merchantId || wallet() == resource.data.customerId || isManager(wallet()) || isOwner(wallet()));
+      allow write: if false;
+      allow update, delete: if false;
+    }
+
+    /* ---------- PAYMENT EVENTS (internal only) ---------- */
+    match /payment_events/{evt} {
+      allow read, write: if false;
+    }
+
+    /* ---------- DEVELOPMENT FALLBACK (disabled by default) ---------- */
+    match /{document=**} {
+      allow read, write: if devMode();
+    }
+  }
+}

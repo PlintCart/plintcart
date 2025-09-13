@@ -55,6 +55,9 @@ const Design = lazy(() =>
 const AdminSettings = lazy(() =>
   import("./pages/AdminSettings")
 );
+const MyWallet = lazy(() =>
+  import("./pages/MyWallet")
+);
 const Subscription = lazy(() =>
   import("./pages/Subscription")
 );
@@ -202,6 +205,11 @@ const App = () => {
                 <Route path="/admin/settings" element={
                   <Suspense fallback={null}>
                     <ProtectedRoute><AdminSettings /></ProtectedRoute>
+                  </Suspense>
+                } />
+                <Route path="/admin/wallet" element={
+                  <Suspense fallback={null}>
+                    <ProtectedRoute><MyWallet /></ProtectedRoute>
                   </Suspense>
                 } />
                 <Route path="/staff" element={

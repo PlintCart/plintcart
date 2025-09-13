@@ -11,7 +11,7 @@ service cloud.firestore {
              request.resource.data[field] != resource.data.get(field, null);
     }
 
-    // Get user role from user document (matches zkRoles.ts structure)
+    // Get user role from user document (matches roles.ts structure)
     function getUserRole(userId) {
       return get(/databases/$(database)/documents/users/$(userId)).data.get('role', null);
     }

@@ -14,12 +14,13 @@ import {
   Shield,
   LogOut,
   TrendingUp,
-  Lock
+  Lock,
+  Wallet
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { getUserRole, setTestRole, clearTestRole } from '@/lib/zkRoles';
+import { getUserRole } from '@/lib/roles';
 
 const navigation = [
   { name: "Dashboard", href: "/admin", icon: BarChart3 },
@@ -28,9 +29,11 @@ const navigation = [
   { name: "Analytics", href: "/admin/analytics", icon: TrendingUp },
   { name: "Stock", href: "/admin/stock", icon: PackageCheck },
   { name: "My Dashboard", href: "/staff", icon: Users }, // For staff members
-  { name: "Manage Staff", href: "/staff/manage", icon: Users }, // For owners/managers
+  { name: "Manage Staff", href: "/staff/manage", icon: Users }, // For owners
   { name: "Customize Store", href: "/admin/design", icon: Palette },
+  { name: "My Wallet", href: "/admin/wallet", icon: Wallet },
   { name: "Settings", href: "/admin/settings", icon: Settings },
+  { name: "Platform Admin", href: "/super-admin", icon: Shield }, // For super admins
 ];
 
 export function AdminSidebar() {
@@ -39,10 +42,10 @@ export function AdminSidebar() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  // Check if user is super admin (use wallet address for zkLogin)
-  const isSuperAdmin = user?.id === 'super_admin';
-
   const [userRole, setUserRole] = useState<string | null>(null);
+
+  // Check if user is super admin (based on role, not ID)
+  const isSuperAdmin = userRole === 'super_admin';
 
   useEffect(() => {
     const fetchRole = async () => {
@@ -53,31 +56,25 @@ export function AdminSidebar() {
       
       const role = await getUserRole(user.id);
       setUserRole(role);
+      console.log('🔍 Fetched user role:', { userId: user.id, role, email: user.email });
     };
     
     fetchRole();
-    
-    // Listen for role changes
-    const handleRoleChange = (event: CustomEvent) => {
-      fetchRole();
-    };
-    
-    window.addEventListener('roleChanged', handleRoleChange as EventListener);
-    
-    return () => {
-      window.removeEventListener('roleChanged', handleRoleChange as EventListener);
-    };
   }, [user]);
 
   // Filter navigation based on user role
   const filteredNavigation = navigation.filter(item => {
     if (item.href === '/staff') {
       // Show "My Dashboard" for staff members
-      return userRole === 'staff' || userRole === 'cashier' || userRole === 'manager';
+      return userRole === 'staff';
     }
     if (item.href === '/staff/manage') {
-      // Show "Manage Staff" for owners and managers only
-      return userRole === 'owner' || userRole === 'manager';
+      // Show "Manage Staff" for owners only
+      return userRole === 'owner';
+    }
+    if (item.href === '/super-admin') {
+      // Show super admin features for super admins only
+      return userRole === 'super_admin';
     }
     return true;
   });
@@ -86,18 +83,25 @@ export function AdminSidebar() {
   const isFeatureRestricted = (href: string) => {
     if (!userRole) return false;
     
-    // Features restricted to owners and managers only
-    const ownerManagerOnly = ['/staff/manage', '/admin/design'];
+    // Features restricted to owners only
+    const ownerOnly = ['/staff/manage', '/admin/design', '/admin/settings'];
     
-    // Features restricted to staff and above (not cashiers)
-    const staffAndAbove = ['/admin/products', '/admin/orders', '/admin/stock'];
+    // Features accessible to both owners and staff
+    const ownerAndStaff = ['/admin/products', '/admin/orders', '/admin/stock', '/admin/analytics'];
     
-    if (ownerManagerOnly.includes(href)) {
-      return userRole !== 'owner' && userRole !== 'manager';
+    // Super admin only features
+    const superAdminOnly = ['/super-admin'];
+    
+    if (ownerOnly.includes(href)) {
+      return userRole !== 'owner';
     }
     
-    if (staffAndAbove.includes(href)) {
-      return userRole === 'cashier';
+    if (ownerAndStaff.includes(href)) {
+      return !['owner', 'staff'].includes(userRole);
+    }
+    
+    if (superAdminOnly.includes(href)) {
+      return userRole !== 'super_admin';
     }
     
     return false;
@@ -111,6 +115,8 @@ export function AdminSidebar() {
       console.error('Error signing out:', error);
     }
   };
+
+
 
   return (
     <>
@@ -163,68 +169,19 @@ export function AdminSidebar() {
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
                 <span className="text-white font-medium text-sm">
-                  {user?.id?.charAt(0).toUpperCase() || 'U'}
+                  {(user?.displayName || user?.email)?.charAt(0).toUpperCase() || 'U'}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">
-                  {user?.id || 'Unknown User'}
+                  {user?.displayName || user?.email || 'Unknown User'}
                 </p>
                 <p className="text-xs text-gray-600">
-                  {isSuperAdmin ? 'Super Admin (plint)' : `Role: ${userRole || 'No role'}`}
+                  {isSuperAdmin ? 'Super Admin' : `Role: ${userRole || 'Loading...'}`}
                 </p>
               </div>
             </div>
-            {/* Development role management buttons - now disabled for security */}
-            <div className="mt-2 space-y-1">
-              <div className="flex flex-wrap gap-1">
-                <button 
-                  onClick={() => setTestRole()}
-                  disabled={true}
-                  className="text-xs px-2 py-1 rounded transition-colors bg-gray-100 cursor-not-allowed opacity-60"
-                  style={{ color: '#9ca3af' }}
-                  title="Role management now handled server-side for security"
-                >
-                  Owner
-                </button>
-                <button 
-                  onClick={() => setTestRole()}
-                  disabled={true}
-                  className="text-xs px-2 py-1 rounded transition-colors bg-gray-100 cursor-not-allowed opacity-60"
-                  style={{ color: '#9ca3af' }}
-                  title="Role management now handled server-side for security"
-                >
-                  Manager
-                </button>
-                <button 
-                  onClick={() => setTestRole()}
-                  disabled={true}
-                  className="text-xs px-2 py-1 rounded transition-colors bg-gray-100 cursor-not-allowed opacity-60"
-                  style={{ color: '#9ca3af' }}
-                  title="Role management now handled server-side for security"
-                >
-                  Staff
-                </button>
-                <button 
-                  onClick={() => setTestRole()}
-                  disabled={true}
-                  className="text-xs px-2 py-1 rounded transition-colors bg-gray-100 cursor-not-allowed opacity-60"
-                  style={{ color: '#9ca3af' }}
-                  title="Role management now handled server-side for security"
-                >
-                  Cashier
-                </button>
-              </div>
-              <button 
-                onClick={() => clearTestRole()}
-                disabled={true}
-                className="text-xs px-2 py-1 rounded transition-colors bg-gray-100 cursor-not-allowed opacity-60"
-                style={{ color: '#9ca3af' }}
-                title="Role management now handled server-side for security"
-              >
-                Clear Role
-              </button>
-            </div>
+
           </div>
         )}
 

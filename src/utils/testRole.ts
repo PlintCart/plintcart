@@ -1,12 +1,12 @@
-// This file is deprecated - zkLogin uses Firestore-based roles in zkRoles.ts
-// Keeping file for compatibility but functionality moved to zkRoles.ts
+// This file is deprecated - Firebase auth uses Firestore-based roles in roles.ts
+// Keeping file for compatibility but functionality moved to roles.ts
 
 export const setTestRole = () => {
-  console.warn('setTestRole is deprecated. Use setUserRole from zkRoles.ts instead');
+  console.warn('setTestRole is deprecated. Use setUserRole from roles.ts instead');
 };
 
 export const getTestRole = () => {
-  console.warn('getTestRole is deprecated. Use getUserRole from zkRoles.ts instead');
+  console.warn('getTestRole is deprecated. Use getUserRole from roles.ts instead');
   return null;
 };
 

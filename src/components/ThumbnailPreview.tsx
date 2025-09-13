@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Eye, Download, Share2 } from 'lucide-react';
 import { ProductThumbnailGenerator } from '@/lib/productThumbnailGenerator';
 import { ProductSharingService } from '@/lib/productSharing';
@@ -77,12 +77,12 @@ export function ThumbnailPreview({ product, settings }: ThumbnailPreviewProps) {
       <DialogContent className="max-w-md mx-auto w-[95vw] sm:w-full">
         <DialogHeader>
           <DialogTitle className="text-base sm:text-lg">Thumbnail Preview</DialogTitle>
+          <DialogDescription>
+            This is how your product will appear when shared as a thumbnail.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">
-          <div className="text-xs sm:text-sm text-muted-foreground">
-            This is how your product will appear when shared as a thumbnail:
-          </div>
           
           <div className="border rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center min-h-[300px]">
             {isGenerating ? (

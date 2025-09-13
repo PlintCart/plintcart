@@ -1,12 +1,12 @@
-import { can } from '../lib/zkRoles';
-import type { Role } from '../lib/zkRoles';
+import { can } from '../lib/roles';
+import type { Role } from '../lib/roles';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { AdminLayout } from '../components/AdminLayout';
 import { useState, useEffect } from 'react';
-import { getUserRole } from '../lib/zkRoles';
+import { getUserRole } from '../lib/roles';
 import { 
   Package, 
   ShoppingBag, 
@@ -23,7 +23,7 @@ export default function StaffDashboard() {
   const navigate = useNavigate();
   const [role, setRole] = useState<string>('viewer');
 
-  // Get role from user object using zkLogin system
+  // Get role from user object using Firebase auth
   useEffect(() => {
     const fetchRole = async () => {
       if (!user) {

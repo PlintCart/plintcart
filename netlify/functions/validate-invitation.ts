@@ -1,6 +1,6 @@
 import { Handler } from '@netlify/functions';
 import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore, collectionGroup, query, where, limit, getDocs, doc, updateDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { getFirestore, collectionGroup, query, where, limit, getDocs, doc, updateDoc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 
 // Initialize Firebase (client SDK)
 if (!getApps().length) {
@@ -28,16 +28,14 @@ export const handler: Handler = async (event) => {
 
     const db = getFirestore();
 
-    // Find the invitation
-    const invitesRef = collectionGroup(db, 'invites');
-    const q = query(invitesRef, where('token', '==', token), limit(1));
-    const snapshot = await getDocs(q);
+    // Find the invitation in staffInvitations collection
+    const inviteRef = doc(db, 'staffInvitations', token);
+    const inviteDoc = await getDoc(inviteRef);
 
-    if (snapshot.empty) {
+    if (!inviteDoc.exists()) {
       return { statusCode: 404, body: 'Invalid invitation token' };
     }
 
-    const inviteDoc = snapshot.docs[0];
     const inviteData = inviteDoc.data();
 
     // Check if expired
@@ -50,37 +48,43 @@ export const handler: Handler = async (event) => {
       return { statusCode: 400, body: 'Invitation has already been used' };
     }
 
-    // Get the merchant ID from the path
-    const pathParts = inviteDoc.ref.path.split('/');
-    const merchantId = pathParts[1]; // merchants/{merchantId}/invites/{token}
+    const vendorId = inviteData.vendorId;
 
-    // Store role in Firestore (since we're using zkLogin, no auth lookup needed)
-    await setDoc(doc(db, 'roles', userId), {
-      role: inviteData.role,
-      merchantId,
-      updatedAt: serverTimestamp()
-    });
+    // Update user document with staff role and vendor relationship  
+    await setDoc(doc(db, 'users', userId), {
+      role: 'staff',
+      vendorId: vendorId,
+      email: inviteData.email,
+      joinedAt: serverTimestamp(),
+      isActive: true
+    }, { merge: true });
+
+    // Add staff to vendor's staff array
+    const vendorRef = doc(db, 'users', vendorId);
+    const vendorDoc = await getDoc(vendorRef);
+    if (vendorDoc.exists()) {
+      const vendorData = vendorDoc.data();
+      const currentStaff = vendorData.staff || [];
+      if (!currentStaff.includes(userId)) {
+        await updateDoc(vendorRef, {
+          staff: [...currentStaff, userId]
+        });
+      }
+    }
 
     // Update invitation status
-    await updateDoc(inviteDoc.ref, {
+    await updateDoc(doc(db, 'staffInvitations', token), {
       status: 'accepted',
       acceptedAt: serverTimestamp(),
       acceptedBy: userId
-    });
-
-    // Add to members collection
-    await setDoc(doc(db, `merchants/${merchantId}/members`, userId), {
-      role: inviteData.role,
-      email: inviteData.email,
-      joinedAt: serverTimestamp()
     });
 
     return {
       statusCode: 200,
       body: JSON.stringify({
         message: 'Invitation validated and role assigned',
-        role: inviteData.role,
-        merchantId
+        role: 'staff',
+        vendorId
       })
     };
   } catch (error: any) {

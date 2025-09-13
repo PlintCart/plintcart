@@ -1,6 +1,6 @@
 import { ReactNode, useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getUserRole } from '@/lib/zkRoles';
+import { getUserRole } from '@/lib/roles';
 
 export function RoleGate({ allow, children }: { allow: string[]; children: ReactNode }) {
   const { user } = useAuth();

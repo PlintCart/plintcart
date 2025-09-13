@@ -3,15 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { useConnectWallet, useCurrentAccount, useWallets, useDisconnectWallet } from '@mysten/dapp-kit';
 import { isEnokiWallet, type EnokiWallet, type AuthProvider } from '@mysten/enoki';
 import { toast } from 'sonner';
-import { createOrUpdateUser } from '@/lib/zkRoles';
+import { createOrUpdateUser } from '@/lib/roles';
 import { auth } from '@/lib/firebase';
 import { signInWithWallet } from '@/lib/authBridge';
+import { onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 
-// User type for Enoki/zkLogin
+// Feature flag for auth provider - defaults to Firebase
+const AUTH_PROVIDER = import.meta.env.VITE_AUTH_PROVIDER || 'firebase';
+
+// User type for Enoki (fallback) / Firebase (primary)
 export interface EnokiUser {
   id: string;
   uid: string; // Add uid for backwards compatibility with existing code
-  address: string;
+  address?: string; // Optional for Firebase mode
   email?: string | null;
   displayName?: string;
 }
@@ -43,13 +47,15 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const navigate = useNavigate();
-  const currentAccount = useCurrentAccount();
-  const wallets = useWallets().filter(isEnokiWallet);
-  const { mutateAsync: connect } = useConnectWallet();
-  const { mutateAsync: disconnect } = useDisconnectWallet();
   const [user, setUser] = useState<EnokiUser | null>(null);
   const [loading, setLoading] = useState(false);
   const [authReady, setAuthReady] = useState(false);
+
+  // Enoki-specific hooks (only used when AUTH_PROVIDER === 'enoki')
+  const currentAccount = AUTH_PROVIDER === 'enoki' ? useCurrentAccount() : null;
+  const wallets = AUTH_PROVIDER === 'enoki' ? useWallets().filter(isEnokiWallet) : [];
+  const { mutateAsync: connect } = AUTH_PROVIDER === 'enoki' ? useConnectWallet() : { mutateAsync: async () => {} };
+  const { mutateAsync: disconnect } = AUTH_PROVIDER === 'enoki' ? useDisconnectWallet() : { mutateAsync: async () => {} };
 
   const walletsByProvider = wallets.reduce(
     (map, wallet) => map.set(wallet.provider, wallet),
@@ -59,8 +65,49 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const googleWallet = walletsByProvider.get('google');
   const facebookWallet = walletsByProvider.get('facebook');
 
-  // Update user state when account changes
+  // Firebase mode: Listen to auth state changes
   useEffect(() => {
+    if (AUTH_PROVIDER !== 'firebase') return;
+
+    const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      if (fbUser) {
+        const userData = {
+          id: fbUser.uid,
+          uid: fbUser.uid,
+          address: undefined, // No wallet address in Firebase mode
+          email: fbUser.email || '',
+          displayName: fbUser.displayName || fbUser.email || `User ${fbUser.uid.slice(0, 6)}...`,
+        };
+        setUser(userData);
+
+        // Create or update user document in Firestore
+        try {
+          await createOrUpdateUser({
+            userId: fbUser.uid,
+            displayName: userData.displayName,
+            provider: 'google',
+            email: userData.email,
+          });
+          console.log('✅ Firebase user document created/updated:', {
+            userId: fbUser.uid,
+            email: userData.email,
+            displayName: userData.displayName
+          });
+        } catch (error) {
+          console.error('❌ Failed to sync Firebase user to Firestore:', error);
+        }
+      } else {
+        setUser(null);
+      }
+      setAuthReady(true);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Enoki mode: Update user state when account changes
+  useEffect(() => {
+    if (AUTH_PROVIDER !== 'enoki') return;
   const handleAccountChange = async () => {
       if (currentAccount) {
         // Try to get user info from the connected wallet
@@ -130,9 +177,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         try {
           await createOrUpdateUser({
             userId: currentAccount.address,
-            walletAddress: currentAccount.address,
             displayName: userData.displayName,
-            provider: provider,
+            provider: provider === 'wallet' ? 'email' : provider,
             email: userData.email, // This will always have a value now
           });
           console.log('✅ User document created/updated in Firestore:', {
@@ -154,64 +200,103 @@ export function AuthProvider({ children }: AuthProviderProps) {
     handleAccountChange();
   }, [currentAccount?.address]); // Only depend on the account address to prevent unnecessary re-runs
 
-  // Placeholder functions - Enoki handles auth through wallet connection
+  // Auth functions that work in both modes
   const signIn = async (email: string, password: string) => {
-    toast.error('Please use wallet connection for authentication.');
-    throw new Error('Use wallet connection instead');
+    if (AUTH_PROVIDER === 'firebase') {
+      setLoading(true);
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+        toast.success('✅ Sign-in successful!');
+      } catch (error: any) {
+        console.error('Email/password sign-in error:', error);
+        toast.error(error.message || 'Failed to sign in');
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      toast.error('Please use wallet connection for authentication.');
+      throw new Error('Use wallet connection instead');
+    }
   };
 
   const signUp = async (email: string, password: string) => {
-    toast.error('Please use wallet connection for authentication.');
-    throw new Error('Use wallet connection instead');
+    if (AUTH_PROVIDER === 'firebase') {
+      setLoading(true);
+      try {
+        await createUserWithEmailAndPassword(auth, email, password);
+        toast.success('✅ Account created successfully!');
+      } catch (error: any) {
+        console.error('Email/password sign-up error:', error);
+        toast.error(error.message || 'Failed to create account');
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      toast.error('Please use wallet connection for authentication.');
+      throw new Error('Use wallet connection instead');
+    }
   };
 
   const signInWithGoogle = async () => {
-    if (!googleWallet) {
-      toast.error('Google wallet not available. Please ensure Enoki is properly configured.');
-      throw new Error('Google wallet not available');
-    }
-
+    setLoading(true);
+    
     try {
-      setLoading(true);
-      console.log('🔐 Attempting Google Sign-In with Enoki...');
-
-      // Actually connect to Google wallet (not development mode)
-      const result = await connect({ wallet: googleWallet });
-      toast.success('✅ Google Sign-In successful! Wallet connected.');
-
-      // Wait briefly for Firebase custom token sign-in to complete (effect triggers it)
-      try {
-        const target = currentAccount?.address;
-        const timeoutMs = 6000;
-        const start = Date.now();
-        while (target && auth.currentUser?.uid !== target && Date.now() - start < timeoutMs) {
-          await new Promise((r) => setTimeout(r, 150));
+      if (AUTH_PROVIDER === 'firebase') {
+        // Firebase Google sign-in
+        console.log('🔐 Attempting Google Sign-In with Firebase...');
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+        toast.success('✅ Google Sign-In successful!');
+        return;
+      } else {
+        // Enoki Google sign-in (existing logic)
+        if (!googleWallet) {
+          toast.error('Google wallet not available. Please ensure Enoki is properly configured.');
+          throw new Error('Google wallet not available');
         }
-        if (target && auth.currentUser?.uid === target) {
-          console.log('✅ Firebase auth matched connected Google wallet');
-        } else {
-          console.warn('⚠️ Firebase auth did not match wallet within timeout');
+
+        console.log('🔐 Attempting Google Sign-In with Enoki...');
+
+        // Actually connect to Google wallet (not development mode)
+        const result = await connect({ wallet: googleWallet });
+        toast.success('✅ Google Sign-In successful! Wallet connected.');
+
+        // Wait briefly for Firebase custom token sign-in to complete (effect triggers it)
+        try {
+          const target = currentAccount?.address;
+          const timeoutMs = 6000;
+          const start = Date.now();
+          while (target && auth.currentUser?.uid !== target && Date.now() - start < timeoutMs) {
+            await new Promise((r) => setTimeout(r, 150));
+          }
+          if (target && auth.currentUser?.uid === target) {
+            console.log('✅ Firebase auth matched connected Google wallet');
+          } else {
+            console.warn('⚠️ Firebase auth did not match wallet within timeout');
+          }
+        } catch (waitErr) {
+          console.warn('⚠️ Error waiting for Firebase auth after Google connect:', waitErr);
         }
-      } catch (waitErr) {
-        console.warn('⚠️ Error waiting for Firebase auth after Google connect:', waitErr);
       }
-
     } catch (error: any) {
       console.error('❌ Google Sign-In error:', error);
 
-      // If it's a network/API key error, offer development fallback
-      if (error.message?.includes('network is not enabled') ||
+      // Enoki development fallback (only in enoki mode)
+      if (AUTH_PROVIDER === 'enoki' && (
+          error.message?.includes('network is not enabled') ||
           error.message?.includes('Invalid API key') ||
           error.message?.includes('API key') ||
-          error.message?.includes('network')) {
+          error.message?.includes('network'))) {
         console.log('⚠️ Enoki API key/network issue detected. Offering development fallback...');
 
         // Development fallback: Create mock user for testing
         const mockUser = {
           id: 'dev-user-' + Date.now(),
-          uid: 'dev-user-' + Date.now(), // Add uid for backwards compatibility
+          uid: 'dev-user-' + Date.now(),
           address: '0x' + Math.random().toString(16).substr(2, 40),
-          email: 'dev@example.com', // Real email instead of null
+          email: 'dev@example.com',
           displayName: 'Development User',
         };
 
@@ -221,7 +306,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         try {
           await createOrUpdateUser({
             userId: mockUser.id,
-            walletAddress: mockUser.address,
             displayName: mockUser.displayName,
             provider: 'google',
             email: mockUser.email,
@@ -244,6 +328,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const signInWithFacebook = async () => {
+    if (AUTH_PROVIDER === 'firebase') {
+      toast.error('Facebook sign-in not implemented for Firebase mode.');
+      throw new Error('Facebook sign-in not implemented for Firebase mode');
+    }
+
     if (!facebookWallet) {
       toast.error('Facebook wallet not available. Please ensure Enoki is properly configured.');
       throw new Error('Facebook wallet not available');
@@ -289,8 +378,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = async () => {
     try {
-      await disconnect();
-      setUser(null);
+      if (AUTH_PROVIDER === 'firebase') {
+        await signOut(auth);
+        setUser(null);
+      } else {
+        await disconnect();
+        setUser(null);
+      }
       toast.success('Logged out successfully');
     } catch (error) {
       console.error('Logout error:', error);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Share2, Smartphone, MessageCircle, Copy } from 'lucide-react';
 
@@ -17,6 +17,9 @@ export default function SharingInstructions({ isOpen, onClose }: SharingInstruct
             <Share2 className="w-5 h-5" />
             How Product Sharing Works
           </DialogTitle>
+          <DialogDescription>
+            Learn how to effectively share your products and increase sales.
+          </DialogDescription>
         </DialogHeader>
         
         <div className="space-y-4">

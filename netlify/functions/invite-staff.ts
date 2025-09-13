@@ -24,10 +24,15 @@ export const handler: Handler = async (event) => {
     const auth = event.headers.authorization || '';
     // TODO: Verify the request comes from an authenticated owner
 
-    const { email, role, merchantId } = JSON.parse(event.body || '{}');
+    const { email, role, vendorId } = JSON.parse(event.body || '{}');
 
-    if (!email || !role || !merchantId) {
+    if (!email || !role || !vendorId) {
       return { statusCode: 400, body: 'Missing required fields' };
+    }
+
+    // Ensure role is 'staff' for this system
+    if (role !== 'staff') {
+      return { statusCode: 400, body: 'Invalid role. Only staff invitations are supported.' };
     }
 
     // Generate invitation token
@@ -36,10 +41,11 @@ export const handler: Handler = async (event) => {
 
     const db = getFirestore();
 
-    // Store invitation
-    await setDoc(doc(db, `merchants/${merchantId}/invites`, token), {
+    // Store invitation in staffInvitations collection
+    await setDoc(doc(db, 'staffInvitations', token), {
       email,
-      role,
+      role: 'staff',
+      vendorId,
       token,
       expiresAt,
       createdAt: serverTimestamp(),

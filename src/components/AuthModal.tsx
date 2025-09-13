@@ -2,11 +2,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
-import { getUserRole } from "@/lib/zkRoles";
+import { getUserRole } from "@/lib/roles";
 import { useState, useEffect } from "react";
+
+// Feature flag for auth provider - defaults to Firebase
+const AUTH_PROVIDER = import.meta.env.VITE_AUTH_PROVIDER || 'firebase';
 
 interface AuthModalProps {
   mode: "signin" | "signup";
@@ -15,8 +20,10 @@ interface AuthModalProps {
 }
 
 export function AuthModal({ mode, onModeChange, onSuccess }: AuthModalProps) {
-  const { user, signInWithGoogle, signInWithFacebook, logout, loading } = useAuth();
+  const { user, signIn, signUp, signInWithGoogle, signInWithFacebook, logout, loading } = useAuth();
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   useEffect(() => {
     const fetchRole = async () => {
@@ -50,6 +57,25 @@ export function AuthModal({ mode, onModeChange, onSuccess }: AuthModalProps) {
       onSuccess();
     } catch (error) {
       console.error("Facebook connection error:", error);
+    }
+  };
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email.trim() || !password.trim()) {
+      return;
+    }
+
+    try {
+      if (mode === "signin") {
+        await signIn(email, password);
+      } else {
+        await signUp(email, password);
+      }
+      onSuccess();
+    } catch (error) {
+      console.error("Email auth error:", error);
     }
   };
 
@@ -131,21 +157,23 @@ export function AuthModal({ mode, onModeChange, onSuccess }: AuthModalProps) {
           {loading ? "Connecting..." : "Continue with Google"}
         </Button>
 
-        {/* Facebook Sign In */}
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full flex items-center justify-center"
-          onClick={handleConnectFacebook}
-          disabled={loading}
-        >
-          {loading ? (
-            <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-          ) : (
-            <FaFacebook className="w-5 h-5 mr-2 text-[#1877F2]" />
-          )}
-          {loading ? "Connecting..." : "Continue with Facebook"}
-        </Button>
+        {/* Facebook Sign In - Only show in Enoki mode */}
+        {AUTH_PROVIDER === 'enoki' && (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full flex items-center justify-center"
+            onClick={handleConnectFacebook}
+            disabled={loading}
+          >
+            {loading ? (
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+            ) : (
+              <FaFacebook className="w-5 h-5 mr-2 text-[#1877F2]" />
+            )}
+            {loading ? "Connecting..." : "Continue with Facebook"}
+          </Button>
+        )}
 
         {/* Divider */}
         <div className="relative">
@@ -154,10 +182,53 @@ export function AuthModal({ mode, onModeChange, onSuccess }: AuthModalProps) {
           </div>
           <div className="relative flex justify-center text-xs uppercase">
             <span className="bg-background px-2 text-muted-foreground">
-              Or continue later
+              Or with email
             </span>
           </div>
         </div>
+
+        {/* Email/Password Form - Only show in Firebase mode */}
+        {AUTH_PROVIDER === 'firebase' && (
+          <form onSubmit={handleEmailAuth} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={loading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+                minLength={6}
+              />
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loading || !email.trim() || !password.trim()}
+            >
+              {loading ? (
+                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              ) : null}
+              {mode === "signin" ? "Sign In" : "Create Account"}
+            </Button>
+          </form>
+        )}
 
         {/* Switch Sign In / Sign Up */}
         <div className="text-center text-sm">
@@ -177,10 +248,9 @@ export function AuthModal({ mode, onModeChange, onSuccess }: AuthModalProps) {
           </button>
         </div>
 
-        {/* Development Mode Warning */}
-        <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
-          <strong>💡 Development Mode:</strong> If Enoki API key fails, a mock user will be created for testing staff management features.
-        </div>
+
+        
+
       </CardContent>
     </Card>
   );
