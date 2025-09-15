@@ -1,5 +1,5 @@
 [build]
-  command = "npm run build:fast"
+  command = "npm run build"
   publish = "dist"
 
 [build.environment]
@@ -29,10 +29,6 @@
 [functions]
   directory = "netlify/functions"
 
-[build.environment]
-  NODE_VERSION = "18"
-  NODE_OPTIONS = "--max-old-space-size=4096"
-
 # Security headers (applies to all responses)
 [[headers]]
   for = "/*"
@@ -42,11 +38,29 @@
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
-    Cross-Origin-Opener-Policy = "unsafe-none"
+    Cross-Origin-Opener-Policy = "same-origin-allow-popups"
 
-# Critical: Force proper MIME types and aggressive caching
+# HIGHEST PRIORITY: Force correct MIME types for ALL JavaScript files
 [[headers]]
   for = "*.js"
+  [headers.values]
+    Content-Type = "application/javascript; charset=utf-8"
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/assets/*.js"
+  [headers.values]
+    Content-Type = "application/javascript; charset=utf-8"
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/assets/*-*.js"
+  [headers.values]
+    Content-Type = "application/javascript; charset=utf-8"
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "**/*.js"
   [headers.values]
     Content-Type = "application/javascript; charset=utf-8"
     Cache-Control = "public, max-age=31536000, immutable"
@@ -67,6 +81,20 @@
   for = "/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
+
+# Specific Firebase Auth configuration
+[[headers]]
+  for = "/__/auth/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    Cross-Origin-Opener-Policy = "same-origin-allow-popups"
+
+# Handle auth callback pages
+[[headers]]
+  for = "/auth/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    Cross-Origin-Opener-Policy = "same-origin-allow-popups"
 
 # Force proper MIME types and long caching for built assets
 [[headers]]

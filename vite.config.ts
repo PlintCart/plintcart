@@ -14,13 +14,16 @@ export default defineConfig(({ mode }) => ({
       'X-Content-Type-Options': 'nosniff',
       'Content-Security-Policy': "frame-ancestors 'self'",
       'X-Frame-Options': 'SAMEORIGIN',
-      // Removed Cross-Origin-Opener-Policy to allow OAuth popups
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups', // Fixed for Google Auth
     },
-    // Add MIME type handling for development
+    // Force correct MIME types
     middlewareMode: false,
     fs: {
       strict: true,
     },
+    mime: {
+      'application/javascript': ['js', 'mjs', 'jsx', 'ts', 'tsx']
+    }
   },
   plugins: [
     react(),
@@ -138,6 +141,11 @@ export default defineConfig(({ mode }) => ({
     
     // Optimize asset handling
     assetsInlineLimit: 2048, // Reduce inline limit to 2KB for smaller bundles
+    
+    // Explicit module format
+    lib: undefined, // Ensure we're building an app, not a library
+    outDir: 'dist',
+    emptyOutDir: true,
   },
   optimizeDeps: {
     // Pre-bundle heavy dependencies

@@ -1,18 +1,33 @@
-# Critical: All JavaScript files MUST have correct MIME type (highest priority)
+# CRITICAL: Force JavaScript MIME types (HIGHEST PRIORITY - MUST BE FIRST)
+*.js
+  Content-Type: application/javascript; charset=utf-8
+  
+/assets/*.js
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: public, max-age=31536000, immutable
+
 /assets/*-*.js
   Content-Type: application/javascript; charset=utf-8
   Cache-Control: public, max-age=31536000, immutable
 
+# For any JS file pattern
 /*-*.js
   Content-Type: application/javascript; charset=utf-8
 
-# Global security headers  
+# JavaScript modules
+*.mjs
+  Content-Type: application/javascript; charset=utf-8
+
+*.tsx
+  Content-Type: application/javascript; charset=utf-8
+
+# Global security headers - FIXED FOR GOOGLE AUTH
 /*
-  X-Frame-Options: DENY
+  X-Frame-Options: SAMEORIGIN
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
-  Cross-Origin-Opener-Policy: unsafe-none
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
 
 # Critical: All JavaScript files must have correct MIME type
 *.js
