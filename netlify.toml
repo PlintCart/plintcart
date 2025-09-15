@@ -4,32 +4,8 @@
 
 [build.environment]
   NODE_VERSION = "18"
-  NODE_OPTIONS = "--max-old-space-size=4096"
-  GENERATE_SOURCEMAP = "false"
-  CI = "true"
 
-# Aggressive build optimizations
-[build.processing]
-  skip_processing = false
-
-[build.processing.css]
-  bundle = true
-  minify = true
-
-[build.processing.js]
-  bundle = true
-  minify = true
-
-[dev]
-  command = "npm run dev"
-  targetPort = 8080
-  port = 8888
-  autoLaunch = false
-
-[functions]
-  directory = "netlify/functions"
-
-# Security headers (applies to all responses)
+# Essential security headers
 [[headers]]
   for = "/*"
   [headers.values]
@@ -37,100 +13,34 @@
     X-Content-Type-Options = "nosniff"
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
     Cross-Origin-Opener-Policy = "same-origin-allow-popups"
 
-# HIGHEST PRIORITY: Force correct MIME types for ALL JavaScript files
+# Force correct MIME types for JavaScript files
 [[headers]]
   for = "*.js"
   [headers.values]
     Content-Type = "application/javascript; charset=utf-8"
-    Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
   for = "/assets/*.js"
   [headers.values]
     Content-Type = "application/javascript; charset=utf-8"
-    Cache-Control = "public, max-age=31536000, immutable"
 
-[[headers]]
-  for = "/assets/*-*.js"
-  [headers.values]
-    Content-Type = "application/javascript; charset=utf-8"
-    Cache-Control = "public, max-age=31536000, immutable"
+# API redirect
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
 
-[[headers]]
-  for = "**/*.js"
-  [headers.values]
-    Content-Type = "application/javascript; charset=utf-8"
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "*.mjs"
-  [headers.values]
-    Content-Type = "application/javascript; charset=utf-8"
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "*.tsx"
-  [headers.values]
-    Content-Type = "application/javascript; charset=utf-8"
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/assets/*"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-# Specific Firebase Auth configuration
-[[headers]]
-  for = "/__/auth/*"
-  [headers.values]
-    X-Frame-Options = "SAMEORIGIN"
-    Cross-Origin-Opener-Policy = "same-origin-allow-popups"
-
-# Handle auth callback pages
-[[headers]]
+# SPA fallback
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
   for = "/auth/*"
   [headers.values]
-    X-Frame-Options = "SAMEORIGIN"
+    X-Frame-Options = "SAMEORIGIN"  
     Cross-Origin-Opener-Policy = "same-origin-allow-popups"
-
-# Force proper MIME types and long caching for built assets
-[[headers]]
-  for = "/assets/*.js"
-  [headers.values]
-    Content-Type = "application/javascript; charset=utf-8"
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/assets/*.mjs"
-  [headers.values]
-    Content-Type = "application/javascript; charset=utf-8"
-    Cache-Control = "public, max-age=31536000, immutable"
-
-# Fallback for any JS files not caught by above rules
-[[headers]]
-  for = "*.js"
-  [headers.values]
-    Content-Type = "application/javascript; charset=utf-8"
-
-[[headers]]
-  for = "*.mjs"  
-  [headers.values]
-    Content-Type = "application/javascript; charset=utf-8"
-
-[[headers]]
-  for = "/assets/*.css"
-  [headers.values]
-    Content-Type = "text/css; charset=utf-8"
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/assets/*.wasm"
-  [headers.values]
-    Content-Type = "application/wasm"
-    Cache-Control = "public, max-age=31536000, immutable"
 
 # API redirect rule (keep before SPA fallback)
 [[redirects]]
