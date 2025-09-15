@@ -10,11 +10,13 @@
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
 
-# Firebase Auth
+# Firebase Auth (comprehensive CORS)
 /__/auth/*
   Access-Control-Allow-Origin: *
-  Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
-  Access-Control-Allow-Headers: Content-Type, Authorization
+  Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS, PATCH
+  Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, X-Client-Version, X-Firebase-*
+  Access-Control-Allow-Credentials: true
+  Access-Control-Max-Age: 3600
 
 /assets/*.tsx
   Content-Type: application/javascript; charset=utf-8

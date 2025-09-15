@@ -14,22 +14,43 @@
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "strict-origin-when-cross-origin"
 
-# Firebase Auth specific headers (allow popups and embeds)
+# Firebase Auth specific headers (comprehensive CORS for all auth methods)
 [[headers]]
   for = "/__/auth/*"
   [headers.values]
     X-Frame-Options = "ALLOWALL"
     Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, X-File-Name, X-Client-Version, X-Firebase-*"
+    Access-Control-Allow-Credentials = "true"
+    Access-Control-Max-Age = "3600"
 
 [[headers]]
   for = "/auth/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
-    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
-    Access-Control-Allow-Headers = "Content-Type, Authorization"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, X-File-Name, X-Client-Version, X-Firebase-*"
+    Access-Control-Allow-Credentials = "true"
+    Access-Control-Max-Age = "3600"
     X-Frame-Options = "ALLOWALL"
+
+# Additional Firebase endpoints
+[[headers]]
+  for = "https://identitytoolkit.googleapis.com/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, X-Client-Version, X-Firebase-*"
+    Access-Control-Allow-Credentials = "true"
+
+[[headers]]
+  for = "https://www.googleapis.com/identitytoolkit/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    Access-Control-Allow-Headers = "Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, X-Client-Version, X-Firebase-*"
+    Access-Control-Allow-Credentials = "true"
 
 # CRITICAL: Force correct MIME types for ALL JavaScript files (multiple patterns for redundancy)
 [[headers]]
