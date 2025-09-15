@@ -1,0 +1,50 @@
+# Force correct MIME types for JavaScript files
+*.js
+  Content-Type: application/javascript; charset=utf-8
+
+/assets/*.js
+  Content-Type: application/javascript; charset=utf-8
+
+# Security headers
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
+
+# Firebase Auth
+/__/auth/*
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
+
+/assets/*.tsx
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: public, max-age=31536000, immutable
+
+# All JS files (fallback)
+*.js
+  Content-Type: application/javascript; charset=utf-8
+
+*.mjs
+  Content-Type: application/javascript; charset=utf-8
+
+# CSS files
+/assets/*.css
+  Content-Type: text/css; charset=utf-8
+  Cache-Control: public, max-age=31536000, immutable
+
+# Other assets
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# HTML files
+/*.html
+  Content-Type: text/html; charset=utf-8
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Index and SPA routes
+/
+  Content-Type: text/html; charset=utf-8
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*
+  Content-Type: text/html; charset=utf-8
+  Cache-Control: public, max-age=0, must-revalidate

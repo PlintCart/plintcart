@@ -4,12 +4,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '../contexts/AuthContext';
 import { can } from '../lib/roles';
 import type { Role } from '../lib/roles';
 import { toast } from 'sonner';
 import { AdminLayout } from '../components/AdminLayout';
 import { getUserRole } from '../lib/roles';
+import { Copy, Mail, CheckCircle, ExternalLink } from 'lucide-react';
 
 export default function StaffManagement() {
   const { user } = useAuth();
@@ -17,6 +20,14 @@ export default function StaffManagement() {
   const [role, setRole] = useState<Role>('staff');
   const [loading, setLoading] = useState(false);
   const [currentRole, setCurrentRole] = useState<string | null>(null);
+  
+  // Invitation dialog state
+  const [invitationDialog, setInvitationDialog] = useState(false);
+  const [invitationData, setInvitationData] = useState<{
+    link: string;
+    email: string;
+    welcomeMessage: string;
+  } | null>(null);
 
   // Get current user's role using Firebase auth
   useEffect(() => {
@@ -105,18 +116,30 @@ export default function StaffManagement() {
       const data = await response.json();
       
       if (data.invitationLink) {
-        // Show the invitation link since email service isn't configured
-        toast.success(`Invitation created! Share this link with ${email}:`);
-        
-        // Copy to clipboard
-        navigator.clipboard.writeText(data.invitationLink).then(() => {
-          toast.info('Invitation link copied to clipboard!');
-        }).catch(() => {
-          // Fallback: show in a prompt
-          prompt('Copy this invitation link and send it to the staff member:', data.invitationLink);
+        // Create welcome message
+        const welcomeMessage = `🎉 You've been invited to join our team!
+
+Hi there! You've been invited to join as a staff member for our store. This invitation gives you access to manage products, orders, and help customers.
+
+Click the link below to accept your invitation and create your account:
+${data.invitationLink}
+
+This invitation will expire in 7 days.
+
+Welcome aboard! 🚀`;
+
+        // Show invitation dialog
+        setInvitationData({
+          link: data.invitationLink,
+          email: email.trim(),
+          welcomeMessage
         });
+        setInvitationDialog(true);
         
-        console.log('Invitation link:', data.invitationLink);
+        toast.success('Invitation created successfully!');
+        
+        // Clear form
+        setEmail('');
       } else {
         toast.success(`Invitation sent to ${email} with ${role} role`);
       }
@@ -141,11 +164,14 @@ export default function StaffManagement() {
         </div>
 
         {/* Email Service Notice */}
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <h3 className="text-amber-800 font-medium">📧 Email Service Notice</h3>
-          <p className="text-amber-700 text-sm mt-1">
-            Email service is not yet configured. When you invite staff, you'll receive a link that you need to manually share with them.
-            The invitation link will be copied to your clipboard automatically.
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h3 className="text-blue-800 font-medium flex items-center gap-2">
+            <Mail className="h-4 w-4" />
+            Invitation System Ready
+          </h3>
+          <p className="text-blue-700 text-sm mt-1">
+            When you invite staff members, you'll get a beautifully formatted welcome message with the invitation link.
+            Copy the message and share it via email, WhatsApp, or any messaging platform.
           </p>
         </div>
 
@@ -203,6 +229,88 @@ export default function StaffManagement() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Invitation Dialog */}
+      <Dialog open={invitationDialog} onOpenChange={setInvitationDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              Invitation Created Successfully!
+            </DialogTitle>
+            <DialogDescription>
+              Share this invitation with <strong>{invitationData?.email}</strong>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Welcome Message */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Welcome Message</Label>
+              <Textarea
+                value={invitationData?.welcomeMessage || ''}
+                readOnly
+                className="min-h-[120px] font-mono text-sm"
+                placeholder="Welcome message will appear here..."
+              />
+            </div>
+
+            {/* Invitation Link */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Invitation Link</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={invitationData?.link || ''}
+                  readOnly
+                  className="font-mono text-sm"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(invitationData?.link || '');
+                    toast.success('Link copied to clipboard!');
+                  }}
+                  className="shrink-0"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 pt-4">
+              <Button
+                onClick={() => {
+                  const message = `${invitationData?.welcomeMessage}\n\nDirect link: ${invitationData?.link}`;
+                  navigator.clipboard.writeText(message);
+                  toast.success('Full message copied to clipboard!');
+                }}
+                className="flex-1"
+              >
+                <Mail className="h-4 w-4 mr-2" />
+                Copy Full Message
+              </Button>
+              
+              <Button
+                variant="outline"
+                onClick={() => {
+                  window.open(`mailto:${invitationData?.email}?subject=You're invited to join our team!&body=${encodeURIComponent(invitationData?.welcomeMessage || '')}`, '_blank');
+                }}
+                className="flex-1"
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Open Email Client
+              </Button>
+            </div>
+
+            <div className="text-xs text-muted-foreground bg-muted p-3 rounded">
+              💡 <strong>Tip:</strong> Copy the full message and send it via email, WhatsApp, or any messaging app. 
+              The invitation link will expire in 7 days.
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }
