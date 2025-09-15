@@ -4,14 +4,17 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host --port 8080",
     "dev:netlify": "netlify dev",
-    "build": "vite build",
+    "build": "vite build --mode production",
+    "build:fast": "vite build --mode production --minify esbuild --reportCompressedSize false",
     "build:dev": "vite build --mode development",
     "build:analyze": "vite build --mode production && npx vite-bundle-analyzer dist",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "preload-routes": "node scripts/preload-routes.js"
+    "preview": "vite preview --port 4173",
+    "preview:gzip": "vite preview --port 4173 --host",
+    "preload-routes": "node scripts/preload-routes.js",
+    "performance:analyze": "node performance-optimizer.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

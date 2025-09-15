@@ -1,5 +1,5 @@
 
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy, useEffect, startTransition } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,15 +8,17 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { SettingsProvider } from "@/contexts/SettingsContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { NetworkStatus } from "@/components/NetworkStatus";
-import { PerformanceMonitor } from "@/components/PerformanceMonitor";
 import ErrorBoundary from "@/components/ErrorBoundary";
+import { FastLoadingSpinner } from "@/components/FastLoadingSpinner";
 import { clearAllFirebaseCache } from "@/utils/clearCache";
 
 
-// Lazy load pages for better performance with route-based splitting
+// Critical routes - load immediately
 const Index = lazy(() => import("./pages/Index"));
-const NotFound = lazy(() => import("./pages/NotFound"));
 const Auth = lazy(() => import("./pages/Auth"));
+
+// Non-critical routes - load on demand
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const Support = lazy(() => import("./pages/Support"));
 
@@ -32,21 +34,21 @@ const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const PaymentCancelled = lazy(() => import("./pages/PaymentCancelled"));
 const PaymentPage = lazy(() => import("./pages/PaymentPage"));
 
-// Admin pages - split into separate chunks for better caching
+// Admin pages - ultra lazy loading with prefetch hints
 const AdminDashboard = lazy(() => 
-  import("./pages/AdminDashboard").then(module => ({ default: module.default }))
+  import(/* webpackChunkName: "admin-dashboard" */ "./pages/AdminDashboard")
 );
 const AddProduct = lazy(() => 
-  import("./pages/AddProduct").then(module => ({ default: module.default }))
+  import(/* webpackChunkName: "admin-products" */ "./pages/AddProduct")
 );
 const Products = lazy(() => 
-  import("./pages/Products").then(module => ({ default: module.default }))
+  import(/* webpackChunkName: "admin-products" */ "./pages/Products")
 );
 const StockManagement = lazy(() => 
-  import("./pages/StockManagement").then(module => ({ default: module.default }))
+  import(/* webpackChunkName: "admin-stock" */ "./pages/StockManagement")
 );
 const Orders = lazy(() => 
-  import("./pages/Orders").then(module => ({ default: module.default }))
+  import(/* webpackChunkName: "admin-orders" */ "./pages/Orders")
 );
 const Analytics = lazy(() => import("./pages/Analytics"));
 const Design = lazy(() =>
@@ -113,7 +115,7 @@ const App = () => {
 
   return (
     <ErrorBoundary>
-      <PerformanceMonitor />
+      {/* Performance monitor removed for faster loading */}
       <BrowserRouter
         future={{
           v7_startTransition: true,
@@ -213,17 +215,17 @@ const App = () => {
                   </Suspense>
                 } />
                 <Route path="/staff" element={
-                  <Suspense fallback={<AdminLoadingSpinner />}>
+                  <Suspense fallback={<FastLoadingSpinner />}>
                     <ProtectedRoute><StaffDashboard /></ProtectedRoute>
                   </Suspense>
                 } />
                 <Route path="/staff/manage" element={
-                  <Suspense fallback={<AdminLoadingSpinner />}>
+                  <Suspense fallback={<FastLoadingSpinner />}>
                     <ProtectedRoute><StaffManagement /></ProtectedRoute>
                   </Suspense>
                 } />
                 <Route path="/invite/accept" element={
-                  <Suspense fallback={<LoadingSpinner />}>
+                  <Suspense fallback={<FastLoadingSpinner />}>
                     <AcceptInvitation />
                   </Suspense>
                 } />

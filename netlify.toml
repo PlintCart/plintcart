@@ -1,6 +1,24 @@
 [build]
-  command = "npm run build"
+  command = "npm run build:fast"
   publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "18"
+  NODE_OPTIONS = "--max-old-space-size=4096"
+  GENERATE_SOURCEMAP = "false"
+  CI = "true"
+
+# Aggressive build optimizations
+[build.processing]
+  skip_processing = false
+
+[build.processing.css]
+  bundle = true
+  minify = true
+
+[build.processing.js]
+  bundle = true
+  minify = true
 
 [dev]
   command = "npm run dev"
@@ -24,22 +42,31 @@
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
-    Cross-Origin-Opener-Policy = "same-origin-allow-popups"
-    Cross-Origin-Embedder-Policy = "credentialless"
+    Cross-Origin-Opener-Policy = "unsafe-none"
 
-# Specific headers for auth and popup handling
+# Critical: Force proper MIME types and aggressive caching
 [[headers]]
-  for = "/auth/*"
+  for = "*.js"
   [headers.values]
-    X-Frame-Options = "SAMEORIGIN"
-    Cross-Origin-Opener-Policy = "same-origin-allow-popups"
+    Content-Type = "application/javascript; charset=utf-8"
+    Cache-Control = "public, max-age=31536000, immutable"
 
-# Headers for Google Auth popup/callback
 [[headers]]
-  for = "/__/auth/*"
+  for = "*.mjs"
   [headers.values]
-    X-Frame-Options = "SAMEORIGIN"
-    Cross-Origin-Opener-Policy = "same-origin-allow-popups"
+    Content-Type = "application/javascript; charset=utf-8"
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "*.tsx"
+  [headers.values]
+    Content-Type = "application/javascript; charset=utf-8"
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
 
 # Force proper MIME types and long caching for built assets
 [[headers]]

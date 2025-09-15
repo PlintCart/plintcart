@@ -74,40 +74,43 @@ export default defineConfig(({ mode }) => ({
         main: path.resolve(__dirname, 'index.html')
       },
       output: {
-        // Much more granular code splitting for better caching and loading
-        manualChunks: {
-          // Split Firebase very granularly to load only what's needed
-          'firebase-core': ['firebase/app'],
-          'firebase-auth': ['firebase/auth'], 
-          'firebase-firestore': ['firebase/firestore'],
-          'firebase-storage': ['firebase/storage'],
+        // Aggressive code splitting for minimal initial bundle
+        manualChunks: (id) => {
+          // Critical path - keep minimal
+          if (id.includes('react/') || id.includes('react-dom/')) {
+            return 'react-core';
+          }
           
-          // React ecosystem split
-          'react-core': ['react', 'react-dom'],
-          'react-router': ['react-router-dom'],
+          // Firebase - super granular splitting
+          if (id.includes('firebase/app')) return 'firebase-core';
+          if (id.includes('firebase/auth')) return 'firebase-auth';
+          if (id.includes('firebase/firestore')) return 'firebase-firestore';
+          if (id.includes('firebase/storage')) return 'firebase-storage';
           
-          // UI components - split heavy Radix UI components
-          'radix-core': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
-          'radix-forms': ['@radix-ui/react-select', '@radix-ui/react-tabs'],
-          'radix-feedback': ['@radix-ui/react-toast', '@radix-ui/react-tooltip'],
+          // Route-based splitting - admin routes separate
+          if (id.includes('src/pages/Admin') || id.includes('src/pages/Stock') || id.includes('src/pages/Products')) {
+            return 'admin-pages';
+          }
+          if (id.includes('src/pages/Dashboard') || id.includes('src/pages/Analytics')) {
+            return 'dashboard-pages';
+          }
+          if (id.includes('src/pages/Payment') || id.includes('src/pages/Checkout')) {
+            return 'payment-pages';
+          }
           
-          // Icons and charts as separate chunks
-          'icons': ['lucide-react'],
-          'charts': ['recharts'],
+          // Component-based splitting
+          if (id.includes('src/components/ui/')) return 'ui-components';
+          if (id.includes('@radix-ui/')) return 'radix-ui';
+          if (id.includes('lucide-react')) return 'icons';
+          if (id.includes('recharts')) return 'charts';
           
-          // Form libraries 
-          'forms': ['react-hook-form', '@hookform/resolvers'],
-          'validation': ['zod'],
+          // Heavy utilities loaded on demand
+          if (id.includes('html2canvas') || id.includes('jspdf')) return 'heavy-utils';
           
-          // Utility libraries
-          'styling': ['clsx', 'tailwind-merge', 'class-variance-authority'],
-          'date-utils': ['date-fns'],
+          // Everything else in vendor
+          if (id.includes('node_modules')) return 'vendor';
           
-          // Supabase separate (if used)
-          'supabase': ['@supabase/supabase-js'],
-          
-          // Heavy libraries that should load on demand
-          'heavy-utils': ['html2canvas'],
+          return 'main';
         },
         
         // Optimize chunk names and sizes

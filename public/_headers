@@ -1,13 +1,30 @@
-# Global security headers
+# Critical: All JavaScript files MUST have correct MIME type (highest priority)
+/assets/*-*.js
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: public, max-age=31536000, immutable
+
+/*-*.js
+  Content-Type: application/javascript; charset=utf-8
+
+# Global security headers  
 /*
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
-  Cross-Origin-Opener-Policy: same-origin-allow-popups
-  Cross-Origin-Embedder-Policy: credentialless
+  Cross-Origin-Opener-Policy: unsafe-none
 
-# JavaScript modules and assets
+# Critical: All JavaScript files must have correct MIME type
+*.js
+  Content-Type: application/javascript; charset=utf-8
+
+*.mjs  
+  Content-Type: application/javascript; charset=utf-8
+
+*.tsx
+  Content-Type: application/javascript; charset=utf-8
+
+# JavaScript modules and assets with caching
 /assets/*.js
   Content-Type: application/javascript; charset=utf-8
   Cache-Control: public, max-age=31536000, immutable
