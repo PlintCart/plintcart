@@ -52,7 +52,7 @@
     Access-Control-Allow-Headers = "Content-Type, Authorization, X-Requested-With, Accept, Origin, Cache-Control, X-Client-Version, X-Firebase-*"
     Access-Control-Allow-Credentials = "true"
 
-# CRITICAL: Force correct MIME types for ALL JavaScript files (multiple patterns for redundancy)
+# CRITICAL: Force correct MIME types for ALL JavaScript files (comprehensive patterns)
 [[headers]]
   for = "*.js"
   [headers.values]
@@ -71,45 +71,19 @@
     Content-Type = "application/javascript; charset=utf-8"
     Cache-Control = "public, max-age=31536000, immutable"
 
+# Specific patterns for dynamically generated JS files
 [[headers]]
-  for = "/*-*.js"
-  [headers.values]
-    Content-Type = "application/javascript; charset=utf-8"
-    Cache-Control = "public, max-age=31536000, immutable"
-
-# Force MIME types for specific asset patterns (including the ones from your error)
-[[headers]]
-  for = "/assets/index-*.js"
+  for = "/assets/*-*.js"
   [headers.values]
     Content-Type = "application/javascript; charset=utf-8"
     Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
-  for = "/assets/firebase-*.js"
+  for = "/assets/StaffManagement-*.js"
   [headers.values]
     Content-Type = "application/javascript; charset=utf-8"
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Fallback for any remaining JS files
-[[headers]]
-  for = "/*.js"
-  [headers.values]
-    Content-Type = "application/javascript; charset=utf-8"
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "**/*.js"
-  [headers.values]
-    Content-Type = "application/javascript; charset=utf-8"
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/*-*.js"
-  [headers.values]
-    Content-Type = "application/javascript; charset=utf-8"
-    Cache-Control = "public, max-age=31536000, immutable"
-
-# Force MIME types for specific asset patterns
 [[headers]]
   for = "/assets/index-*.js"
   [headers.values]
@@ -128,35 +102,18 @@
     Content-Type = "application/javascript; charset=utf-8"
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Fallback for any remaining JS files
-[[headers]]
-  for = "/*.js"
-  [headers.values]
-    Content-Type = "application/javascript; charset=utf-8"
-    Cache-Control = "public, max-age=31536000, immutable"
-
-# Force MIME type for CSS files too
+# CSS files
 [[headers]]
   for = "*.css"
   [headers.values]
     Content-Type = "text/css; charset=utf-8"
+    Cache-Control = "public, max-age=31536000, immutable"
 
 [[headers]]
   for = "/assets/*.css"
   [headers.values]
     Content-Type = "text/css; charset=utf-8"
-
-# API redirect
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-
-# SPA fallback
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+    Cache-Control = "public, max-age=31536000, immutable"
 
 # API redirect rule (keep before SPA fallback)
 [[redirects]]

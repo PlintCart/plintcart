@@ -5,6 +5,13 @@
 /assets/*.js
   Content-Type: application/javascript; charset=utf-8
 
+# Specific patterns for dynamically generated JS files
+/assets/*-*.js
+  Content-Type: application/javascript; charset=utf-8
+
+/assets/StaffManagement-*.js
+  Content-Type: application/javascript; charset=utf-8
+
 # Security headers
 /*
   X-Frame-Options: DENY
