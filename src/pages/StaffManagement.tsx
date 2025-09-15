@@ -103,12 +103,22 @@ export default function StaffManagement() {
       }
 
       const data = await response.json();
-      toast.success(`Invitation sent to ${email} with ${role} role`);
-
-      // In development, show the invitation link
+      
       if (data.invitationLink) {
+        // Show the invitation link since email service isn't configured
+        toast.success(`Invitation created! Share this link with ${email}:`);
+        
+        // Copy to clipboard
+        navigator.clipboard.writeText(data.invitationLink).then(() => {
+          toast.info('Invitation link copied to clipboard!');
+        }).catch(() => {
+          // Fallback: show in a prompt
+          prompt('Copy this invitation link and send it to the staff member:', data.invitationLink);
+        });
+        
         console.log('Invitation link:', data.invitationLink);
-        toast.info('Check console for invitation link (dev mode)');
+      } else {
+        toast.success(`Invitation sent to ${email} with ${role} role`);
       }
 
       setEmail('');
@@ -130,11 +140,20 @@ export default function StaffManagement() {
           <p className="text-muted-foreground">Invite team members and manage their access levels</p>
         </div>
 
+        {/* Email Service Notice */}
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <h3 className="text-amber-800 font-medium">📧 Email Service Notice</h3>
+          <p className="text-amber-700 text-sm mt-1">
+            Email service is not yet configured. When you invite staff, you'll receive a link that you need to manually share with them.
+            The invitation link will be copied to your clipboard automatically.
+          </p>
+        </div>
+
         <Card>
           <CardHeader>
             <CardTitle>Invite New Staff Member</CardTitle>
             <CardDescription>
-              Send an invitation email to grant access to your store
+              Create an invitation link to grant staff access to your store
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

@@ -30,6 +30,12 @@ export interface BusinessSettings {
   mpesaPhoneNumber?: string;
   mpesaInstructions?: string;
   
+  // Base Wallet Integration
+  enableBase?: boolean;
+  baseWalletAddress?: string;
+  baseNetwork?: 'mainnet' | 'testnet';
+  baseApiKey?: string;
+  
   // WhatsApp Integration
   whatsappNumber: string;
   orderMessageTemplate: string;

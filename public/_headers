@@ -1,10 +1,13 @@
+# Global security headers
 /*
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Cross-Origin-Opener-Policy: same-origin-allow-popups
+  Cross-Origin-Embedder-Policy: credentialless
 
-# Assets (built by Vite live under /assets)
+# JavaScript modules and assets
 /assets/*.js
   Content-Type: application/javascript; charset=utf-8
   Cache-Control: public, max-age=31536000, immutable
@@ -13,14 +16,36 @@
   Content-Type: application/javascript; charset=utf-8
   Cache-Control: public, max-age=31536000, immutable
 
+/assets/*.tsx
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: public, max-age=31536000, immutable
+
+# All JS files (fallback)
+*.js
+  Content-Type: application/javascript; charset=utf-8
+
+*.mjs
+  Content-Type: application/javascript; charset=utf-8
+
+# CSS files
 /assets/*.css
   Content-Type: text/css; charset=utf-8
   Cache-Control: public, max-age=31536000, immutable
 
+# Other assets
 /assets/*
   Cache-Control: public, max-age=31536000, immutable
 
-# HTML and index
+# HTML files
+/*.html
+  Content-Type: text/html; charset=utf-8
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Index and SPA routes
+/
+  Content-Type: text/html; charset=utf-8
+  Cache-Control: public, max-age=0, must-revalidate
+
 /*
   Content-Type: text/html; charset=utf-8
   Cache-Control: public, max-age=0, must-revalidate

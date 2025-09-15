@@ -52,18 +52,36 @@ export const handler: Handler = async (event) => {
       status: 'pending'
     });
 
-    // TODO: Send invitation email with link to /invite/accept?token=${token}&role=${role}
+    // Send invitation email
+    const invitationLink = `${process.env.URL || 'http://localhost:8080'}/invite/accept?token=${token}&role=${role}`;
 
-    const invitationLink = `${process.env.URL || 'http://localhost:5173'}/invite/accept?token=${token}&role=${role}`;
+    // Send email using a simple email service (you can use SendGrid, Nodemailer, etc.)
+    try {
+      // For now, we'll use a simple approach - in production, use proper email service
+      const emailBody = `
+        <h2>You've been invited to join our team!</h2>
+        <p>You've been invited to join as a <strong>${role}</strong> member.</p>
+        <p>Click the link below to accept your invitation and create your account:</p>
+        <p><a href="${invitationLink}" style="background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Accept Invitation</a></p>
+        <p>Or copy and paste this link in your browser:</p>
+        <p>${invitationLink}</p>
+        <p><small>This invitation will expire in 7 days.</small></p>
+      `;
 
-    // For now, just return the link (in production, send via email service)
-    console.log(`Invitation link for ${email}: ${invitationLink}`);
+      // TODO: Replace with actual email service (SendGrid, AWS SES, etc.)
+      // await sendEmail(email, 'Team Invitation', emailBody);
+      
+      console.log(`Invitation link for ${email}: ${invitationLink}`);
+    } catch (emailError) {
+      console.log('Email service not configured, invitation link:', invitationLink);
+    }
 
     return {
       statusCode: 200,
       body: JSON.stringify({
         message: 'Invitation created successfully',
-        invitationLink // Remove this in production
+        invitationLink, // Remove this in production
+        note: 'Email service not configured - invitation link logged to console'
       })
     };
   } catch (error: any) {
