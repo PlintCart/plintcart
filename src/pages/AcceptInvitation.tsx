@@ -47,31 +47,37 @@ export default function AcceptInvitation() {
     setLoading(true);
     try {
       // Create account
-      await signUp(email, password);
+      const newUser = await signUp(email, password);
 
-      // TODO: Validate invitation token and set role
-      // This would call the set-role function with the invitation details
-      if (token) {
+      // Validate invitation token and set role
+      if (token && newUser) {
         // Validate token and get invitation details
         const response = await fetch('/.netlify/functions/validate-invitation', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ token })
+          body: JSON.stringify({ 
+            token,
+            userId: newUser.uid || newUser.id
+          })
         });
 
         if (response.ok) {
           const invitationData = await response.json();
           // Role will be set automatically via the validation function
           toast.success('Account created and role assigned! Welcome to the team.');
+          console.log('✅ Role assigned:', invitationData.role);
         } else {
-          toast.success('Account created successfully! Please contact your administrator to set your role.');
+          const errorText = await response.text();
+          console.error('❌ Invitation validation failed:', errorText);
+          toast.error('Account created but role assignment failed. Please contact your administrator.');
         }
       }
 
       navigate('/staff');
     } catch (error: any) {
+      console.error('❌ Account creation error:', error);
       toast.error(error.message || 'Failed to create account');
     } finally {
       setLoading(false);
